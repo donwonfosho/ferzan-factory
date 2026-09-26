@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { PRIVY_APP_ID, accountWallets, evmWallet, useAccountWallets } from "@/lib/factory/wallet-bridge";
 import { MoveFunds } from "./move-funds";
+import { AccountPortfolio, AccountRewards } from "./portfolio";
 import { AccountCard } from "./account-card";
 import { Link } from "@tanstack/react-router";
 import { GROK_PROVIDERS, authEnabled, signIn, signOut } from "@/lib/auth/client";
@@ -60,6 +61,12 @@ export function AccountPage() {
   const [sol, setSol] = useState<string | null>(null);
   const usingSite = Boolean(wallet && siteAddress && wallet.toLowerCase() === siteAddress.toLowerCase());
   const [panel, setPanel] = useState<Panel>("menu");
+  const account = useAccountWallets();
+  const signedIn = Boolean(account?.authenticated);
+  // The signed-in account's wallets; the old browser wallet only when nobody is signed in.
+  const mineEvm = signedIn ? (account?.evmAddress ?? null) : siteAddress || null;
+  const mineSol = signedIn ? (account?.solAddress ?? null) : sol;
+  const oldWallet = Boolean(siteAddress) && (!mineEvm || siteAddress.toLowerCase() !== mineEvm.toLowerCase());
 
   useEffect(() => {
     function sync() {
@@ -329,52 +336,43 @@ export function AccountPage() {
 
       {panel === "send" ? <SendPanel siteAddress={siteAddress} /> : null}
 
-      {panel === "portfolio" && siteAddress ? (
+      {panel === "portfolio" && (mineEvm || mineSol) ? (
         <>
           <h1 className="text-3xl">Portfolio</h1>
-          <div className="mt-4">
-            <WalletBalances evm={siteAddress} sol={sol} />
-          </div>
-          <Holding evm={siteAddress} sol={sol} />
-          <Launched creator={siteAddress} sol={sol} />
+          <AccountPortfolio evm={mineEvm} sol={mineSol} />
           <div className="mt-4 flex flex-wrap gap-2">
-            <Link to="/p/$address" params={{ address: siteAddress }} className="btn-line">
-              Public profile
-            </Link>
-            {sol ? (
-              <Link to="/p/$address" params={{ address: sol }} className="btn-line">
+            {mineEvm ? (
+              <Link to="/p/$address" params={{ address: mineEvm }} className="btn-line">
+                Public profile
+              </Link>
+            ) : null}
+            {mineSol ? (
+              <Link to="/p/$address" params={{ address: mineSol }} className="btn-line">
                 Solana profile
               </Link>
             ) : null}
           </div>
+          {oldWallet ? (
+            <section className="mt-8 border-t border-line pt-6">
+              <h2 className="text-xl font-extrabold">Old browser wallet</h2>
+              <p className="mt-1 text-sm text-muted">Coins on the site's first contracts, held by the wallet this browser made before accounts. Move its funds on the Manage account page.</p>
+              <Holding evm={siteAddress} sol={sol} />
+              <Launched creator={siteAddress} sol={sol} />
+            </section>
+          ) : null}
         </>
       ) : null}
-      {panel === "portfolio" && !siteAddress ? <p className="text-sm text-muted">Create a wallet first.</p> : null}
+      {panel === "portfolio" && !mineEvm && !mineSol ? <p className="text-sm text-muted">Sign in on the Manage account page first.</p> : null}
 
-      {panel === "rewards" && siteAddress ? (
+      {panel === "rewards" && (mineEvm || mineSol) ? (
         <>
           <h1 className="text-3xl">Rewards</h1>
-          <div className="ticket mt-4">
-            <p className="font-semibold">Referrals</p>
-            <p className="mt-1 text-sm text-muted">A buyer who pastes this wallet on a trade sends you the 0.10% referrer cut. There is no separate cashback.</p>
-            <button
-              type="button"
-              className="btn-line mt-3"
-              onClick={() => {
-                void navigator.clipboard.writeText(siteAddress).then(
-                  () => setCopied("Referrer address copied."),
-                  () => setCopied("Copy was blocked."),
-                );
-              }}
-            >
-              Copy referrer address
-            </button>
-          </div>
-          <CreatorFees evm={siteAddress} sol={sol} />
+          <AccountRewards evm={mineEvm} sol={mineSol} />
+          {oldWallet ? <CreatorFees evm={siteAddress} sol={sol} /> : null}
           {copied ? <p className="mt-2 text-sm text-muted">{copied}</p> : null}
         </>
       ) : null}
-      {panel === "rewards" && !siteAddress ? <p className="text-sm text-muted">Create a wallet first.</p> : null}
+      {panel === "rewards" && !mineEvm && !mineSol ? <p className="text-sm text-muted">Sign in on the Manage account page first.</p> : null}
 
       {panel === "settings" ? <SettingsPanel /> : null}
     </div>

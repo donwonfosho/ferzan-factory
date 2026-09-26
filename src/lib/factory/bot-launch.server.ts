@@ -1,6 +1,6 @@
 /**
  * Server-only calls to the Ferzan Launch Bot API (launch.ferzaneco.com).
- * The shared secret never leaves this server; the browser only gets unsigned transactions.
+ * If this deployment has a Launch Bot key it is sent server-side only; the browser only gets unsigned transactions.
  */
 import { env } from "@/lib/env.server";
 import { chainRpc, type RelayChain } from "./relay";
@@ -22,11 +22,10 @@ const CURVE_LAUNCHED = "0x188ae4cd8aa7c0376e9501e76fb7a19dd1454add5c88bffbf75f39
 
 async function call(path: string, body: unknown, secret = false): Promise<Record<string, unknown>> {
   const headers: Record<string, string> = { "content-type": "application/json", accept: "application/json" };
-  if (secret) {
-    const value = env("FERZAN_INGEST_SECRET") ?? "";
-    if (value.length < 24) throw new Error("Launching is not set up on this site yet.");
-    headers["x-ferzan-ingest"] = value;
-  }
+  // The Launch Bot no longer needs a shared key from the website: nothing is announced until it has
+  // checked the launch on chain. A key is still sent if this deployment has one.
+  const value = secret ? (env("FERZAN_INGEST_SECRET") ?? "") : "";
+  if (value.length >= 24) headers["x-ferzan-ingest"] = value;
   let res: Response;
   try {
     res = await fetch(`${API}${path}`, {

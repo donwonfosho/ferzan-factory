@@ -1,7 +1,7 @@
 /**
  * Solana coin pages: data and swaps for Ferzan Meteora curves, through the Launch Bot API.
  * Chart/stats come from the public /api/sol-coin; buy/sell transactions are built by the droplet
- * (/api/sol-swap, locked to this site's secret) and signed by the visitor's own wallet.
+ * (/api/sol-swap, unsigned) and signed by the visitor's own wallet.
  */
 import { createServerFn } from "@tanstack/react-start";
 
@@ -107,12 +107,10 @@ export const buildSolSwap = createServerFn({ method: "POST" })
   })
   .handler(async ({ data }): Promise<{ txB64: string; amountOut: string; minOut: string }> => {
     await (await import("./guard.server")).guardRelay("send");
-    const { env } = await import("@/lib/env.server");
-    const secret = env("FERZAN_INGEST_SECRET") ?? "";
-    if (secret.length < 24) throw new Error("Trading is not set up on this site yet.");
+    // The swap is unsigned and built for the visitor's own wallet, so the Launch Bot needs no key for it.
     const res = await fetch(`${API}/sol-swap`, {
       method: "POST",
-      headers: { "content-type": "application/json", "x-ferzan-ingest": secret },
+      headers: { "content-type": "application/json" },
       body: JSON.stringify({ mint: data.mint, wallet: data.wallet, side: data.side, amount: data.amount, slippage_bps: data.slippageBps }),
       signal: AbortSignal.timeout(60_000),
     }).catch(() => null);

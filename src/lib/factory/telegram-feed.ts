@@ -3,7 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 /** Public read-only API of the Ferzan Telegram launch platform (Launch Bot, Trade Bot, Buy Bot). */
 export const FERZAN_API = "https://launch.ferzaneco.com/api";
 
-export type TelegramSort = "new" | "koth" | "trending" | "volume";
+export type TelegramSort = "new" | "koth" | "trending" | "volume" | "graduated";
 export type TelegramChain = "" | "base" | "bsc" | "ethereum" | "robinhood" | "solana";
 
 export type TelegramCoin = {
@@ -22,6 +22,9 @@ export type TelegramCoin = {
   creator: string;
   creatorLaunches: number;
   creatorGraduated: number;
+  /** "site" when it was launched on this website, otherwise "telegram". */
+  source: string;
+  native: string;
 };
 
 export type TelegramLeader = {
@@ -36,7 +39,7 @@ export type TelegramLeader = {
   best: { name: string; symbol: string; chain: string; url: string; mcapUsd: number; graduated: boolean } | null;
 };
 
-const SORTS = new Set<string>(["new", "koth", "trending", "volume"]);
+const SORTS = new Set<string>(["new", "koth", "trending", "volume", "graduated"]);
 const CHAINS = new Set<string>(["", "base", "bsc", "ethereum", "robinhood", "solana"]);
 const PERIODS = new Set<string>(["7d", "30d", "all"]);
 const cache = new Map<string, { at: number; value: unknown }>();
@@ -50,6 +53,7 @@ async function getJson(path: string): Promise<unknown> {
   });
   if (!res.ok) throw new Error(`Ferzan API answered ${res.status}`);
   const value: unknown = await res.json();
+  if (cache.size > 500) cache.clear();
   cache.set(path, { at: Date.now(), value });
   return value;
 }
@@ -82,20 +86,24 @@ function toCoin(raw: unknown): TelegramCoin {
     creator: str(it.creator),
     creatorLaunches: num(stats.launches),
     creatorGraduated: num(stats.graduated),
+    source: it.source === "site" ? "site" : "telegram",
+    native: str(it.native).slice(0, 6),
   };
 }
 
-/** Launches from the Telegram platform: new, King of the Hill, trending (last hour) or 24h volume. */
+/** Every Ferzan launch (site and Telegram): new, King of the Hill, trending, 24h volume or graduated; optional search. */
 export const listTelegram = createServerFn({ method: "GET" })
-  .validator((data: unknown): { sort: TelegramSort; chain: TelegramChain } => {
+  .validator((data: unknown): { sort: TelegramSort; chain: TelegramChain; q: string } => {
     const row = record(data);
     const sort = typeof row.sort === "string" && SORTS.has(row.sort) ? (row.sort as TelegramSort) : "new";
     const chain = typeof row.chain === "string" && CHAINS.has(row.chain) ? (row.chain as TelegramChain) : "";
-    return { sort, chain };
+    const q = typeof row.q === "string" ? row.q.replace(/[^\p{L}\p{N} ._-]/gu, "").trim().slice(0, 44) : "";
+    return { sort, chain, q };
   })
   .handler(async ({ data }): Promise<TelegramCoin[]> => {
     try {
-      const body = record(await getJson(`/launches?sort=${data.sort}&limit=30${data.chain ? `&chain=${data.chain}` : ""}`));
+      const search = data.q ? `&q=${encodeURIComponent(data.q)}` : "";
+      const body = record(await getJson(`/launches?sort=${data.sort}&limit=30${data.chain ? `&chain=${data.chain}` : ""}${search}`));
       const items = Array.isArray(body.items) ? body.items : [];
       return items.map(toCoin).filter((coin) => coin.token && coin.url && coin.symbol);
     } catch {
@@ -135,4 +143,105 @@ export const listTelegramLeaders = createServerFn({ method: "GET" })
     } catch {
       return [];
     }
+  });
+
+export type PortfolioCoin = TelegramCoin & {
+  balance: number;
+  valueNative: number;
+  valueUsd: number;
+  /** EVM curves pay the creator on every trade; null where fees are claimed instead (Solana). */
+  earnedNative: number | null;
+  earnedUsd: number | null;
+};
+
+export type WalletPortfolio = {
+  holdings: PortfolioCoin[];
+  launches: PortfolioCoin[];
+  valueUsd: number;
+  earnedUsd: number;
+  referralUsd: number;
+};
+
+const EVM_ADDRESS = /^0x[0-9a-fA-F]{40}$/;
+const SOL_ADDRESS = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+
+function toPortfolioCoin(raw: unknown): PortfolioCoin {
+  const it = record(raw);
+  const earned = typeof it.earned_native === "number" && Number.isFinite(it.earned_native);
+  return {
+    ...toCoin(raw),
+    balance: num(it.balance),
+    valueNative: num(it.value_native),
+    valueUsd: num(it.value_usd),
+    earnedNative: earned ? num(it.earned_native) : null,
+    earnedUsd: earned ? num(it.earned_usd) : null,
+  };
+}
+
+/** What one wallet holds (live balances), launched, and earned in trading fees. */
+export const getPortfolio = createServerFn({ method: "GET" })
+  .validator((data: unknown): { wallet: string } => {
+    const wallet = String(record(data).wallet ?? "").trim();
+    if (!EVM_ADDRESS.test(wallet) && !SOL_ADDRESS.test(wallet)) throw new Error("Wallet looks wrong.");
+    return { wallet };
+  })
+  .handler(async ({ data }): Promise<WalletPortfolio> => {
+    const body = record(await getJson(`/wallet/${data.wallet}`));
+    const list = (v: unknown) => (Array.isArray(v) ? v.map(toPortfolioCoin).filter((coin) => coin.token && coin.symbol) : []);
+    return {
+      holdings: list(body.holdings),
+      launches: list(body.launches),
+      valueUsd: num(body.value_usd),
+      earnedUsd: num(body.earned_usd),
+      referralUsd: num(body.referral_usd),
+    };
+  });
+
+export type SolFeePool = { pool: string; mint: string; symbol: string; name: string; sol: number };
+
+/** Unclaimed creator trading fees on the wallet's Solana (Meteora) launches. */
+export const getSolFees = createServerFn({ method: "GET" })
+  .validator((data: unknown): { wallet: string } => {
+    const wallet = String(record(data).wallet ?? "").trim();
+    if (!SOL_ADDRESS.test(wallet)) throw new Error("Wallet looks wrong.");
+    return { wallet };
+  })
+  .handler(async ({ data }): Promise<{ totalSol: number; pools: SolFeePool[] }> => {
+    try {
+      const body = record(await getJson(`/sol-fees?wallet=${data.wallet}&role=creator`));
+      const pools = (Array.isArray(body.pools) ? body.pools : [])
+        .map((raw): SolFeePool => {
+          const it = record(raw);
+          return { pool: str(it.pool), mint: str(it.mint), symbol: str(it.symbol).slice(0, 12), name: str(it.name).slice(0, 40), sol: num(it.sol) };
+        })
+        .filter((p) => SOL_ADDRESS.test(p.pool) && p.sol > 0);
+      return { totalSol: num(body.total_sol), pools };
+    } catch {
+      return { totalSol: 0, pools: [] };
+    }
+  });
+
+/** Unsigned fee-claim transactions for the wallet to sign (built by the Launch Bot API). */
+export const buildSolFeeClaim = createServerFn({ method: "POST" })
+  .validator((data: unknown): { wallet: string; pools: string[] } => {
+    const row = record(data);
+    const wallet = String(row.wallet ?? "").trim();
+    const pools = (Array.isArray(row.pools) ? row.pools : []).map(String).filter((p) => SOL_ADDRESS.test(p)).slice(0, 12);
+    if (!SOL_ADDRESS.test(wallet) || !pools.length) throw new Error("Nothing to claim.");
+    return { wallet, pools };
+  })
+  .handler(async ({ data }): Promise<string[]> => {
+    await (await import("./guard.server")).guardRelay("send");
+    const res = await fetch(`${FERZAN_API}/sol-fees/build`, {
+      method: "POST",
+      headers: { "content-type": "application/json", accept: "application/json" },
+      body: JSON.stringify({ wallet: data.wallet, role: "creator", pools: data.pools }),
+      signal: AbortSignal.timeout(45_000),
+    }).catch(() => null);
+    if (!res) throw new Error("The claim service did not answer. Try again.");
+    const body = record(await res.json().catch(() => ({})));
+    if (!res.ok) throw new Error(typeof body.detail === "string" ? body.detail.slice(0, 200) : `The claim service answered ${res.status}.`);
+    const txs = (Array.isArray(body.txs) ? body.txs : []).map((t) => str(record(t).tx_b64)).filter((t) => /^[A-Za-z0-9+/=]{100,}$/.test(t));
+    if (!txs.length) throw new Error("Nothing to claim right now.");
+    return txs;
   });
