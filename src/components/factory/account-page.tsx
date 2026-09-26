@@ -367,6 +367,7 @@ function ReplaceWallet({
             value={value}
             onChange={(e) => setValue(e.target.value.trim())}
             placeholder="Exported key"
+            type="password"
             autoComplete="off"
             spellCheck={false}
             className="min-h-11 w-full bg-surface px-3 text-fg shadow-border outline-none"
@@ -379,6 +380,16 @@ function ReplaceWallet({
               if (!termsAccepted()) {
                 setNeedTerms(true);
                 return;
+              }
+              // Importing replaces this browser's key. If the current wallet was never exported,
+              // its funds would be lost, so make that explicit before overwriting it.
+              const current = readSiteWallet();
+              if (current && current.privateKey.toLowerCase() !== value.toLowerCase()) {
+                const sure = window.confirm(
+                  `This replaces the wallet ${current.address.slice(0, 6)}…${current.address.slice(-4)} in this browser. ` +
+                    "If it holds funds and you have not saved its key, they will be lost. Copy its key from Account first. Replace it?",
+                );
+                if (!sure) return;
               }
               const imported = importSiteWallet(value);
               if (!imported) {
