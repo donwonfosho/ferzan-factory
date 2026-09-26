@@ -61,7 +61,7 @@ function referrerFor(account: string): string {
   return /^0x[0-9a-f]{40}$/.test(ref) && ref !== account.toLowerCase() ? ref : ZERO;
 }
 
-function Chart({ candles }: { candles: BotCurveState["candles"] }) {
+export function Chart({ candles }: { candles: BotCurveState["candles"] }) {
   const path = useMemo(() => {
     const closes = candles.map((k) => k[4]).filter((v) => v > 0);
     if (closes.length < 2) return "";

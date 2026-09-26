@@ -34,7 +34,10 @@ export const addrWord = (a: string) => a.toLowerCase().replace(/^0x/, "").padSta
 /** Links from the bots (curve.html) that this site can show itself. */
 export function siteCoinHref(url: string): string | null {
   const m = /curve\.html\?chain=(base|bsc|ethereum|robinhood)&curve=(0x[0-9a-fA-F]{40})/.exec(url);
-  return m ? `/coin/${m[1]}/${m[2].toLowerCase()}` : null;
+  if (m) return `/coin/${m[1]}/${m[2].toLowerCase()}`;
+  // The bots hand out Jupiter links for Solana coins; those get the on-site Solana page instead.
+  const sol = /^https:\/\/jup\.ag\/tokens\/([1-9A-HJ-NP-Za-km-z]{32,44})$/.exec(url);
+  return sol ? `/coin/solana/${sol[1]}` : null;
 }
 
 export type BotCurveState = {
