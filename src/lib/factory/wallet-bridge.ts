@@ -8,8 +8,8 @@ import { useSyncExternalStore } from "react";
 import { Transaction, VersionedTransaction } from "@solana/web3.js";
 import { provider as injectedProvider, switchChain, type EvmChainId } from "./deploy";
 
-/** Public Privy app id. Empty = accounts are off and the site behaves as before. */
-export const PRIVY_APP_ID: string = import.meta.env.VITE_PRIVY_APP_ID ?? "";
+/** Public Privy app id (not a secret). The deploy server builds without .grok/app-env.json, so it is the fallback here; a VITE_PRIVY_APP_ID in the build environment still wins. */
+export const PRIVY_APP_ID: string = import.meta.env.VITE_PRIVY_APP_ID || "cmuitovv501qx0cl6wnj2qvvt";
 
 export type Eip1193 = { request: (args: { method: string; params?: unknown[] }) => Promise<unknown> };
 
