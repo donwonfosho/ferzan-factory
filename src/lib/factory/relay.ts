@@ -124,6 +124,9 @@ export const prepareTx = createServerFn({ method: "POST" })
     };
   })
   .handler(async ({ data }): Promise<PreparedTx> => {
+    const guard = await import("./guard.server");
+    await guard.guardRelay("send");
+    await guard.assertAllowedEvmTx(data.chain, data.to || null, data.data);
     const tx: { from: string; data: string; value: string; to?: string } = {
       from: data.from,
       data: data.data,
@@ -154,6 +157,17 @@ export const broadcastSigned = createServerFn({ method: "POST" })
     return { chain: asChain(row.chain), raw: asHex(row.raw, "Signed transaction", 200_000) };
   })
   .handler(async ({ data }): Promise<{ hash: string }> => {
+    const guard = await import("./guard.server");
+    await guard.guardRelay("send");
+    const { parseTransaction } = await import("viem");
+    let parsed: { to?: string | null; data?: string; chainId?: number };
+    try {
+      parsed = parseTransaction(data.raw as `0x${string}`);
+    } catch {
+      throw new Error("Signed transaction looks wrong.");
+    }
+    if (parsed.chainId !== CHAINS[data.chain].chainId) throw new Error("That transaction is for another chain.");
+    await guard.assertAllowedEvmTx(data.chain, parsed.to ?? null, parsed.data ?? "0x");
     const hash = await rpc(data.chain, "eth_sendRawTransaction", [data.raw]);
     if (typeof hash !== "string" || !/^0x[a-fA-F0-9]{64}$/.test(hash)) throw new Error("The chain did not take the transaction.");
     return { hash };
@@ -168,6 +182,7 @@ export const getReceipt = createServerFn({ method: "POST" })
     return { chain: asChain(row.chain), hash };
   })
   .handler(async ({ data }): Promise<ChainReceipt | null> => {
+    await (await import("./guard.server")).guardRelay("read");
     const receipt = await rpc(data.chain, "eth_getTransactionReceipt", [data.hash]);
     if (!receipt || typeof receipt !== "object") return null;
     const row = receipt as { status?: string; contractAddress?: string | null };
@@ -185,6 +200,7 @@ export const readBalance = createServerFn({ method: "POST" })
     return { chain: asChain(row.chain), address: asAddress(row.address, "Wallet") };
   })
   .handler(async ({ data }): Promise<{ wei: string }> => {
+    await (await import("./guard.server")).guardRelay("read");
     const hex = await rpc(data.chain, "eth_getBalance", [data.address, "latest"]);
     return { wei: hexToDec(hex) };
   });
@@ -206,6 +222,7 @@ export const readTokenBalances = createServerFn({ method: "POST" })
     return { chain: asChain(row.chain), wallet: asAddress(row.wallet, "Wallet"), tokens };
   })
   .handler(async ({ data }): Promise<{ address: string; symbol: string; raw: string }[]> => {
+    await (await import("./guard.server")).guardRelay("read");
     const who = data.wallet.slice(2).toLowerCase().padStart(64, "0");
     const dataWord = BALANCE_OF + who;
     const rows = await Promise.all(

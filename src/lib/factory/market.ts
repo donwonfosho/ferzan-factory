@@ -188,6 +188,7 @@ export const listFills = createServerFn({ method: "POST" })
     return { chain: asChain(row.chain), contract };
   })
   .handler(async ({ data }): Promise<Fill[]> => {
+    await (await import("./guard.server")).guardRelay("read");
     const key = `${data.chain}:${data.contract.toLowerCase()}`;
     const hit = cache.get(key);
     if (hit && Date.now() - hit.at < 20_000) return hit.rows;
@@ -264,6 +265,7 @@ export const listHolders = createServerFn({ method: "POST" })
     return { chain: asChain(row.chain), contract };
   })
   .handler(async ({ data }) => {
+    await (await import("./guard.server")).guardRelay("read");
     const key = data.chain + ":" + data.contract.toLowerCase();
     const hit = holderCache.get(key);
     if (hit && Date.now() - hit.at < 20_000) return hit.rows;

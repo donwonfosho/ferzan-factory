@@ -149,6 +149,7 @@ export const quoteBoard = createServerFn({ method: "POST" })
     };
   })
   .handler(async ({ data }): Promise<BoardMark[]> => {
+    await (await import("./guard.server")).guardRelay("read");
     const { getSql } = await import("@/lib/db");
     const { readCurve } = await import("@/lib/factory/deploy");
     const { readSolanaCurve } = await import("@/lib/factory/solana-curve");
@@ -340,6 +341,7 @@ export const publishCoin = createServerFn({ method: "POST" })
   })
   .handler(async ({ data }): Promise<{ ok: true }> => {
     // The creator signs what gets listed, and the chain proves that wallet created the coin.
+    await (await import("./guard.server")).guardRelay("send");
     const { requireProof } = await import("./proof.server");
     await requireProof("coin", data.creator, coinProofFields(data), data.proof);
     const verify = await import("./chain-verify.server");
@@ -369,6 +371,7 @@ export const recordTrade = createServerFn({ method: "POST" })
     return { chain, hash };
   })
   .handler(async ({ data }): Promise<{ ok: true; recorded: number }> => {
+    await (await import("./guard.server")).guardRelay("send");
     const verify = await import("./chain-verify.server");
     const prints =
       data.chain === "solana"

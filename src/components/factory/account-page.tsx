@@ -1,9 +1,9 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { GROK_PROVIDERS, authEnabled, signIn, signOut } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { readRemembered, useFactory } from "@/lib/factory/store";
-import { importSiteWallet, keySaved, knownSiteAddress, markKeySaved, openSiteWallet, readSiteWallet } from "@/lib/factory/site-wallet";
+import { importSiteWallet, knownSiteAddress, markKeySaved, openSiteWallet, readSiteWallet } from "@/lib/factory/site-wallet";
 import { listBoard, listLaunched, loadProfile, saveProfile, type BoardCoin } from "@/lib/factory/board";
 import { profileFields } from "@/lib/factory/proof";
 import { signProof } from "@/lib/factory/proof-client";
@@ -207,33 +207,31 @@ export function AccountPage() {
               address={siteAddress}
               secret={siteKey || null}
               onNote={setCopied}
-              replace={
-                <ReplaceWallet
-                  onImported={(imported) => {
-                    markKeySaved(imported.address);
-                    setWallet(imported.address);
-                    setSiteKey(imported.privateKey);
-                    setSiteAddress(imported.address);
-                    const nextSol = solanaAddress();
-                    setSol(nextSol);
-                    void loadProfile({ data: { address: imported.address } }).then((row) => {
-                      if (!row || (!row.name && !row.bio && !row.image)) return;
-                      setProfile(row);
-                      setName(row.name);
-                      setBio(row.bio);
-                    });
-                    setCopied(keySaved(imported.address) ? "Wallet restored. Launched coins load below." : "EVM wallet replaced.");
-                  }}
-                  onFail={() => setCopied("That is not a key.")}
-                />
-              }
             />
           </div>
           </KeyLock>
         )}
         {!siteKey && siteAddress ? (
-          <p className="mt-3 text-sm text-sell">This browser does not have the key for {shortAddress(siteAddress)}. Replace the EVM wallet with the exported key.</p>
+          <p className="mt-3 text-sm text-sell">This browser does not have the key for {shortAddress(siteAddress)}. Import the exported key below.</p>
         ) : null}
+        <ReplaceWallet
+          onImported={(imported) => {
+            markKeySaved(imported.address);
+            setWallet(imported.address);
+            setSiteKey(imported.privateKey);
+            setSiteAddress(imported.address);
+            const nextSol = solanaAddress();
+            setSol(nextSol);
+            void loadProfile({ data: { address: imported.address } }).then((row) => {
+              if (!row || (!row.name && !row.bio && !row.image)) return;
+              setProfile(row);
+              setName(row.name);
+              setBio(row.bio);
+            });
+            setCopied("Wallet imported. Launched coins for this key load below.");
+          }}
+          onFail={() => setCopied("That is not a key. Paste the exported private key, starting with 0x.")}
+        />
         <p className="mt-3 text-sm text-muted">Send chain coins to the matching address. Base ETH is not Ethereum ETH.</p>
         {siteAddress ? (
           <div className="mt-4">
@@ -306,13 +304,11 @@ function WalletCard({
   address,
   secret,
   onNote,
-  replace,
 }: {
   title: string;
   address: string | null;
   secret: string | null;
   onNote: (note: string) => void;
-  replace?: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -344,7 +340,6 @@ function WalletCard({
       {open && secret ? (
         <textarea readOnly value={secret} rows={3} spellCheck={false} className="mt-2 w-full bg-surface px-3 py-3 text-xs break-all shadow-border outline-none" />
       ) : null}
-      {replace}
     </div>
   );
 }
@@ -361,12 +356,13 @@ function ReplaceWallet({
   const [needTerms, setNeedTerms] = useState(false);
   if (needTerms) return <TermsGate onAccept={() => setNeedTerms(false)} />;
   return (
-    <div className="mt-2">
-      <button type="button" className="w-full text-sm text-muted" onClick={() => setOpen((current) => !current)}>
-        Replace EVM wallet
+    <div className="mt-4">
+      <button type="button" className="btn-line w-full" onClick={() => setOpen((current) => !current)}>
+        Import wallet
       </button>
       {open ? (
         <div className="mt-2">
+          <p className="text-sm text-muted">Paste the exported private key. The name, picture, and coins launched by that wallet come back.</p>
           <input
             value={value}
             onChange={(e) => setValue(e.target.value.trim())}
@@ -394,7 +390,7 @@ function ReplaceWallet({
               onImported(imported);
             }}
           >
-            Replace
+            Import
           </Button>
         </div>
       ) : null}

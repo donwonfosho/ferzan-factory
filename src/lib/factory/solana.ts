@@ -67,6 +67,9 @@ export const solanaRelay = createServerFn({ method: "POST" })
     throw new Error("Bad Solana request.");
   })
   .handler(async ({ data }) => {
+    const guard = await import("./guard.server");
+    await guard.guardRelay(data.method === "send" ? "send" : "read");
+    if (data.method === "send") await guard.assertAllowedSolanaTx(data.raw);
     const { Connection, PublicKey } = await import("@solana/web3.js");
     const rpc = new Connection(RPC, "confirmed");
     if (data.method === "balance") {

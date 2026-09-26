@@ -26,7 +26,6 @@ export function Shell({ children }: { children: ReactNode }) {
   const wallet = useFactory((s) => s.wallet);
   const profile = useFactory((s) => s.profile);
   const [open, setOpen] = useState(false);
-  const [walletError, setWalletError] = useState("");
   const [sol, setSol] = useState<string | null>(null);
 
   useEffect(() => {
@@ -82,18 +81,10 @@ export function Shell({ children }: { children: ReactNode }) {
             Launch
           </Link>
           {wallet ? (
-            <button
-              type="button"
-              className="btn-line"
-              onClick={() => {
-                void navigator.clipboard.writeText(wallet).then(() => {
-                  setWalletError("");
-                });
-              }}
-            >
+            <Link to="/login" className="btn-line">
               {profile?.image ? <img src={profile.image} alt="" className="h-6 w-6 object-cover" /> : null}
               {profile?.name || creatorLabel(wallet)}
-            </button>
+            </Link>
           ) : (
             <Link to="/login" className="btn-line">
               Profile
@@ -108,7 +99,6 @@ export function Shell({ children }: { children: ReactNode }) {
             Desk
           </button>
         </div>
-        {walletError ? <p className="mx-auto max-w-5xl px-4 pb-3 text-sm text-sell">{walletError}</p> : null}
         {open ? (
           <div className="border-t border-line bg-surface">
             <div className="mx-auto grid max-w-5xl gap-4 px-4 py-4">

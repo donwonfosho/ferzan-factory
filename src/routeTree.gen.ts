@@ -17,6 +17,7 @@ import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as ApiLaunchesRouteImport } from './routes/api/launches'
+import { Route as ApiRelayStatusRouteImport } from './routes/api/relay-status'
 import { Route as PAddressRouteImport } from './routes/p/$address'
 import { Route as TIdRouteImport } from './routes/t/$id'
 import { Route as CChainAddressRouteImport } from './routes/c/$chain/$address'
@@ -61,6 +62,11 @@ const ApiLaunchesRoute = ApiLaunchesRouteImport.update({
   path: '/api/launches',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiRelayStatusRoute = ApiRelayStatusRouteImport.update({
+  id: '/api/relay-status',
+  path: '/api/relay-status',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PAddressRoute = PAddressRouteImport.update({
   id: '/p/$address',
   path: '/p/$address',
@@ -86,6 +92,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/terms': typeof TermsRoute
   '/api/launches': typeof ApiLaunchesRoute
+  '/api/relay-status': typeof ApiRelayStatusRoute
   '/p/$address': typeof PAddressRoute
   '/t/$id': typeof TIdRoute
   '/c/$chain/$address': typeof CChainAddressRoute
@@ -99,6 +106,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/terms': typeof TermsRoute
   '/api/launches': typeof ApiLaunchesRoute
+  '/api/relay-status': typeof ApiRelayStatusRoute
   '/p/$address': typeof PAddressRoute
   '/t/$id': typeof TIdRoute
   '/c/$chain/$address': typeof CChainAddressRoute
@@ -113,6 +121,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/terms': typeof TermsRoute
   '/api/launches': typeof ApiLaunchesRoute
+  '/api/relay-status': typeof ApiRelayStatusRoute
   '/p/$address': typeof PAddressRoute
   '/t/$id': typeof TIdRoute
   '/c/$chain/$address': typeof CChainAddressRoute
@@ -128,6 +137,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/terms'
     | '/api/launches'
+    | '/api/relay-status'
     | '/p/$address'
     | '/t/$id'
     | '/c/$chain/$address'
@@ -141,6 +151,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/terms'
     | '/api/launches'
+    | '/api/relay-status'
     | '/p/$address'
     | '/t/$id'
     | '/c/$chain/$address'
@@ -154,6 +165,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/terms'
     | '/api/launches'
+    | '/api/relay-status'
     | '/p/$address'
     | '/t/$id'
     | '/c/$chain/$address'
@@ -168,6 +180,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   TermsRoute: typeof TermsRoute
   ApiLaunchesRoute: typeof ApiLaunchesRoute
+  ApiRelayStatusRoute: typeof ApiRelayStatusRoute
   PAddressRoute: typeof PAddressRoute
   TIdRoute: typeof TIdRoute
   CChainAddressRoute: typeof CChainAddressRoute
@@ -231,6 +244,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiLaunchesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/relay-status': {
+      id: '/api/relay-status'
+      path: '/api/relay-status'
+      fullPath: '/api/relay-status'
+      preLoaderRoute: typeof ApiRelayStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/p/$address': {
       id: '/p/$address'
       path: '/p/$address'
@@ -264,6 +284,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   TermsRoute: TermsRoute,
   ApiLaunchesRoute: ApiLaunchesRoute,
+  ApiRelayStatusRoute: ApiRelayStatusRoute,
   PAddressRoute: PAddressRoute,
   TIdRoute: TIdRoute,
   CChainAddressRoute: CChainAddressRoute,
