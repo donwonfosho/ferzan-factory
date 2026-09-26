@@ -98,7 +98,7 @@ type Provider = {
   request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
 };
 
-function provider(): Provider | null {
+export function provider(): Provider | null {
   if (typeof window === "undefined") return null;
   const eth = (window as unknown as { ethereum?: Provider }).ethereum;
   return eth ?? null;
@@ -140,7 +140,7 @@ export function tokenDeployData(name: string, symbol: string, supplyWhole: bigin
   return FERZAN_TOKEN_BYTECODE + encodeTokenConstructor(name, symbol, supplyWhole, owner);
 }
 
-async function switchChain(eth: Provider, chain: EvmChainId) {
+export async function switchChain(eth: Provider, chain: EvmChainId) {
   const meta = EVM_CHAIN[chain];
   const hexId = "0x" + meta.chainId.toString(16);
   try {

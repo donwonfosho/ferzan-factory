@@ -19,6 +19,7 @@ import { Button, Label, TextInput } from "./ui";
 import { termsAccepted } from "@/lib/factory/terms";
 import { TermsGate } from "./terms";
 import { KeyLock } from "./key-gate";
+import { OwnWalletLaunch } from "./own-wallet-launch";
 
 const LAUNCH_CHAINS: MarkChain[] = ["solana", "base", "bsc", "ethereum", "robinhood", "arc"];
 
@@ -30,6 +31,11 @@ const CHAIN_NOTE: Record<MarkChain, string> = {
   ethereum: "Can take a minute. You pay ETH gas.",
   arc: "Gas is USDC. Same contract as Base. Chain 5042.",
 };
+
+/** Plain boolean (not a type guard) so the older curve code below still type-checks until Phase 3 removes it. */
+function isCurveTab(mode: Mode): boolean {
+  return mode === "curve";
+}
 
 export function LaunchForm({ initialMode = "curve", initialChain = "base" }: { initialMode?: Mode; initialChain?: MarkChain }) {
   const stamp = useFactory((s) => s.stampPrimary);
@@ -319,6 +325,33 @@ export function LaunchForm({ initialMode = "curve", initialChain = "base" }: { i
       chain,
       hash,
     });
+  }
+
+  // Curve launches go through the Telegram bots' pipeline with the visitor's own wallet (Phase 2).
+  // The older site-curve flow below stays only for existing coins until Phase 3 retires it.
+  if (isCurveTab(mode)) {
+    return (
+      <div className="mx-auto max-w-xl">
+        <p className="text-sm font-medium text-cyan">Curve</p>
+        <h1 className="mt-2 text-4xl">Launch a coin</h1>
+        <p className="mt-2 text-sm text-muted">
+          Prefer Telegram?{" "}
+          <a className="font-semibold text-cyan" href="https://t.me/Ferzan_Launch_Bot" target="_blank" rel="noopener noreferrer">
+            Launch with @Ferzan_Launch_Bot
+          </a>
+          . Both land on the same curves.
+        </p>
+        <div className="mt-6 grid grid-cols-2 gap-3">
+          <button type="button" className="btn-cyan w-full" onClick={() => pick("curve")}>
+            Curve
+          </button>
+          <button type="button" className="btn-line w-full" onClick={() => pick("plain")}>
+            Regular pool
+          </button>
+        </div>
+        <OwnWalletLaunch />
+      </div>
+    );
   }
 
   if (launched) {
@@ -650,7 +683,7 @@ function launchRisk(chain: string, mode: string): string {
   return "Unaudited. The buy that fills a new curve opens a pool. You keep 30% of the LP and earn fees on that market. The other 70% is burned. Ethereum, Robinhood, and Arc use Uniswap. Base uses Aerodrome. BNB Chain uses PancakeSwap. Arc pairs the coin with USDC. Coins launched before this update burn the whole LP.";
 }
 
-function ProjectPicture({
+export function ProjectPicture({
   image,
   onChange,
   onError,
