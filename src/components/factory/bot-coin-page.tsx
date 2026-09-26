@@ -9,7 +9,8 @@ import {
   type BotCurveChain,
   type BotCurveState,
 } from "@/lib/factory/bot-curve";
-import { dexSwapUrl, explorerAddress, explorerTx, provider, switchChain } from "@/lib/factory/deploy";
+import { dexSwapUrl, explorerAddress, explorerTx } from "@/lib/factory/deploy";
+import { evmWallet } from "@/lib/factory/wallet-bridge";
 import { getReceipt } from "@/lib/factory/relay";
 import { formatSmart, parseDecimal } from "@/lib/factory/units";
 import { cn } from "@/lib/cn";
@@ -127,20 +128,14 @@ export function BotCoinPage({ chain, curve }: { chain: BotCurveChain; curve: str
   }, [amount, side, chain, curve, state?.graduated]);
 
   async function connect(): Promise<string> {
-    const eth = provider();
-    if (!eth) throw new Error("No wallet in this browser. Install MetaMask or Rabby, or open this page in the MetaMask app.");
-    await switchChain(eth, chain);
-    const accounts = (await eth.request({ method: "eth_requestAccounts" })) as string[];
-    const a = accounts?.[0]?.toLowerCase();
-    if (!a) throw new Error("The wallet returned no account.");
-    setAccount(a);
-    return a;
+    const { address } = await evmWallet(chain);
+    setAccount(address);
+    return address;
   }
 
   async function send(from: string, to: string, data: string, value = 0n): Promise<void> {
-    const eth = provider();
-    if (!eth) throw new Error("No wallet in this browser.");
-    await switchChain(eth, chain);
+    const { address, provider: eth } = await evmWallet(chain);
+    if (address !== from.toLowerCase()) throw new Error("The wallet changed. Press the button again.");
     const hash = await eth.request({
       method: "eth_sendTransaction",
       params: [{ from, to, data, ...(value > 0n ? { value: "0x" + value.toString(16) } : {}) }],
@@ -166,7 +161,7 @@ export function BotCoinPage({ chain, curve }: { chain: BotCurveChain; curve: str
       if (!raw || raw <= 0n) throw new Error(side === "buy" ? `Type how much ${state.native} to spend.` : `Type how many ${state.symbol} to sell.`);
       if (state.startTime > Date.now() / 1000) throw new Error("Trading has not opened yet.");
       setBusy("Connect your wallet.");
-      const from = account || (await connect());
+      const from = await connect(); // follows sign-in / wallet switches since the page loaded
       const ref = referrerFor(from);
       const fresh = await quoteBotCurve({ data: { chain, curve, side, amount: raw.toString() } });
       const out = BigInt(fresh.out);

@@ -1,17 +1,16 @@
 import { useState } from "react";
-import { Transaction, VersionedTransaction } from "@solana/web3.js";
+import { WalletNeeded, evmWallet, solanaWallet } from "@/lib/factory/wallet-bridge";
 import { CHAINS } from "@/lib/factory/catalog";
 import {
   BOT_LAUNCH_CHAINS,
   GRAD_PRESETS,
   finishBotLaunch,
-  sendBotLaunchSol,
   startBotLaunch,
   type BotLaunchChain,
   type EvmLaunchTx,
   type SolanaLaunchTx,
 } from "@/lib/factory/bot-launch";
-import { explorerTx, provider, switchChain, type EvmChainId } from "@/lib/factory/deploy";
+import { explorerTx, type EvmChainId } from "@/lib/factory/deploy";
 import { siteCoinHref } from "@/lib/factory/bot-curve";
 import { getReceipt } from "@/lib/factory/relay";
 import { solanaExplorerTx } from "@/lib/factory/solana";
@@ -23,29 +22,10 @@ import { ProjectPicture } from "./launch-form";
 import { TermsGate } from "./terms";
 import { Button, Label, TextInput } from "./ui";
 
-type SolProvider = {
-  publicKey?: { toString(): string } | null;
-  connect: () => Promise<{ publicKey: { toString(): string } }>;
-  signAndSendTransaction?: (tx: Transaction | VersionedTransaction) => Promise<{ signature: string }>;
-  signTransaction?: (tx: Transaction | VersionedTransaction) => Promise<Transaction | VersionedTransaction>;
-};
-
-function solProvider(): SolProvider | null {
-  if (typeof window === "undefined") return null;
-  const w = window as unknown as { phantom?: { solana?: SolProvider }; solana?: SolProvider };
-  return w.phantom?.solana ?? w.solana ?? null;
-}
-
-function bytesFromHex(hex: string): Uint8Array {
+function bytesFromHex(hex: string): Uint8Array<ArrayBuffer> {
   const out = new Uint8Array(hex.length / 2);
   for (let i = 0; i < out.length; i += 1) out[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
   return out;
-}
-
-function base64(bytes: Uint8Array): string {
-  let text = "";
-  for (const b of bytes) text += String.fromCharCode(b);
-  return btoa(text);
 }
 
 /** Opens this page inside the wallet app's browser on phones with no extension. */
@@ -91,21 +71,9 @@ export function OwnWalletLaunch() {
     if (next !== "solana") setGrad(GRAD_PRESETS[next][1]);
   }
 
+  // Signed in -> the account's wallet; otherwise a browser extension; otherwise the sign-in opens.
   async function connect(): Promise<string> {
-    if (evm) {
-      const eth = provider();
-      if (!eth) throw new Error("NO_WALLET");
-      await switchChain(eth, chain as EvmChainId);
-      const accounts = (await eth.request({ method: "eth_requestAccounts" })) as string[];
-      const account = accounts?.[0];
-      if (!account) throw new Error("The wallet returned no account.");
-      setWallet(account);
-      return account;
-    }
-    const sol = solProvider();
-    if (!sol) throw new Error("NO_WALLET");
-    const res = await sol.connect();
-    const account = res.publicKey.toString();
+    const account = evm ? (await evmWallet(chain as EvmChainId)).address : (await solanaWallet()).address;
     setWallet(account);
     return account;
   }
@@ -123,9 +91,8 @@ export function OwnWalletLaunch() {
   }
 
   async function signEvm(built: EvmLaunchTx, from: string): Promise<string> {
-    const eth = provider();
-    if (!eth) throw new Error("NO_WALLET");
-    await switchChain(eth, chain as EvmChainId);
+    const { address, provider: eth } = await evmWallet(chain as EvmChainId);
+    if (address.toLowerCase() !== from.toLowerCase()) throw new Error("The wallet changed. Press Launch again.");
     const sent = await eth.request({
       method: "eth_sendTransaction",
       params: [{ from, to: built.to, data: built.data, value: "0x" + BigInt(built.value).toString(16), gas: "0x" + BigInt(built.gas).toString(16) }],
@@ -138,24 +105,8 @@ export function OwnWalletLaunch() {
   }
 
   async function signSolana(built: SolanaLaunchTx): Promise<string> {
-    const sol = solProvider();
-    if (!sol) throw new Error("NO_WALLET");
-    const bytes = bytesFromHex(built.txHex);
-    let tx: Transaction | VersionedTransaction;
-    try {
-      tx = Transaction.from(bytes);
-    } catch {
-      tx = VersionedTransaction.deserialize(bytes);
-    }
-    if (sol.signAndSendTransaction) {
-      const { signature } = await sol.signAndSendTransaction(tx);
-      setHash(signature);
-      return signature;
-    }
-    if (!sol.signTransaction) throw new Error("This wallet cannot sign Solana transactions.");
-    const signed = await sol.signTransaction(tx);
-    const raw = signed instanceof VersionedTransaction ? signed.serialize() : signed.serialize();
-    const { signature } = await sendBotLaunchSol({ data: { requestId: built.requestId, signedB64: base64(raw) } });
+    const { signAndSend } = await solanaWallet();
+    const signature = await signAndSend(bytesFromHex(built.txHex));
     setHash(signature);
     return signature;
   }
@@ -178,7 +129,7 @@ export function OwnWalletLaunch() {
     }
     try {
       setBusy("Connect your wallet.");
-      const account = wallet || (await connect());
+      const account = await connect();
       setBusy("Preparing the launch.");
       const built = await startBotLaunch({
         data: {
@@ -219,8 +170,8 @@ export function OwnWalletLaunch() {
       setLaunched({ chain, name: cleanName, symbol: cleanSymbol, token: done.token, curve: done.curve, url: done.url, hash: txHash });
     } catch (err) {
       const msg = err instanceof Error ? err.message : "The launch did not go through.";
-      if (msg === "NO_WALLET") {
-        setError(evm ? "No wallet in this browser. Install MetaMask or Rabby, or open this page in the MetaMask app." : "No Solana wallet in this browser. Install Phantom, or open this page in the Phantom app.");
+      if (err instanceof WalletNeeded) {
+        setError(err.message);
       } else if (/user (rejected|denied)|rejected the request|4001/i.test(msg)) {
         setError("You cancelled in the wallet. Nothing was launched.");
       } else {

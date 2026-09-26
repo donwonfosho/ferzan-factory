@@ -6,7 +6,8 @@
  * 2. Each visitor (by Cloudflare's cf-connecting-ip) gets a per-minute budget, counted in the
  *    database so it holds across serverless instances. Addresses are stored as a salted hash.
  * 3. Transactions the relay prepares or broadcasts must be one of the things this site
- *    actually sends: a site curve or token deploy, or buy/sell/claim on a coin on the board.
+ *    actually sends: a site curve or token deploy, buy/sell/claim on a coin on the board,
+ *    or a plain transfer of the chain's coin.
  */
 import { getRequest } from "@tanstack/react-start/server";
 import { assertSameSiteRequest } from "@/lib/auth/isolation.server";
@@ -84,6 +85,8 @@ export async function assertAllowedEvmTx(chain: string, to: string | null | unde
     if (body.startsWith(FERZAN_CURVE_BYTECODE.toLowerCase()) || body.startsWith(FERZAN_TOKEN_BYTECODE.toLowerCase())) return;
     throw new Error("Only Ferzan coins can be created from this site.");
   }
+  // A plain coin transfer (no calldata): the account menu's Send, and moving funds out of the old browser wallet.
+  if (body === "0x" || body === "") return;
   if (!CURVE_CALLS.has(body.slice(0, 10))) throw new Error("This site only sends buy, sell and claim to a coin.");
   const { getSql } = await import("@/lib/db");
   const sql = await getSql();

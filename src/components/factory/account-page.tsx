@@ -1,4 +1,6 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { accountWallets } from "@/lib/factory/wallet-bridge";
+import { AccountCard } from "./account-card";
 import { Link } from "@tanstack/react-router";
 import { GROK_PROVIDERS, authEnabled, signIn, signOut } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -152,7 +154,8 @@ export function AccountPage() {
       ) : (
         <>
           <h1 className="text-4xl">Manage account</h1>
-          <p className="mt-2 text-sm text-muted">Profile, wallets, rewards, and what the chart shows. The key stays on this phone.</p>
+          <p className="mt-2 text-sm text-muted">Profile, wallets, rewards, and what the chart shows.</p>
+          <AccountCard />
           <MenuGroup label="Account">
             <MenuRow title="Edit profile" onClick={() => open("profile")} />
             <MenuRow title="Portfolio" detail="Balances, holdings, and launches" onClick={() => open("portfolio")} />
@@ -218,7 +221,9 @@ export function AccountPage() {
                   return;
                 }
               }
-              const jobs = [siteAddress, sol].filter((address): address is string => Boolean(address));
+              // The signed-in account's wallet first, then any old browser wallet still on this phone.
+              const accountEvm = accountWallets()?.evmAddress ?? null;
+              const jobs = [...new Set([accountEvm, siteAddress, sol].filter((address): address is string => Boolean(address)))];
               await Promise.allSettled(
                 jobs.map(async (address) => {
                   const proof = await signProof("profile", address, next);
@@ -232,28 +237,6 @@ export function AccountPage() {
           Save profile
         </Button>
         {profile?.bio ? <p className="mt-3 text-sm text-muted">{profile.bio}</p> : null}
-      </div>
-      <div className="ticket mt-4">
-        <p className="text-sm font-medium text-cyan">Sign in</p>
-        <p className="mt-2 text-sm text-muted">Sign in does not hold the wallets. Export stays under View wallets.</p>
-        {isPending ? <p className="mt-2 text-sm text-muted">Checking the session.</p> : null}
-        {!isPending && user && !user.isDevFallback ? (
-          <div className="mt-2">
-            <p className="font-extrabold">{user.displayName ?? user.primaryEmail}</p>
-            <button type="button" className="btn-line mt-4" onClick={() => void signOut()}>
-              Sign out
-            </button>
-          </div>
-        ) : null}
-        {!isPending && authEnabled && (!user || user.isDevFallback) ? (
-          <div className="mt-3 flex flex-col gap-2">
-            {GROK_PROVIDERS.map((provider) => (
-              <button key={provider.providerId} type="button" className="btn-line" onClick={() => void signIn(provider.providerId, { callbackURL: "/login" })}>
-                Continue with {provider.label}
-              </button>
-            ))}
-          </div>
-        ) : null}
       </div>
       </>
       ) : null}

@@ -1,4 +1,5 @@
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
+import { PrivyRoot } from "@/components/factory/privy-root";
 import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { Shell } from "@/components/factory/shell";
@@ -40,9 +41,11 @@ export const Route = createRootRoute({
       <body>
         <PreviewHostBridge />
         <AuthProvider>
-          <Shell>
-            <Outlet />
-          </Shell>
+          <PrivyRoot>
+            <Shell>
+              <Outlet />
+            </Shell>
+          </PrivyRoot>
         </AuthProvider>
         <Scripts />
       </body>

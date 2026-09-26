@@ -2,6 +2,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import { toHex } from "viem/utils";
 import { readSiteWallet } from "./site-wallet";
 import { solanaAddress } from "./solana";
+import { signWithAccount } from "./wallet-bridge";
 import { proofAddress, proofDigest, proofMessage, type Proof, type ProofAction } from "./proof";
 
 type EthProvider = { request: (args: { method: string; params?: unknown[] }) => Promise<unknown> };
@@ -50,6 +51,8 @@ export async function signProof(action: ProofAction, address: string, fields: Re
       const signature = await privateKeyToAccount(site.privateKey).signMessage({ message });
       return { ts, signature };
     }
+    const viaAccount = await signWithAccount(address, message);
+    if (viaAccount) return { ts, signature: viaAccount };
     const eth = (window as unknown as { ethereum?: EthProvider }).ethereum;
     if (!eth) throw new Error("Open the wallet that owns this address to sign.");
     const signature = await eth.request({ method: "personal_sign", params: [toHex(message), address] });
