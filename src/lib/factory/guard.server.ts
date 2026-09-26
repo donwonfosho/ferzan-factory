@@ -39,15 +39,32 @@ const SOLANA_PROGRAMS = new Set([
   "dbcij3LWUppWqq96dh6gJWwBifmcGfLSB5D4DuSMaqN", // Meteora DBC
 ]);
 
+/** Hosts that reach Vercel directly (the custom domain), with no proxy in front. */
+const DIRECT_HOSTS = new Set(["ferzan-factory.com", "www.ferzan-factory.com"]);
+
 /**
- * The real visitor address, or null when we cannot know it.
- * The site sits behind Cloudflare -> Envoy -> Vercel, so x-forwarded-for and
- * x-vercel-forwarded-for hold a shared proxy address, not the browser. Cloudflare
- * sets cf-connecting-ip to the visitor and overwrites any value a client sends.
+ * The real visitor address, or null when we cannot know it. Two ways in:
+ * - ferzan-factory.com goes straight to Vercel, which sets x-real-ip to the visitor and
+ *   overwrites any value a client sends. A client-sent cf-connecting-ip is NOT trusted here.
+ * - ferzan-factory.grok.me goes Cloudflare -> Envoy -> Vercel, so x-real-ip is a shared proxy;
+ *   Cloudflare's cf-connecting-ip is the visitor there.
+ * The door is read from x-forwarded-host, which Vercel sets itself.
  */
-function visitor(): string | null {
-  const ip = getRequest()?.headers.get("cf-connecting-ip")?.trim();
+export function visitor(): string | null {
+  const h = getRequest()?.headers;
+  if (!h) return null;
+  const host = (h.get("x-forwarded-host") || h.get("host") || "").toLowerCase().split(",")[0].split(":")[0].trim();
+  const ip = (DIRECT_HOSTS.has(host) ? h.get("x-real-ip") : h.get("cf-connecting-ip"))?.trim();
   return ip && ip.length <= 64 ? ip : null;
+}
+
+/** A short salted tag for the visitor (never the address), so two devices can be compared. */
+export async function visitorTag(): Promise<string | null> {
+  const ip = visitor();
+  if (!ip) return null;
+  const { createHash } = await import("node:crypto");
+  const salt = process.env.FERZAN_INGEST_SECRET ?? "ferzan-relay";
+  return createHash("sha256").update(salt + "|tag|" + ip).digest("hex").slice(0, 8);
 }
 
 async function visitorKey(bucket: RelayBucket, ip: string): Promise<string> {
