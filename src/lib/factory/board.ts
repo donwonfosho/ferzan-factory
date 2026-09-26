@@ -1,5 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
-import { postBody, profileFields, readProof, type Proof } from "./proof";
+import { coinExtras, coinProofFields, postBody, profileFields, readProof, type Proof } from "./proof";
+import type { RelayChain } from "./relay";
+import type { ChainPrint } from "./chain-verify.server";
 
 export type BoardCoin = {
   id: string;
@@ -323,18 +325,26 @@ export const publishCoin = createServerFn({ method: "POST" })
     const supply = text(row, "supply", 40);
     const contract = coinAddress(text(row, "contract", 48));
     const creator = coinAddress(text(row, "creator", 48));
-    const imageRaw = typeof row.image === "string" ? row.image : "";
-    const image = imageRaw.startsWith("data:image/") && imageRaw.length <= 200_000 ? imageRaw : "";
-    const blurb = typeof row.blurb === "string" ? row.blurb.trim().slice(0, 160) : "";
+    const hash = text(row, "hash", 100);
+    const { image, blurb } = coinExtras(row);
     if (!CHAINS.has(chain)) throw new Error("That chain is not open.");
     if (mode !== "curve" && mode !== "plain") throw new Error("Launch type looks wrong.");
     if (name.length < 2 || !/^[A-Z0-9]{2,8}$/.test(symbol)) throw new Error("Name or ticker looks wrong.");
     if (!/^\d+$/.test(supply)) throw new Error("Supply looks wrong.");
     if (chain === "solana" && contract.startsWith("0x")) throw new Error("Solana mint looks wrong.");
     if (chain !== "solana" && !contract.startsWith("0x")) throw new Error("Contract looks wrong.");
-    return { chain, mode, name, symbol, supply, contract, creator, image, blurb };
+    if (chain === "solana" ? !/^[1-9A-HJ-NP-Za-km-z]{64,90}$/.test(hash) : !/^0x[a-fA-F0-9]{64}$/.test(hash)) {
+      throw new Error("Launch transaction looks wrong.");
+    }
+    return { chain, mode, name, symbol, supply, contract, creator, image, blurb, hash, proof: readProof(row.proof) };
   })
   .handler(async ({ data }): Promise<{ ok: true }> => {
+    // The creator signs what gets listed, and the chain proves that wallet created the coin.
+    const { requireProof } = await import("./proof.server");
+    await requireProof("coin", data.creator, coinProofFields(data), data.proof);
+    const verify = await import("./chain-verify.server");
+    if (data.chain === "solana") await verify.verifySolanaLaunch(data.hash, data.contract, data.creator);
+    else await verify.verifyEvmLaunch(data.chain as RelayChain, data.hash, data.contract, data.creator);
     const { getSql } = await import("@/lib/db");
     const sql = await getSql();
     const id = `${data.chain}-${data.contract}`;
@@ -346,53 +356,44 @@ export const publishCoin = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-export const recordBuy = createServerFn({ method: "POST" })
-  .validator((data: unknown): { contract: string; nativeWei: string } => {
+/** Records the trades a transaction really made, read from the chain. The browser only sends the hash. */
+export const recordTrade = createServerFn({ method: "POST" })
+  .validator((data: unknown): { chain: string; hash: string } => {
     const row = clean(data);
-    const contract = coinAddress(text(row, "contract", 48));
-    const nativeWei = text(row, "nativeWei", 78);
-    if (!/^\d+$/.test(nativeWei) || nativeWei === "0") throw new Error("Buy amount looks wrong.");
-    return { contract, nativeWei };
+    const chain = text(row, "chain", 20);
+    const hash = text(row, "hash", 100);
+    if (!CHAINS.has(chain)) throw new Error("That chain is not open.");
+    if (chain === "solana" ? !/^[1-9A-HJ-NP-Za-km-z]{64,90}$/.test(hash) : !/^0x[a-fA-F0-9]{64}$/.test(hash)) {
+      throw new Error("Transaction looks wrong.");
+    }
+    return { chain, hash };
   })
-  .handler(async ({ data }): Promise<{ ok: true }> => {
-    return writePrint({
-      contract: data.contract,
-      side: "buy",
-      amountWei: data.nativeWei,
-      who: "",
-      price: "",
-    });
+  .handler(async ({ data }): Promise<{ ok: true; recorded: number }> => {
+    const verify = await import("./chain-verify.server");
+    const prints =
+      data.chain === "solana"
+        ? await verify.solanaTradePrints(data.hash)
+        : await verify.evmTradePrints(data.chain as RelayChain, data.hash);
+    let recorded = 0;
+    for (const print of prints) if (await writePrint(data.chain, print)) recorded += 1;
+    return { ok: true, recorded };
   });
 
-export const recordTrade = createServerFn({ method: "POST" })
-  .validator((data: unknown): { contract: string; side: "buy" | "sell"; amountWei: string; who: string; price: string } => {
-    const row = clean(data);
-    const contract = coinAddress(text(row, "contract", 48));
-    const side = text(row, "side", 8);
-    const amountWei = text(row, "amountWei", 78);
-    const who = coinAddress(text(row, "who", 48));
-    const price = typeof row.price === "string" ? row.price.trim().slice(0, 32) : "";
-    if (side !== "buy" && side !== "sell") throw new Error("Side looks wrong.");
-    if (!/^\d+$/.test(amountWei) || amountWei === "0") throw new Error("Amount looks wrong.");
-    return { contract, side, amountWei, who, price };
-  })
-  .handler(async ({ data }) => writePrint(data));
-
-async function writePrint(data: {
-  contract: string;
-  side: "buy" | "sell";
-  amountWei: string;
-  who: string;
-  price: string;
-}): Promise<{ ok: true }> {
+async function writePrint(chain: string, data: ChainPrint): Promise<boolean> {
   const { getSql } = await import("@/lib/db");
   const sql = await getSql();
-  const found = await sql<{ contract: string }>`select contract from coins where contract = ${data.contract} limit 1`;
-  if (!found[0]) return { ok: true };
-  await sql`
-    insert into prints (contract, side, native_wei, who, price)
-    values (${data.contract}, ${data.side}, ${data.amountWei}, ${data.who}, ${data.price})
+  const found = await sql<{ contract: string }>`
+    select contract from coins where contract = ${data.contract} and chain = ${chain} limit 1
   `;
+  if (!found[0]) return false;
+  // (tx_hash, log_index) is unique, so the same trade can only be recorded once.
+  const saved = await sql<{ id: string }>`
+    insert into prints (contract, side, native_wei, who, price, tx_hash, log_index)
+    values (${data.contract}, ${data.side}, ${data.amountWei}, ${data.who}, ${data.price}, ${data.txHash}, ${data.logIndex})
+    on conflict do nothing
+    returning id::text as id
+  `;
+  if (!saved[0]) return false;
   if (data.side === "buy") {
     await sql`
       update coins
@@ -401,7 +402,7 @@ async function writePrint(data: {
       where contract = ${data.contract}
     `;
   }
-  return { ok: true };
+  return true;
 }
 
 export type BoardTrade = {

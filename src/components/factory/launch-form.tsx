@@ -2,6 +2,8 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { CHAINS } from "@/lib/factory/catalog";
 import { publishCoin, recordTrade } from "@/lib/factory/board";
+import { coinProofFields } from "@/lib/factory/proof";
+import { signProof } from "@/lib/factory/proof-client";
 import { deployCurve, deployFixedToken, explorerTx } from "@/lib/factory/deploy";
 import { launchSolanaMint, solanaAddress, solanaExplorerTx } from "@/lib/factory/solana";
 import { launchSolanaCurve } from "@/lib/factory/solana-curve";
@@ -281,20 +283,14 @@ export function LaunchForm({ initialMode = "curve", initialChain = "base" }: { i
     });
     if (!res.ok) setError(`${res.error} The token was still created at ${contract}.`);
     try {
-      await publishCoin({
-        data: {
-          chain,
-          mode,
-          name: cleanName,
-          symbol: cleanSymbol,
-          supply,
-          contract,
-          creator: boardCreator,
-          image,
-          blurb,
-        },
-      });
+      // The creator signs the listing; the server checks the launch transaction on chain.
+      const listing = { chain, mode, name: cleanName, symbol: cleanSymbol, supply, contract, image, blurb };
+      setBusy("Sign once to list the coin on the floor. It does not move funds.");
+      const proof = await signProof("coin", boardCreator, coinProofFields(listing));
+      await publishCoin({ data: { ...listing, creator: boardCreator, hash, proof } });
+      setBusy("");
     } catch (err) {
+      setBusy("");
       setError(
         err instanceof Error
           ? `${err.message} The token exists on chain, but other people will not see it on the floor.`
@@ -310,13 +306,9 @@ export function LaunchForm({ initialMode = "curve", initialChain = "base" }: { i
       image,
       creator: owner,
     });
-    if (chain !== "solana" && mode === "curve" && devBuy.trim()) {
-      const first = parseDecimal(devBuy.trim(), CHAINS[chain].nativeDecimals);
-      if (first && first > 0n) {
-        void recordTrade({
-          data: { contract, side: "buy", amountWei: first.toString(), who: owner, price: "" },
-        }).catch(() => undefined);
-      }
+    if (chain !== "solana" && mode === "curve" && devBuy.trim() && hash) {
+      // The first buy happens inside the deploy transaction, so its Trade event is in that receipt.
+      void recordTrade({ data: { chain, hash } }).catch(() => undefined);
     }
     setLaunched({
       id: res.ok ? (res.id ?? "") : "",

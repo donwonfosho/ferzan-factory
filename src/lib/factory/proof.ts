@@ -4,7 +4,7 @@
  * a hash of exactly what is being saved, and the time. Shared by browser and server.
  */
 
-export type ProofAction = "profile" | "post";
+export type ProofAction = "profile" | "post" | "coin";
 
 export type Proof = { ts: number; signature: string };
 
@@ -49,6 +49,36 @@ export function postBody(raw: string): string {
 export function profileFields(input: { name: string; bio: string; image: string }): { name: string; bio: string; image: string } {
   const image = input.image.startsWith("data:image/") && input.image.length <= 200_000 ? input.image : "";
   return { name: input.name.trim().slice(0, 24), bio: input.bio.trim().slice(0, 80), image };
+}
+
+/** Coin image and blurb exactly as the server stores them. */
+export function coinExtras(row: { image?: unknown; blurb?: unknown }): { image: string; blurb: string } {
+  const imageRaw = typeof row.image === "string" ? row.image : "";
+  const image = imageRaw.startsWith("data:image/") && imageRaw.length <= 200_000 ? imageRaw : "";
+  const blurb = typeof row.blurb === "string" ? row.blurb.trim().slice(0, 160) : "";
+  return { image, blurb };
+}
+
+/** What a creator signs to list a coin. Normalized the same way on both sides. */
+export function coinProofFields(input: {
+  chain: string;
+  mode: string;
+  name: string;
+  symbol: string;
+  supply: string;
+  contract: string;
+  image: string;
+  blurb: string;
+}): Record<string, string> {
+  return {
+    chain: input.chain.trim(),
+    mode: input.mode.trim(),
+    name: input.name.trim(),
+    symbol: input.symbol.trim().toUpperCase(),
+    supply: input.supply.trim(),
+    contract: proofAddress(input.contract.trim()),
+    ...coinExtras(input),
+  };
 }
 
 /** Validator helper: pull a proof out of a request body or throw. */

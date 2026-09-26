@@ -5,7 +5,7 @@ import { recordTrade } from "@/lib/factory/board";
 import { buyData, claimData, curveGuardsMin, CURVE_POOL, dexSwapUrl, explorerAddress, explorerTx, readClaimable, readCurve, readCurveWall, readHeld, readPool, sellData, sendCurve, type ChainCurve, type EvmChainId } from "@/lib/factory/deploy";
 import { useFactory } from "@/lib/factory/store";
 import { siteBalance, siteMatches, keySaved } from "@/lib/factory/site-wallet";
-import { formatPrice, formatSmart, formatTokensPerNative, parseDecimal, priceWire } from "@/lib/factory/units";
+import { formatPrice, formatSmart, formatTokensPerNative, parseDecimal } from "@/lib/factory/units";
 import { cn } from "@/lib/cn";
 import { Dollar } from "./dollar";
 import { GraduationMeter } from "./graduation-meter";
@@ -229,27 +229,8 @@ export function ChainPanel({ chain, address, symbol }: { chain: EvmChainId; addr
     }
     setTxHash(sent.hash);
     setRefresh((n) => n + 1);
-    let marked = price;
-    try {
-      const next = await readCurve(chain, address);
-      const after = spot(next, meta.nativeDecimals, meta.tokenDecimals);
-      if (after > 0) marked = after;
-    } catch {
-      /* the chart still has the price from before this trade */
-    }
-    const spent =
-      side === "buy" ? parseDecimal(amount, meta.nativeDecimals) : parseDecimal(amount, meta.tokenDecimals);
-    if (spent && spent > 0n) {
-      void recordTrade({
-        data: {
-          contract: address,
-          side,
-          amountWei: spent.toString(),
-          who: wallet,
-          price: priceWire(marked),
-        },
-      }).catch(() => undefined);
-    }
+    // The server reads side, amounts, wallet and price from the transaction itself.
+    void recordTrade({ data: { chain, hash: sent.hash } }).catch(() => undefined);
     setAmount("");
   }
 

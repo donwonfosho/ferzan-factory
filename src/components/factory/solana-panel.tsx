@@ -135,12 +135,7 @@ export function SolanaPanel({ mint, symbol }: { mint: string; symbol: string }) 
         return;
       }
       setTx(sent.signature);
-      const who = solanaAddress();
-      if (who) {
-        void recordTrade({
-          data: { contract: mint, side: "buy", amountWei: solIn.toString(), who, price: "" },
-        }).catch(() => undefined);
-      }
+      void recordTrade({ data: { chain: "solana", hash: sent.signature } }).catch(() => undefined);
       setAmount("");
       const filled = await readSolanaCurve(mint);
       if (filled?.graduated && !filled.pooled) {
@@ -181,12 +176,7 @@ export function SolanaPanel({ mint, symbol }: { mint: string; symbol: string }) 
       return;
     }
     setTx(sent.signature);
-    const who = solanaAddress();
-    if (who) {
-      void recordTrade({
-        data: { contract: mint, side: "sell", amountWei: tokens.toString(), who, price: "" },
-      }).catch(() => undefined);
-    }
+    void recordTrade({ data: { chain: "solana", hash: sent.signature } }).catch(() => undefined);
     setAmount("");
   }
 
