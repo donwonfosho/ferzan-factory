@@ -1,0 +1,194 @@
+import { Link, useRouterState } from "@tanstack/react-router";
+import { useEffect, useState, type ReactNode } from "react";
+import { CHAINS, COMMUNITY_URL, X_URL } from "@/lib/factory/catalog";
+import { creatorLabel, owns } from "@/lib/factory/engine";
+import { useFactory } from "@/lib/factory/store";
+import { readSiteWallet } from "@/lib/factory/site-wallet";
+import { solanaAddress } from "@/lib/factory/solana";
+import type { ChainId, Launch } from "@/lib/factory/types";
+import { formatSmart } from "@/lib/factory/units";
+import { cn } from "@/lib/cn";
+import { Button } from "./ui";
+import { WalletBalances } from "./gas-step";
+
+const LINKS = [
+  { to: "/", label: "Floor" },
+  { to: "/ferzan", label: "FERZAN" },
+  { to: "/launch", label: "Launch" },
+  { to: "/bots", label: "Bots" },
+  { to: "/login", label: "Profile" },
+] as const;
+
+export function Shell({ children }: { children: ReactNode }) {
+  const path = useRouterState({ select: (s) => s.location.pathname });
+  const launches = useFactory((s) => s.launches);
+  const reset = useFactory((s) => s.reset);
+  const wallet = useFactory((s) => s.wallet);
+  const profile = useFactory((s) => s.profile);
+  const [open, setOpen] = useState(false);
+  const [walletError, setWalletError] = useState("");
+  const [sol, setSol] = useState<string | null>(null);
+
+  useEffect(() => {
+    const done = useFactory.persist.rehydrate();
+    void Promise.resolve(done).then(() => {
+      const site = readSiteWallet();
+      const current = useFactory.getState().wallet;
+      if (site && !current) useFactory.getState().setWallet(site.address);
+      setSol(solanaAddress());
+    });
+  }, []);
+
+  const creatorCut = launches
+    .filter((item) => item.kind === "primary" && owns(item.creator, wallet))
+    .reduce<Record<string, bigint>>((acc, item) => {
+      acc[item.chain] = (acc[item.chain] ?? 0n) + BigInt(item.feeCreator);
+      return acc;
+    }, {});
+  const referrerCut = launches
+    .filter((item) => item.kind === "attached" && owns(item.creator, wallet))
+    .reduce<Record<string, bigint>>((acc, item) => {
+      acc[item.chain] = (acc[item.chain] ?? 0n) + BigInt(item.feeReferrer);
+      return acc;
+    }, {});
+
+  return (
+    <div className="min-h-screen">
+      <div className="h-px bg-cyan" />
+      <header className="sticky top-0 z-40 border-b border-line bg-bg/90 backdrop-blur-md">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-3 px-4 py-3">
+          <Link to="/" className="mr-auto flex items-center gap-2">
+            <img src="/brand/seal.jpg" alt="" className="h-10 w-10 rounded-full object-cover" />
+            <span className="text-base font-semibold text-fg">Ferzan</span>
+          </Link>
+          <nav className="order-last flex w-full gap-1 overflow-x-auto sm:order-none sm:w-auto">
+            {LINKS.filter((link) => wallet || link.to !== "/login").map((link) => {
+              const on = link.to === "/" ? path === "/" : path.startsWith(link.to);
+              return (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className={cn(
+                    "inline-flex min-h-10 shrink-0 items-center rounded-lg px-3 text-sm font-medium",
+                    on ? "bg-cyan/15 text-cyan" : "text-muted hover:bg-surface hover:text-fg",
+                  )}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
+          </nav>
+          <Link to="/launch" search={{ kind: "curve" }} className="btn-cyan hidden sm:inline-flex">
+            Launch
+          </Link>
+          {wallet ? (
+            <button
+              type="button"
+              className="btn-line"
+              onClick={() => {
+                void navigator.clipboard.writeText(wallet).then(() => {
+                  setWalletError("");
+                });
+              }}
+            >
+              {profile?.image ? <img src={profile.image} alt="" className="h-6 w-6 object-cover" /> : null}
+              {profile?.name || creatorLabel(wallet)}
+            </button>
+          ) : (
+            <Link to="/login" className="btn-line">
+              Profile
+            </Link>
+          )}
+          <button
+            type="button"
+            className="btn-line"
+            aria-expanded={open}
+            onClick={() => setOpen((v) => !v)}
+          >
+            Desk
+          </button>
+        </div>
+        {walletError ? <p className="mx-auto max-w-5xl px-4 pb-3 text-sm text-sell">{walletError}</p> : null}
+        {open ? (
+          <div className="border-t border-line bg-surface">
+            <div className="mx-auto grid max-w-5xl gap-4 px-4 py-4">
+              <div>
+                <p className="text-sm font-medium text-muted">Your cuts</p>
+                <p className="mt-2 text-sm">
+                  Creator {sumLine(creatorCut)} · Referrer {sumLine(referrerCut)}
+                </p>
+                <Button variant="ghost" className="mt-3" onClick={() => { reset(); setOpen(false); }}>
+                  Reset floor
+                </Button>
+              </div>
+              {wallet.startsWith("0x") ? <WalletBalances evm={readSiteWallet()?.address ?? wallet} sol={sol} /> : null}
+            </div>
+          </div>
+        ) : null}
+      </header>
+      <Tape launches={launches} />
+      <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-14">{children}</main>
+      <footer className="mx-auto max-w-5xl px-4 pb-10 text-sm text-muted">
+        <p>
+          1% on every curve trade. 60% treasury, 30% creator, 10% to a referrer when a buyer names a wallet. After graduation the creator keeps 30% of the pool.
+        </p>
+        <p className="mt-2">
+          <a className="text-cyan" href={COMMUNITY_URL}>
+            Ferzan Chat
+          </a>
+          {" · "}
+          <a className="text-cyan" href="https://t.me/Ferzan_Trade_Ecosystem">
+            Hub
+          </a>
+          {" · "}
+          <Link to="/terms" className="text-cyan">
+            Terms
+          </Link>
+          {" · "}
+          <a className="text-cyan" href={X_URL}>
+            X
+          </a>
+        </p>
+      </footer>
+    </div>
+  );
+}
+
+function Tape({ launches }: { launches: Launch[] }) {
+  const items = launches
+    .flatMap((launch) =>
+      launch.tape
+        .filter((tick) => tick.side === "buy" || tick.side === "sell" || tick.side === "grad")
+        .map((tick) => ({
+          key: `${launch.id}-${tick.t}-${tick.side}-${tick.who}`,
+          label: `${tick.side} ${launch.symbol}`,
+          detail: tick.detail,
+        })),
+    )
+    .slice(0, 16);
+  if (items.length < 2) return null;
+  const loop = [...items, ...items];
+  return (
+    <div className="tape-viewport" aria-label="Recent trades">
+      <div className="tape-track">
+        {loop.map((item, index) => (
+          <span key={`${item.key}-${index}`} className="flex items-baseline gap-2 text-xs whitespace-nowrap">
+            <span className="font-semibold text-cyan">{item.label}</span>
+            <span className="text-muted">{item.detail}</span>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function sumLine(map: Record<string, bigint>) {
+  const parts = Object.entries(map).filter(([, v]) => v > 0n);
+  if (!parts.length) return "0";
+  return parts
+    .map(([chain, value]) => {
+      const meta = CHAINS[chain as ChainId];
+      return `${formatSmart(value, meta.nativeDecimals)} ${meta.native}`;
+    })
+    .join(" · ");
+}
