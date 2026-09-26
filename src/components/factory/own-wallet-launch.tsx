@@ -12,6 +12,7 @@ import {
   type SolanaLaunchTx,
 } from "@/lib/factory/bot-launch";
 import { explorerTx, provider, switchChain, type EvmChainId } from "@/lib/factory/deploy";
+import { siteCoinHref } from "@/lib/factory/bot-curve";
 import { getReceipt } from "@/lib/factory/relay";
 import { solanaExplorerTx } from "@/lib/factory/solana";
 import { formatSmart } from "@/lib/factory/units";
@@ -244,7 +245,11 @@ export function OwnWalletLaunch() {
         </p>
         <p className="mt-3 break-all text-xs text-muted">Token {launched.token}</p>
         <div className="mt-4 flex flex-wrap gap-3">
-          <a className="btn-cyan" href={launched.url} target="_blank" rel="noopener noreferrer">
+          <a
+            className="btn-cyan"
+            href={siteCoinHref(launched.url) ?? launched.url}
+            {...(siteCoinHref(launched.url) ? {} : { target: "_blank", rel: "noopener noreferrer" })}
+          >
             Trade it
           </a>
           <a

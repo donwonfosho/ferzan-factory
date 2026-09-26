@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { siteCoinHref } from "@/lib/factory/bot-curve";
 import { listTelegram, type TelegramChain, type TelegramCoin, type TelegramSort } from "@/lib/factory/telegram-feed";
 import { cn } from "@/lib/cn";
 import { Mark } from "./ui";
@@ -98,8 +99,10 @@ export function TelegramBoard({ chain = "all" }: { chain?: string }) {
 function TelegramCard({ coin }: { coin: TelegramCoin }) {
   const progress = coin.graduated ? 100 : coin.progress;
   const creator = coin.creator ? `${coin.creator.slice(0, 4)}…${coin.creator.slice(-4)}` : "";
+  // EVM curves open the on-site coin page; Solana (Jupiter) and anything else stays external.
+  const onSite = siteCoinHref(coin.url);
   return (
-    <a href={coin.url} target="_blank" rel="noopener noreferrer" className="ticket block">
+    <a href={onSite ?? coin.url} {...(onSite ? {} : { target: "_blank", rel: "noopener noreferrer" })} className="ticket block">
       <div className="flex items-center gap-3">
         <Mark symbol={coin.symbol} image={coin.image || undefined} />
         <span className="min-w-0 flex-1">

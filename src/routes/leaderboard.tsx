@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { siteCoinHref } from "@/lib/factory/bot-curve";
 import { useEffect, useState } from "react";
 import { listTelegramLeaders, type TelegramChain, type TelegramLeader } from "@/lib/factory/telegram-feed";
 import { cn } from "@/lib/cn";
@@ -94,7 +95,11 @@ function LeaderboardPage() {
                   <span className="block truncate text-sm">
                     Best:{" "}
                     {row.best.url ? (
-                      <a className="text-cyan" href={row.best.url} target="_blank" rel="noopener noreferrer">
+                      <a
+                        className="text-cyan"
+                        href={siteCoinHref(row.best.url) ?? row.best.url}
+                        {...(siteCoinHref(row.best.url) ? {} : { target: "_blank", rel: "noopener noreferrer" })}
+                      >
                         {row.best.name} (${row.best.symbol})
                       </a>
                     ) : (

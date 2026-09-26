@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BotsRouteImport } from './routes/bots'
+import { Route as DocsRouteImport } from './routes/docs'
 import { Route as FerzanRouteImport } from './routes/ferzan'
 import { Route as LaunchRouteImport } from './routes/launch'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
@@ -21,6 +22,7 @@ import { Route as ApiRelayStatusRouteImport } from './routes/api/relay-status'
 import { Route as PAddressRouteImport } from './routes/p/$address'
 import { Route as TIdRouteImport } from './routes/t/$id'
 import { Route as CChainAddressRouteImport } from './routes/c/$chain/$address'
+import { Route as CoinChainCurveRouteImport } from './routes/coin/$chain/$curve'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -30,6 +32,11 @@ const IndexRoute = IndexRouteImport.update({
 const BotsRoute = BotsRouteImport.update({
   id: '/bots',
   path: '/bots',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocsRoute = DocsRouteImport.update({
+  id: '/docs',
+  path: '/docs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FerzanRoute = FerzanRouteImport.update({
@@ -82,10 +89,16 @@ const CChainAddressRoute = CChainAddressRouteImport.update({
   path: '/c/$chain/$address',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CoinChainCurveRoute = CoinChainCurveRouteImport.update({
+  id: '/coin/$chain/$curve',
+  path: '/coin/$chain/$curve',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/bots': typeof BotsRoute
+  '/docs': typeof DocsRoute
   '/ferzan': typeof FerzanRoute
   '/launch': typeof LaunchRoute
   '/leaderboard': typeof LeaderboardRoute
@@ -96,10 +109,12 @@ export interface FileRoutesByFullPath {
   '/p/$address': typeof PAddressRoute
   '/t/$id': typeof TIdRoute
   '/c/$chain/$address': typeof CChainAddressRoute
+  '/coin/$chain/$curve': typeof CoinChainCurveRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/bots': typeof BotsRoute
+  '/docs': typeof DocsRoute
   '/ferzan': typeof FerzanRoute
   '/launch': typeof LaunchRoute
   '/leaderboard': typeof LeaderboardRoute
@@ -110,11 +125,13 @@ export interface FileRoutesByTo {
   '/p/$address': typeof PAddressRoute
   '/t/$id': typeof TIdRoute
   '/c/$chain/$address': typeof CChainAddressRoute
+  '/coin/$chain/$curve': typeof CoinChainCurveRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/bots': typeof BotsRoute
+  '/docs': typeof DocsRoute
   '/ferzan': typeof FerzanRoute
   '/launch': typeof LaunchRoute
   '/leaderboard': typeof LeaderboardRoute
@@ -125,12 +142,14 @@ export interface FileRoutesById {
   '/p/$address': typeof PAddressRoute
   '/t/$id': typeof TIdRoute
   '/c/$chain/$address': typeof CChainAddressRoute
+  '/coin/$chain/$curve': typeof CoinChainCurveRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/bots'
+    | '/docs'
     | '/ferzan'
     | '/launch'
     | '/leaderboard'
@@ -141,10 +160,12 @@ export interface FileRouteTypes {
     | '/p/$address'
     | '/t/$id'
     | '/c/$chain/$address'
+    | '/coin/$chain/$curve'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/bots'
+    | '/docs'
     | '/ferzan'
     | '/launch'
     | '/leaderboard'
@@ -155,10 +176,12 @@ export interface FileRouteTypes {
     | '/p/$address'
     | '/t/$id'
     | '/c/$chain/$address'
+    | '/coin/$chain/$curve'
   id:
     | '__root__'
     | '/'
     | '/bots'
+    | '/docs'
     | '/ferzan'
     | '/launch'
     | '/leaderboard'
@@ -169,11 +192,13 @@ export interface FileRouteTypes {
     | '/p/$address'
     | '/t/$id'
     | '/c/$chain/$address'
+    | '/coin/$chain/$curve'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BotsRoute: typeof BotsRoute
+  DocsRoute: typeof DocsRoute
   FerzanRoute: typeof FerzanRoute
   LaunchRoute: typeof LaunchRoute
   LeaderboardRoute: typeof LeaderboardRoute
@@ -184,6 +209,7 @@ export interface RootRouteChildren {
   PAddressRoute: typeof PAddressRoute
   TIdRoute: typeof TIdRoute
   CChainAddressRoute: typeof CChainAddressRoute
+  CoinChainCurveRoute: typeof CoinChainCurveRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -200,6 +226,13 @@ declare module '@tanstack/react-router' {
       path: '/bots'
       fullPath: '/bots'
       preLoaderRoute: typeof BotsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/docs': {
+      id: '/docs'
+      path: '/docs'
+      fullPath: '/docs'
+      preLoaderRoute: typeof DocsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/ferzan': {
@@ -272,12 +305,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CChainAddressRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/coin/$chain/$curve': {
+      id: '/coin/$chain/$curve'
+      path: '/coin/$chain/$curve'
+      fullPath: '/coin/$chain/$curve'
+      preLoaderRoute: typeof CoinChainCurveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BotsRoute: BotsRoute,
+  DocsRoute: DocsRoute,
   FerzanRoute: FerzanRoute,
   LaunchRoute: LaunchRoute,
   LeaderboardRoute: LeaderboardRoute,
@@ -288,6 +329,7 @@ const rootRouteChildren: RootRouteChildren = {
   PAddressRoute: PAddressRoute,
   TIdRoute: TIdRoute,
   CChainAddressRoute: CChainAddressRoute,
+  CoinChainCurveRoute: CoinChainCurveRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

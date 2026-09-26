@@ -8,6 +8,7 @@ import { formatPrice } from "@/lib/factory/units";
 import { useNativeUsd } from "@/lib/factory/usd";
 import { compactCap, compactUsd } from "./market-line";
 import { cn } from "@/lib/cn";
+import { readPrefs, writePrefs } from "@/lib/factory/prefs";
 
 type Point = { t: number; y: number };
 
@@ -40,7 +41,7 @@ export function PriceChart({
   const [live, setLive] = useState(0);
   const [range, setRange] = useState<RangeId>("all");
   const [focus, setFocus] = useState<Point | null>(null);
-  const [plot, setPlot] = useState<"price" | "cap">("cap");
+  const [plot, setPlot] = useState<"price" | "cap">(readPrefs().chart);
 
   useEffect(() => {
     let stop = false;
@@ -115,10 +116,10 @@ export function PriceChart({
         </p>
       </div>
       <div className="mt-3 flex gap-2">
-        <button type="button" className={asCap ? "chip-on min-h-11 px-3 text-sm font-semibold" : "min-h-11 bg-surface px-3 text-sm font-semibold text-muted shadow-border"} onClick={() => { setPlot("cap"); setFocus(null); }}>
+        <button type="button" className={asCap ? "chip-on min-h-11 px-3 text-sm font-semibold" : "min-h-11 bg-surface px-3 text-sm font-semibold text-muted shadow-border"} onClick={() => { setPlot("cap"); writePrefs({ chart: "cap" }); setFocus(null); }}>
           Market cap
         </button>
-        <button type="button" className={!asCap ? "chip-on min-h-11 px-3 text-sm font-semibold" : "min-h-11 bg-surface px-3 text-sm font-semibold text-muted shadow-border"} onClick={() => { setPlot("price"); setFocus(null); }}>
+        <button type="button" className={!asCap ? "chip-on min-h-11 px-3 text-sm font-semibold" : "min-h-11 bg-surface px-3 text-sm font-semibold text-muted shadow-border"} onClick={() => { setPlot("price"); writePrefs({ chart: "price" }); setFocus(null); }}>
           Price
         </button>
       </div>

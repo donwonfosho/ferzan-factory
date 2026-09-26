@@ -10,6 +10,7 @@ import { formatSmart } from "@/lib/factory/units";
 import { cn } from "@/lib/cn";
 import { Button } from "./ui";
 import { WalletBalances } from "./gas-step";
+import { LaunchWatch } from "./launch-watch";
 
 const LINKS = [
   { to: "/", label: "Floor" },
@@ -103,7 +104,30 @@ export function Shell({ children }: { children: ReactNode }) {
           <div className="border-t border-line bg-surface">
             <div className="mx-auto grid max-w-5xl gap-4 px-4 py-4">
               <div>
-                <p className="text-sm font-medium text-muted">Your cuts</p>
+                <p className="text-sm font-medium text-muted">Menu</p>
+                <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                  <Link to="/login" hash="portfolio" className="rounded-xl bg-bg px-3 py-3 shadow-border" onClick={() => setOpen(false)}>
+                    <span className="block font-semibold">Portfolio</span>
+                    <span className="text-sm text-muted">Balances, holdings, and launches</span>
+                  </Link>
+                  <Link to="/login" hash="rewards" className="rounded-xl bg-bg px-3 py-3 shadow-border" onClick={() => setOpen(false)}>
+                    <span className="block font-semibold">Rewards</span>
+                    <span className="text-sm text-muted">Creator fees and your referrer link</span>
+                  </Link>
+                  <Link to="/docs" className="rounded-xl bg-bg px-3 py-3 shadow-border" onClick={() => setOpen(false)}>
+                    <span className="block font-semibold">Docs</span>
+                    <span className="text-sm text-muted">How a launch, a trade, and graduation work</span>
+                  </Link>
+                  <a href={COMMUNITY_URL} className="rounded-xl bg-bg px-3 py-3 shadow-border">
+                    <span className="block font-semibold">Telegram</span>
+                    <span className="text-sm text-muted">Ferzan chat</span>
+                  </a>
+                  <a href={X_URL} className="rounded-xl bg-bg px-3 py-3 shadow-border">
+                    <span className="block font-semibold">X</span>
+                    <span className="text-sm text-muted">@ferzaneco</span>
+                  </a>
+                </div>
+                <p className="mt-4 text-sm font-medium text-muted">Your cuts</p>
                 <p className="mt-2 text-sm">
                   Creator {sumLine(creatorCut)} · Referrer {sumLine(referrerCut)}
                 </p>
@@ -118,6 +142,7 @@ export function Shell({ children }: { children: ReactNode }) {
       </header>
       <Tape launches={launches} />
       <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-14">{children}</main>
+      <LaunchWatch />
       <footer className="mx-auto max-w-5xl px-4 pb-10 text-sm text-muted">
         <p>
           Site curves: 1% on every trade. 60% treasury, 30% creator, 10% to a referrer when a buyer names a wallet. After graduation the creator keeps 30% of the pool.
@@ -138,6 +163,10 @@ export function Shell({ children }: { children: ReactNode }) {
           {" · "}
           <Link to="/leaderboard" className="text-cyan">
             Leaderboard
+          </Link>
+          {" · "}
+          <Link to="/docs" className="text-cyan">
+            Docs
           </Link>
           {" · "}
           <Link to="/terms" className="text-cyan">

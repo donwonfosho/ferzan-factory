@@ -620,3 +620,49 @@ export const saveProfile = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+function accountId(value: string): string {
+  const id = value.trim();
+  if (!/^[0-9a-f-]{36}$/.test(id)) throw new Error("Profile looks wrong.");
+  return id;
+}
+
+/** The person's name, photo, and bio. Separate from any wallet key. */
+export const loadAccountProfile = createServerFn({ method: "POST" })
+  .validator((data: unknown): { id: string } => {
+    const row = clean(data);
+    return { id: accountId(text(row, "id", 36)) };
+  })
+  .handler(async ({ data }): Promise<SavedProfile | null> => {
+    const { getSql } = await import("@/lib/db");
+    const sql = await getSql();
+    const rows = await sql<{ name: string; bio: string; image: string }>`
+      select name, bio, image from account_profiles where id = ${data.id} limit 1
+    `;
+    const row = rows[0];
+    if (!row) return null;
+    return { name: row.name, bio: row.bio, image: row.image };
+  });
+
+export const saveAccountProfile = createServerFn({ method: "POST" })
+  .validator((data: unknown): { id: string; name: string; bio: string; image: string } => {
+    const row = clean(data);
+    const id = accountId(text(row, "id", 36));
+    const fields = profileFields({
+      name: typeof row.name === "string" ? row.name : "",
+      bio: typeof row.bio === "string" ? row.bio : "",
+      image: typeof row.image === "string" ? row.image : "",
+    });
+    return { id, ...fields };
+  })
+  .handler(async ({ data }): Promise<{ ok: true }> => {
+    const { getSql } = await import("@/lib/db");
+    const sql = await getSql();
+    await sql`
+      insert into account_profiles (id, name, bio, image)
+      values (${data.id}, ${data.name}, ${data.bio}, ${data.image})
+      on conflict (id) do update
+      set name = excluded.name, bio = excluded.bio, image = excluded.image, updated_at = now()
+    `;
+    return { ok: true };
+  });
+

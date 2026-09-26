@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { GROK_PROVIDERS, authEnabled, signIn, signOut } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { readRemembered, useFactory } from "@/lib/factory/store";
-import { importSiteWallet, knownSiteAddress, markKeySaved, openSiteWallet, readSiteWallet } from "@/lib/factory/site-wallet";
-import { listBoard, listLaunched, loadProfile, saveProfile, type BoardCoin } from "@/lib/factory/board";
+import { importSiteWallet, knownSiteAddress, markKeySaved, openSiteWallet, readSiteWallet, sendWithSiteWallet } from "@/lib/factory/site-wallet";
+import { listBoard, listLaunched, loadAccountProfile, loadProfile, saveAccountProfile, saveProfile, type BoardCoin } from "@/lib/factory/board";
 import { profileFields } from "@/lib/factory/proof";
 import { signProof } from "@/lib/factory/proof-client";
 import { CHAINS } from "@/lib/factory/catalog";
@@ -18,7 +18,25 @@ import { termsAccepted } from "@/lib/factory/terms";
 import { TermsGate } from "./terms";
 import { readSolanaHeld } from "@/lib/factory/solana-curve";
 import { readTokenBalances } from "@/lib/factory/relay";
-import { formatSmart } from "@/lib/factory/units";
+import { formatSmart, parseDecimal } from "@/lib/factory/units";
+import { readPrefs, writePrefs, type ChartPlot, type LaunchAlerts } from "@/lib/factory/prefs";
+import { FundButton } from "./fund-wallet";
+import type { EvmChainId } from "@/lib/factory/deploy";
+
+const PROFILE_ID = "ferzan-profile-id";
+
+function accountProfileId(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    const existing = window.localStorage.getItem(PROFILE_ID) ?? "";
+    if (/^[0-9a-f-]{36}$/.test(existing)) return existing;
+    const id = crypto.randomUUID();
+    window.localStorage.setItem(PROFILE_ID, id);
+    return id;
+  } catch {
+    return "";
+  }
+}
 
 type EthereumProvider = {
   request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
@@ -38,40 +56,60 @@ export function AccountPage() {
   const [siteAddress, setSiteAddress] = useState("");
   const [sol, setSol] = useState<string | null>(null);
   const usingSite = Boolean(wallet && siteAddress && wallet.toLowerCase() === siteAddress.toLowerCase());
+  const [panel, setPanel] = useState<Panel>("menu");
 
   useEffect(() => {
-    const site = readSiteWallet();
-    if (site) {
-      setSiteKey(site.privateKey);
-      setSiteAddress(site.address);
-      if (!useFactory.getState().wallet) setWallet(site.address);
-    } else {
-      setSiteKey("");
-      setSiteAddress(knownSiteAddress() || "");
+    function sync() {
+      setPanel(panelFromHash());
     }
-    setSol(solanaAddress());
-    const saved = useFactory.getState().profile;
-    setName(saved?.name ?? "");
-    setBio(saved?.bio ?? "");
-    setAgreed(termsAccepted());
-  }, [setWallet]);
+    sync();
+    window.addEventListener("hashchange", sync);
+    return () => window.removeEventListener("hashchange", sync);
+  }, []);
+
+  function open(next: Panel) {
+    window.location.hash = next === "menu" ? "" : next;
+    setPanel(next);
+  }
 
   useEffect(() => {
-    if (!siteAddress) return;
     let stop = false;
-    void loadProfile({ data: { address: siteAddress } }).then(
-      (row) => {
-        if (stop || !row || (!row.name && !row.bio && !row.image)) return;
-        setProfile(row);
-        setName(row.name);
-        setBio(row.bio);
-      },
-      () => undefined,
-    );
+    void Promise.resolve(useFactory.persist.rehydrate()).then(async () => {
+      if (stop) return;
+      const site = readSiteWallet();
+      const address = site?.address || knownSiteAddress() || "";
+      if (site) {
+        setSiteKey(site.privateKey);
+        setSiteAddress(site.address);
+        if (!useFactory.getState().wallet) setWallet(site.address);
+      } else {
+        setSiteKey("");
+        setSiteAddress(address);
+      }
+      setSol(solanaAddress());
+      const saved = useFactory.getState().profile;
+      setName(saved?.name ?? "");
+      setBio(saved?.bio ?? "");
+      setAgreed(termsAccepted());
+      const profileId = accountProfileId();
+      const account = profileId ? await loadAccountProfile({ data: { id: profileId } }).catch(() => null) : null;
+      if (!stop && account && (account.name || account.bio || account.image)) {
+        setProfile(account);
+        setName(account.name);
+        setBio(account.bio);
+        return;
+      }
+      if (!address) return;
+      const row = await loadProfile({ data: { address } }).catch(() => null);
+      if (stop || !row || (!row.name && !row.bio && !row.image)) return;
+      setProfile(row);
+      setName(row.name);
+      setBio(row.bio);
+    });
     return () => {
       stop = true;
     };
-  }, [siteAddress, setProfile]);
+  }, [setWallet, setProfile]);
 
   function useBrowserWallet() {
     const opened = readSiteWallet();
@@ -107,10 +145,32 @@ export function AccountPage() {
 
   return (
     <div className="mx-auto max-w-lg">
-      <h1 className="text-4xl">Profile</h1>
-      <p className="mt-3 text-muted">
-        The key is the login. Paste it on another phone and the name, picture, and every coin this wallet launched come back. Those coins also sit on the floor so anyone can trade them.
-      </p>
+      {panel !== "menu" ? (
+        <button type="button" className="btn-line mb-4" onClick={() => open("menu")}>
+          Back
+        </button>
+      ) : (
+        <>
+          <h1 className="text-4xl">Manage account</h1>
+          <p className="mt-2 text-sm text-muted">Profile, wallets, rewards, and what the chart shows. The key stays on this phone.</p>
+          <MenuGroup label="Account">
+            <MenuRow title="Edit profile" onClick={() => open("profile")} />
+            <MenuRow title="Portfolio" detail="Balances, holdings, and launches" onClick={() => open("portfolio")} />
+            <MenuRow title="Rewards" detail="Creator fees and your referrer link" onClick={() => open("rewards")} />
+          </MenuGroup>
+          <MenuGroup label="Wallet">
+            <MenuRow title="View wallets" onClick={() => open("wallets")} />
+            <MenuRow title="Send" detail="Move ETH, BNB, or Arc USDC out" onClick={() => open("send")} />
+          </MenuGroup>
+          <MenuGroup label="Preferences">
+            <MenuRow title="Settings" detail="Chart, launch alerts, and sound" onClick={() => open("settings")} />
+          </MenuGroup>
+        </>
+      )}
+
+      {panel === "profile" ? (
+      <>
+      <h1 className="text-4xl">Edit profile</h1>
 
       <div className="ticket mt-6">
         <div className="flex items-center gap-4">
@@ -148,30 +208,59 @@ export function AccountPage() {
           onClick={() => {
             const next = profileFields({ name, bio, image: useFactory.getState().profile.image ?? "" });
             setProfile(next);
-            const jobs = [siteAddress, sol].filter((address): address is string => Boolean(address));
-            void Promise.all(
-              jobs.map(async (address) => {
-                const proof = await signProof("profile", address, next);
-                return saveProfile({ data: { address, ...next, proof } });
-              }),
-            ).then(
-              () => setCopied("Saved to this wallet. Paste the key on another phone and it comes back."),
-              (err) =>
-                setCopied(
-                  err instanceof Error
-                    ? `Saved on this phone only. ${err.message}`
-                    : "Saved on this phone. The site could not store the profile.",
-                ),
-            );
+            const profileId = accountProfileId();
+            void (async () => {
+              if (profileId) {
+                try {
+                  await saveAccountProfile({ data: { id: profileId, ...next } });
+                } catch (err) {
+                  setCopied(err instanceof Error ? `Saved on this phone. ${err.message}` : "Saved on this phone. The site could not store the profile.");
+                  return;
+                }
+              }
+              const jobs = [siteAddress, sol].filter((address): address is string => Boolean(address));
+              await Promise.allSettled(
+                jobs.map(async (address) => {
+                  const proof = await signProof("profile", address, next);
+                  return saveProfile({ data: { address, ...next, proof } });
+                }),
+              );
+              setCopied(profileId ? "Profile saved. The wallet key was not changed." : "Saved on this phone.");
+            })();
           }}
         >
           Save profile
         </Button>
         {profile?.bio ? <p className="mt-3 text-sm text-muted">{profile.bio}</p> : null}
       </div>
-
       <div className="ticket mt-4">
-        <p className="text-lg font-semibold">Wallets</p>
+        <p className="text-sm font-medium text-cyan">Sign in</p>
+        <p className="mt-2 text-sm text-muted">Sign in does not hold the wallets. Export stays under View wallets.</p>
+        {isPending ? <p className="mt-2 text-sm text-muted">Checking the session.</p> : null}
+        {!isPending && user && !user.isDevFallback ? (
+          <div className="mt-2">
+            <p className="font-extrabold">{user.displayName ?? user.primaryEmail}</p>
+            <button type="button" className="btn-line mt-4" onClick={() => void signOut()}>
+              Sign out
+            </button>
+          </div>
+        ) : null}
+        {!isPending && authEnabled && (!user || user.isDevFallback) ? (
+          <div className="mt-3 flex flex-col gap-2">
+            {GROK_PROVIDERS.map((provider) => (
+              <button key={provider.providerId} type="button" className="btn-line" onClick={() => void signIn(provider.providerId, { callbackURL: "/login" })}>
+                Continue with {provider.label}
+              </button>
+            ))}
+          </div>
+        ) : null}
+      </div>
+      </>
+      ) : null}
+
+      {panel === "wallets" ? (
+      <div className="ticket">
+        <h1 className="text-3xl">View wallets</h1>
         {!siteAddress && !siteKey ? (
           agreed ? (
             <Button
@@ -233,11 +322,7 @@ export function AccountPage() {
           onFail={() => setCopied("That is not a key. Paste the exported private key, starting with 0x.")}
         />
         <p className="mt-3 text-sm text-muted">Send chain coins to the matching address. Base ETH is not Ethereum ETH.</p>
-        {siteAddress ? (
-          <div className="mt-4">
-            <WalletBalances evm={siteAddress} sol={sol} />
-          </div>
-        ) : null}
+        {siteAddress ? <FundButton address={siteAddress} chain="base" /> : null}
         <div className="mt-3 flex flex-wrap gap-2">
           {!usingSite && siteAddress ? (
             <Button type="button" variant="ghost" onClick={useBrowserWallet}>
@@ -250,47 +335,192 @@ export function AccountPage() {
         </div>
         {copied ? <p className="mt-2 text-sm text-muted">{copied}</p> : null}
       </div>
-
-      {siteAddress ? <Holding evm={siteAddress} sol={sol} /> : null}
-      {siteAddress ? <Launched creator={siteAddress} sol={sol} /> : null}
-      {siteAddress ? <CreatorFees evm={siteAddress} sol={sol} /> : null}
-
-      {siteAddress ? (
-        <div className="mt-4 flex flex-wrap gap-2">
-          <Link to="/p/$address" params={{ address: siteAddress }} className="btn-line">
-            Public profile
-          </Link>
-          {sol ? (
-            <Link to="/p/$address" params={{ address: sol }} className="btn-line">
-              Solana profile
-            </Link>
-          ) : null}
-        </div>
       ) : null}
 
-      <div className="ticket mt-4">
-        <p className="text-sm font-medium text-cyan">Sign in</p>
-        <p className="mt-2 text-sm text-muted">Sign in does not hold the wallets. Export stays on this page.</p>
-        {isPending ? <p className="mt-2 text-sm text-muted">Checking the session.</p> : null}
-        {!isPending && user && !user.isDevFallback ? (
-          <div className="mt-2">
-            <p className="font-extrabold">{user.displayName ?? user.primaryEmail}</p>
-            <button type="button" className="btn-line mt-4" onClick={() => void signOut()}>
-              Sign out
+      {panel === "send" && siteAddress ? <SendForm from={siteAddress} /> : null}
+      {panel === "send" && !siteAddress ? <p className="text-sm text-muted">Create a wallet first.</p> : null}
+
+      {panel === "portfolio" && siteAddress ? (
+        <>
+          <h1 className="text-3xl">Portfolio</h1>
+          <div className="mt-4">
+            <WalletBalances evm={siteAddress} sol={sol} />
+          </div>
+          <Holding evm={siteAddress} sol={sol} />
+          <Launched creator={siteAddress} sol={sol} />
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Link to="/p/$address" params={{ address: siteAddress }} className="btn-line">
+              Public profile
+            </Link>
+            {sol ? (
+              <Link to="/p/$address" params={{ address: sol }} className="btn-line">
+                Solana profile
+              </Link>
+            ) : null}
+          </div>
+        </>
+      ) : null}
+      {panel === "portfolio" && !siteAddress ? <p className="text-sm text-muted">Create a wallet first.</p> : null}
+
+      {panel === "rewards" && siteAddress ? (
+        <>
+          <h1 className="text-3xl">Rewards</h1>
+          <div className="ticket mt-4">
+            <p className="font-semibold">Referrals</p>
+            <p className="mt-1 text-sm text-muted">A buyer who pastes this wallet on a trade sends you the 0.10% referrer cut. There is no separate cashback.</p>
+            <button
+              type="button"
+              className="btn-line mt-3"
+              onClick={() => {
+                void navigator.clipboard.writeText(siteAddress).then(
+                  () => setCopied("Referrer address copied."),
+                  () => setCopied("Copy was blocked."),
+                );
+              }}
+            >
+              Copy referrer address
             </button>
           </div>
-        ) : null}
-        {!isPending && authEnabled && (!user || user.isDevFallback) ? (
-          <div className="mt-3 flex flex-col gap-2">
-            {GROK_PROVIDERS.map((provider) => (
-              <button key={provider.providerId} type="button" className="btn-line" onClick={() => void signIn(provider.providerId, { callbackURL: "/login" })}>
-                Continue with {provider.label}
-              </button>
-            ))}
-          </div>
-        ) : null}
-      </div>
+          <CreatorFees evm={siteAddress} sol={sol} />
+          {copied ? <p className="mt-2 text-sm text-muted">{copied}</p> : null}
+        </>
+      ) : null}
+      {panel === "rewards" && !siteAddress ? <p className="text-sm text-muted">Create a wallet first.</p> : null}
+
+      {panel === "settings" ? <SettingsPanel /> : null}
     </div>
+  );
+}
+
+type Panel = "menu" | "profile" | "wallets" | "send" | "rewards" | "settings" | "portfolio";
+
+function panelFromHash(): Panel {
+  const hash = typeof window === "undefined" ? "" : window.location.hash.replace("#", "");
+  if (hash === "profile" || hash === "wallets" || hash === "send" || hash === "rewards" || hash === "settings" || hash === "portfolio") return hash;
+  return "menu";
+}
+
+function MenuGroup({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <section className="mt-6">
+      <p className="text-sm font-medium text-muted">{label}</p>
+      <div className="mt-2 divide-y divide-line overflow-hidden rounded-2xl bg-surface shadow-border">{children}</div>
+    </section>
+  );
+}
+
+function MenuRow({ title, detail, onClick }: { title: string; detail?: string; onClick: () => void }) {
+  return (
+    <button type="button" onClick={onClick} className="flex min-h-14 w-full items-center justify-between gap-3 px-4 py-3 text-left">
+      <span>
+        <span className="block font-semibold">{title}</span>
+        {detail ? <span className="block text-sm text-muted">{detail}</span> : null}
+      </span>
+      <span className="text-muted">›</span>
+    </button>
+  );
+}
+
+function SettingsPanel() {
+  const [prefs, setPrefs] = useState(readPrefs());
+  function save(next: Partial<{ chart: ChartPlot; alerts: LaunchAlerts; sound: boolean }>) {
+    setPrefs(writePrefs(next));
+  }
+  return (
+    <div>
+      <h1 className="text-3xl">Settings</h1>
+      <section className="ticket mt-4">
+        <p className="font-semibold">Chart</p>
+        <p className="mt-1 text-sm text-muted">What the token chart plots. This sticks on every coin.</p>
+        <div className="mt-3 flex gap-2">
+          <button type="button" className={prefs.chart === "cap" ? "chip-on min-h-11 px-3 text-sm font-semibold" : "min-h-11 bg-bg px-3 text-sm font-semibold text-muted shadow-border"} onClick={() => save({ chart: "cap" })}>
+            Market cap
+          </button>
+          <button type="button" className={prefs.chart === "price" ? "chip-on min-h-11 px-3 text-sm font-semibold" : "min-h-11 bg-bg px-3 text-sm font-semibold text-muted shadow-border"} onClick={() => save({ chart: "price" })}>
+            Price
+          </button>
+        </div>
+      </section>
+      <section className="ticket mt-4">
+        <p className="font-semibold">Launch alerts</p>
+        <p className="mt-1 text-sm text-muted">A card on this site when a new coin hits the board. This is not a phone notification.</p>
+        <div className="mt-3 flex gap-2">
+          <button type="button" className={prefs.alerts === "off" ? "chip-on min-h-11 px-3 text-sm font-semibold" : "min-h-11 bg-bg px-3 text-sm font-semibold text-muted shadow-border"} onClick={() => save({ alerts: "off" })}>
+            Off
+          </button>
+          <button type="button" className={prefs.alerts === "all" ? "chip-on min-h-11 px-3 text-sm font-semibold" : "min-h-11 bg-bg px-3 text-sm font-semibold text-muted shadow-border"} onClick={() => save({ alerts: "all" })}>
+            All chains
+          </button>
+        </div>
+      </section>
+      <section className="ticket mt-4">
+        <p className="font-semibold">Launch sound</p>
+        <p className="mt-1 text-sm text-muted">A short tone with the card. The browser can block it until you have tapped the page.</p>
+        <button type="button" className="btn-line mt-3" onClick={() => save({ sound: !prefs.sound })}>
+          {prefs.sound ? "Sound on" : "Sound off"}
+        </button>
+      </section>
+    </div>
+  );
+}
+
+const SEND_CHAINS: EvmChainId[] = ["base", "ethereum", "bsc", "robinhood", "arc"];
+
+function SendForm({ from }: { from: string }) {
+  const [chain, setChain] = useState<EvmChainId>("base");
+  const [to, setTo] = useState("");
+  const [amount, setAmount] = useState("");
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const meta = CHAINS[chain];
+
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    const value = parseDecimal(amount, meta.nativeDecimals);
+    if (!value || value <= 0n) {
+      setNote("Type how much to send.");
+      return;
+    }
+    if (!/^0x[a-fA-F0-9]{40}$/.test(to)) {
+      setNote("That address looks wrong.");
+      return;
+    }
+    setBusy(true);
+    setNote("");
+    try {
+      const receipt = await sendWithSiteWallet({ chain, from, to, data: "0x", value });
+      setNote(receipt.status === "0x0" ? "The send failed." : `Sent. ${receipt.hash}`);
+    } catch (err) {
+      setNote(err instanceof Error ? err.message : "The send failed.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <form onSubmit={(e) => void submit(e)} className="ticket space-y-3">
+      <h1 className="text-3xl">Send</h1>
+      <p className="text-sm text-muted">Sends the chain coin from the EVM wallet on this profile. Solana sends are not on this form.</p>
+      <div className="flex flex-wrap gap-2">
+        {SEND_CHAINS.map((id) => (
+          <button key={id} type="button" className={chain === id ? "chip-on min-h-11 px-3 text-sm font-semibold" : "min-h-11 bg-bg px-3 text-sm font-semibold text-muted shadow-border"} onClick={() => setChain(id)}>
+            {CHAINS[id].label}
+          </button>
+        ))}
+      </div>
+      <label className="block text-sm text-muted">
+        To
+        <input value={to} onChange={(e) => setTo(e.target.value.trim())} placeholder="0x…" className="mt-1 min-h-11 w-full bg-bg px-3 text-fg shadow-border outline-none" />
+      </label>
+      <label className="block text-sm text-muted">
+        Amount ({meta.native})
+        <input value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="decimal" className="mt-1 min-h-11 w-full bg-bg px-3 text-fg shadow-border outline-none" />
+      </label>
+      <Button type="submit" disabled={busy}>
+        {busy ? "Sending" : `Send ${meta.native}`}
+      </Button>
+      {note ? <p className="text-sm break-all text-muted">{note}</p> : null}
+    </form>
   );
 }
 
@@ -357,8 +587,8 @@ function ReplaceWallet({
   if (needTerms) return <TermsGate onAccept={() => setNeedTerms(false)} />;
   return (
     <div className="mt-4">
-      <button type="button" className="btn-line w-full" onClick={() => setOpen((current) => !current)}>
-        Import wallet
+      <button type="button" className="btn-line mt-4 w-full" onClick={() => setOpen((current) => !current)}>
+        Replace EVM wallet
       </button>
       {open ? (
         <div className="mt-2">
