@@ -9,6 +9,7 @@ import type { ChainId, Kind, Launch } from "@/lib/factory/types";
 import { compactWhole, formatPrice, formatSmart } from "@/lib/factory/units";
 import { cn } from "@/lib/cn";
 import { HotList } from "./hot-list";
+import { TelegramBoard } from "./telegram-board";
 import { GraduationMeter } from "./graduation-meter";
 import { Mark } from "./ui";
 import { ChainMark, type MarkChain } from "./chain-mark";
@@ -118,6 +119,8 @@ export function Floor() {
       <OpenContract />
 
       <HotList chain={chain} />
+
+      <TelegramBoard chain={chain} />
 
       <section>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">

@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as BotsRouteImport } from './routes/bots'
 import { Route as FerzanRouteImport } from './routes/ferzan'
 import { Route as LaunchRouteImport } from './routes/launch'
+import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as ApiLaunchesRouteImport } from './routes/api/launches'
@@ -38,6 +39,11 @@ const FerzanRoute = FerzanRouteImport.update({
 const LaunchRoute = LaunchRouteImport.update({
   id: '/launch',
   path: '/launch',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LeaderboardRoute = LeaderboardRouteImport.update({
+  id: '/leaderboard',
+  path: '/leaderboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -76,6 +82,7 @@ export interface FileRoutesByFullPath {
   '/bots': typeof BotsRoute
   '/ferzan': typeof FerzanRoute
   '/launch': typeof LaunchRoute
+  '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/terms': typeof TermsRoute
   '/api/launches': typeof ApiLaunchesRoute
@@ -88,6 +95,7 @@ export interface FileRoutesByTo {
   '/bots': typeof BotsRoute
   '/ferzan': typeof FerzanRoute
   '/launch': typeof LaunchRoute
+  '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/terms': typeof TermsRoute
   '/api/launches': typeof ApiLaunchesRoute
@@ -101,6 +109,7 @@ export interface FileRoutesById {
   '/bots': typeof BotsRoute
   '/ferzan': typeof FerzanRoute
   '/launch': typeof LaunchRoute
+  '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/terms': typeof TermsRoute
   '/api/launches': typeof ApiLaunchesRoute
@@ -115,6 +124,7 @@ export interface FileRouteTypes {
     | '/bots'
     | '/ferzan'
     | '/launch'
+    | '/leaderboard'
     | '/login'
     | '/terms'
     | '/api/launches'
@@ -127,6 +137,7 @@ export interface FileRouteTypes {
     | '/bots'
     | '/ferzan'
     | '/launch'
+    | '/leaderboard'
     | '/login'
     | '/terms'
     | '/api/launches'
@@ -139,6 +150,7 @@ export interface FileRouteTypes {
     | '/bots'
     | '/ferzan'
     | '/launch'
+    | '/leaderboard'
     | '/login'
     | '/terms'
     | '/api/launches'
@@ -152,6 +164,7 @@ export interface RootRouteChildren {
   BotsRoute: typeof BotsRoute
   FerzanRoute: typeof FerzanRoute
   LaunchRoute: typeof LaunchRoute
+  LeaderboardRoute: typeof LeaderboardRoute
   LoginRoute: typeof LoginRoute
   TermsRoute: typeof TermsRoute
   ApiLaunchesRoute: typeof ApiLaunchesRoute
@@ -188,6 +201,13 @@ declare module '@tanstack/react-router' {
       path: '/launch'
       fullPath: '/launch'
       preLoaderRoute: typeof LaunchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/leaderboard': {
+      id: '/leaderboard'
+      path: '/leaderboard'
+      fullPath: '/leaderboard'
+      preLoaderRoute: typeof LeaderboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -240,6 +260,7 @@ const rootRouteChildren: RootRouteChildren = {
   BotsRoute: BotsRoute,
   FerzanRoute: FerzanRoute,
   LaunchRoute: LaunchRoute,
+  LeaderboardRoute: LeaderboardRoute,
   LoginRoute: LoginRoute,
   TermsRoute: TermsRoute,
   ApiLaunchesRoute: ApiLaunchesRoute,

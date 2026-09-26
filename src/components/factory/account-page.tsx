@@ -10,6 +10,7 @@ import type { ChainId } from "@/lib/factory/types";
 import { Button, Mark } from "./ui";
 import { KeyLock } from "./key-gate";
 import { WalletBalances } from "./gas-step";
+import { CreatorFees } from "./creator-fees";
 import { solanaAddress, solanaSecret } from "@/lib/factory/solana";
 import { termsAccepted } from "@/lib/factory/terms";
 import { TermsGate } from "./terms";
@@ -242,6 +243,7 @@ export function AccountPage() {
 
       {siteAddress ? <Holding evm={siteAddress} sol={sol} /> : null}
       {siteAddress ? <Launched creator={siteAddress} sol={sol} /> : null}
+      {siteAddress ? <CreatorFees evm={siteAddress} sol={sol} /> : null}
 
       {siteAddress ? (
         <div className="mt-4 flex flex-wrap gap-2">

@@ -44,6 +44,7 @@ export function LaunchForm({ initialMode = "curve", initialChain = "base" }: { i
   const [devBuy, setDevBuy] = useState("");
   const [delayMin, setDelayMin] = useState("0");
   const [maxBuy, setMaxBuy] = useState("");
+  const [wall, setWall] = useState(true);
   const [blurb, setBlurb] = useState("");
   const [telegram, setTelegram] = useState("");
   const [xHandle, setXHandle] = useState("");
@@ -138,7 +139,8 @@ export function LaunchForm({ initialMode = "curve", initialChain = "base" }: { i
         const grad = parseDecimal(graduation.trim() || "50", dec);
         const virt = parseDecimal(virtualNative.trim() || "1", dec);
         const depthWhole = virtualToken.trim() ? parseWhole(virtualToken) : (whole * 80n) / 100n;
-        const cap = maxBuy.trim() ? parseDecimal(maxBuy.trim(), dec) : 0n;
+        const capHuman = wall ? wallAmount(chain, graduation) : maxBuy.trim();
+        const cap = capHuman ? parseDecimal(capHuman, dec) : 0n;
         const delayNum = delayMin.trim() === "" ? 0 : Number(delayMin);
         const dev = devBuy.trim() ? parseDecimal(devBuy.trim(), dec) : 0n;
         if (!grad || !virt || !depthWhole || cap == null || dev == null || !Number.isInteger(delayNum) || delayNum < 0 || delayNum > 10080) {
@@ -147,6 +149,10 @@ export function LaunchForm({ initialMode = "curve", initialChain = "base" }: { i
         }
         if (delayNum > 0 && dev > 0n) {
           setError("The first buy is the first trade, so the curve has to open now. Clear the delay or the buy.");
+          return;
+        }
+        if (cap > 0n && dev > cap) {
+          setError("The first buy is over the wallet cap. Lower it, or turn the anti-snipe wall off.");
           return;
         }
         const depth = depthWhole * 10n ** BigInt(tokenDec);
@@ -200,7 +206,8 @@ export function LaunchForm({ initialMode = "curve", initialChain = "base" }: { i
       const grad = parseDecimal(graduation.trim() || "5", dec);
       const virt = parseDecimal(virtualNative.trim() || "1", dec);
       const depth = virtualToken.trim() ? parseWhole(virtualToken) : (whole * 80n) / 100n;
-      const cap = maxBuy.trim() ? parseDecimal(maxBuy.trim(), dec) : 0n;
+      const capHuman = wall ? wallAmount(chain, graduation) : maxBuy.trim();
+      const cap = capHuman ? parseDecimal(capHuman, dec) : 0n;
       const delayNum = delayMin.trim() === "" ? 0 : Number(delayMin);
       if (!Number.isInteger(delayNum) || delayNum < 0 || delayNum > 10080) {
         setError("Delay is whole minutes, up to a week.");
@@ -214,6 +221,10 @@ export function LaunchForm({ initialMode = "curve", initialChain = "base" }: { i
       }
       if (delay > 0n && dev > 0n) {
         setError("The first buy is the first trade, so the curve has to open now. Clear the delay or the buy.");
+        return;
+      }
+      if (cap > 0n && dev > cap) {
+        setError("The first buy is over the wallet cap. Lower it, or turn the anti-snipe wall off.");
         return;
       }
       setBusy(
@@ -259,7 +270,7 @@ export function LaunchForm({ initialMode = "curve", initialChain = "base" }: { i
       virtualTokenWhole: virtualToken,
       devBuy: mode === "curve" ? devBuy : "",
       delayMin: mode === "curve" ? delayMin : "0",
-      maxBuy: mode === "curve" ? maxBuy : "",
+      maxBuy: mode === "curve" ? (wall ? wallAmount(chain, graduation) : maxBuy) : "",
       allocs,
       blurb,
       telegram,
@@ -356,6 +367,13 @@ export function LaunchForm({ initialMode = "curve", initialChain = "base" }: { i
         {mode === "plain" ? "Regular pool" : "Curve"}
       </p>
       <h1 className="mt-2 text-4xl">Launch a coin</h1>
+      <p className="mt-2 text-sm text-muted">
+        Prefer Telegram?{" "}
+        <a className="font-semibold text-cyan" href="https://t.me/Ferzan_Launch_Bot" target="_blank" rel="noopener noreferrer">
+          Launch with @Ferzan_Launch_Bot
+        </a>{" "}
+        and it shows here too.
+      </p>
       {!wallet ? (
         <p className="mt-3 text-sm text-muted">
           <Link to="/login" className="font-semibold text-cyan">Create your profile</Link> first. Then this page can sign.
@@ -452,6 +470,28 @@ export function LaunchForm({ initialMode = "curve", initialChain = "base" }: { i
           </div>
         ) : null}
 
+        {mode === "curve" ? (
+          <div className="bg-bg px-3 py-3 shadow-border">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-extrabold">Anti-snipe wall</p>
+                <p className="mt-1 text-sm text-muted">
+                  Each wallet can buy at most 0.5% of the graduation target
+                  {wallAmount(chain, graduation) ? ` (${wallAmount(chain, graduation)} ${meta.native})` : ""}. The cap stays until the curve graduates. It does not expire after a few minutes. That is what snipers wait for.
+                </p>
+              </div>
+              <button
+                type="button"
+                aria-pressed={wall}
+                onClick={() => setWall((on) => !on)}
+                className={cn("min-h-11 shrink-0 px-3 text-sm font-extrabold", wall ? "bg-cyan text-cyan-ink" : "text-muted shadow-border")}
+              >
+                {wall ? "On" : "Off"}
+              </button>
+            </div>
+          </div>
+        ) : null}
+
         <details className="bg-bg px-3 py-2 shadow-border">
           <summary className="min-h-11 cursor-pointer text-sm font-semibold">
             {mode === "curve" ? "Curve settings" : "More"}
@@ -496,7 +536,14 @@ export function LaunchForm({ initialMode = "curve", initialChain = "base" }: { i
                 </div>
                 <div>
                   <Label>Max buy ({meta.native})</Label>
-                  <TextInput value={maxBuy} onChange={(e) => setMaxBuy(e.target.value)} placeholder="No cap" inputMode="decimal" />
+                  <TextInput
+                    value={wall ? wallAmount(chain, graduation) : maxBuy}
+                    onChange={(e) => setMaxBuy(e.target.value)}
+                    placeholder="No cap"
+                    inputMode="decimal"
+                    disabled={wall}
+                  />
+                  {wall ? <p className="mt-1.5 text-xs text-muted">The wall sets this. Turn it off to type your own cap.</p> : null}
                 </div>
               </div>
             ) : null}
@@ -587,6 +634,15 @@ export function LaunchForm({ initialMode = "curve", initialChain = "base" }: { i
       </KeyLock>
     </div>
   );
+}
+
+function wallAmount(chain: MarkChain, graduation: string): string {
+  const raw = (graduation.trim() || (chain === "solana" ? "50" : "5")).replace(/,/g, "");
+  const goal = Number(raw);
+  if (!Number.isFinite(goal) || goal <= 0) return "";
+  const cap = goal * 0.005;
+  const text = cap >= 1 ? cap.toFixed(4) : cap.toFixed(6);
+  return text.replace(/\.?0+$/, "");
 }
 
 function launchRisk(chain: string, mode: string): string {

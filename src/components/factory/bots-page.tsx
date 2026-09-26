@@ -12,7 +12,19 @@ const ROOMS = [
     name: "Launch Bot",
     handle: "@Ferzan_Launch_Bot",
     href: "https://t.me/Ferzan_Launch_Bot",
-    text: "Launch a coin from Telegram on your phone. You do not need this website open, and you do not need a computer. You still sign. The bot does not keep the key. After the coin exists, the bot sends the contract here and it shows on the floor.",
+    text: "Launch a coin from Telegram on your phone. You do not need this website open, and you do not need a computer. You still sign. The bot does not keep the key. Every Telegram launch shows on the floor under From Telegram, and in the @Ferzan_Launches channel.",
+  },
+  {
+    name: "Buy Bot",
+    handle: "@Ferzan_Buy_Bot",
+    href: "https://t.me/Ferzan_Buy_Bot",
+    text: "Add it to your coin's group. It posts every buy the moment it lands, with a chart and a buy button.",
+  },
+  {
+    name: "Launches channel",
+    handle: "@Ferzan_Launches",
+    href: "https://t.me/Ferzan_Launches",
+    text: "Every coin launched with the Launch Bot, its milestones, King of the Hill, and graduations. Follow it to catch coins early.",
   },
   {
     name: "Guardian",
@@ -71,14 +83,6 @@ export function BotsPage() {
           </li>
         ))}
       </ul>
-      <details className="ticket mt-8 text-sm text-muted">
-        <summary className="cursor-pointer font-semibold text-fg">For the Launch Bot</summary>
-        <p className="mt-3">
-          After a phone launch, the bot posts the contract to this site. The coin then shows on the floor. People still launch inside Telegram.
-        </p>
-        <pre className="mt-3 overflow-x-auto text-xs text-fg">{`POST /api/launches
-{"chain":"base","contract":"0x…","name":"Name","symbol":"TICK"}`}</pre>
-      </details>
       <Link to="/launch" search={{ kind: "curve" }} className="btn-cyan mt-8">
         Launch a coin
       </Link>

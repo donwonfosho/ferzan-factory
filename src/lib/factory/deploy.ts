@@ -396,6 +396,19 @@ export async function readCurve(chain: EvmChainId, address: string): Promise<Cha
   return decodeState(await rpcCall(chain, address, CURVE_SELECTOR.state));
 }
 
+export async function readCurveWall(chain: EvmChainId, address: string): Promise<{ maxBuy: bigint; startAt: bigint } | null> {
+  try {
+    const [maxRaw, startRaw] = await Promise.all([
+      rpcCall(chain, address, "0x70db69d6"),
+      rpcCall(chain, address, "0xc7446565"),
+    ]);
+    if (!maxRaw || !startRaw) return null;
+    return { maxBuy: BigInt(maxRaw), startAt: BigInt(startRaw) };
+  } catch {
+    return null;
+  }
+}
+
 export async function readPool(chain: EvmChainId, address: string): Promise<string | null> {
   try {
     const raw = await rpcCall(chain, address, "0x16f0115b");
@@ -407,6 +420,31 @@ export async function readPool(chain: EvmChainId, address: string): Promise<stri
   } catch {
     return null;
   }
+}
+
+/** Where a graduated coin trades. Robinhood and Arc only have the pool address. */
+export function dexSwapUrl(chain: EvmChainId, token: string): string | null {
+  if (chain === "ethereum") {
+    return `https://app.uniswap.org/swap?chain=ethereum&inputCurrency=NATIVE&outputCurrency=${token}`;
+  }
+  if (chain === "base") {
+    return `https://aerodrome.finance/swap?from=eth&to=${token}`;
+  }
+  if (chain === "bsc") {
+    return `https://pancakeswap.finance/swap?chain=bsc&outputCurrency=${token}`;
+  }
+  return null;
+}
+
+export function raydiumSwapUrl(mint: string): string {
+  return `https://raydium.io/swap/?inputMint=sol&outputMint=${mint}`;
+}
+
+export async function readClaimable(chain: EvmChainId, curve: string, wallet: string): Promise<bigint> {
+  const who = wallet.toLowerCase().replace(/^0x/, "").padStart(64, "0");
+  const raw = await rpcCall(chain, curve, CURVE_SELECTOR.claimable + who);
+  if (!raw || raw === "0x") return 0n;
+  return BigInt(raw);
 }
 
 export async function readErc20String(chain: EvmChainId, address: string, selector: string): Promise<string> {

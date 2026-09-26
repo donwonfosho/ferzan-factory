@@ -8,8 +8,10 @@ import type { ChainId } from "@/lib/factory/types";
 import { ChainPanel } from "./chain-panel";
 import { SolanaPanel } from "./solana-panel";
 import { ContractLine } from "./token-view";
+import { CoinPush } from "./coin-push";
 import { CoinTape, CoinThread } from "./coin-board";
 import { Holders } from "./holders";
+import { CreatorHealth } from "./creator-health";
 import { Mark } from "./ui";
 
 export function TradePage({ chain, address }: { chain: string; address: string }) {
@@ -93,6 +95,7 @@ export function TradePage({ chain, address }: { chain: string; address: string }
           </div>
         </div>
         <ContractLine chain={listed} address={coin?.contract || address} />
+        <CoinPush chain={listed} address={coin?.contract || address} symbol={coin?.symbol || onChain?.symbol || "Coin"} />
         <p className="mt-4 max-w-xl text-sm text-muted">
           Buy and sell here. The signature stays in the wallet this site opened for you. No extension popup.
         </p>
@@ -104,6 +107,7 @@ export function TradePage({ chain, address }: { chain: string; address: string }
           <CoinTape contract={coin?.contract || address} chain={coin?.chain || listed} createdAt={coin?.createdAt} supply={coin?.supply} />
         ) : null}
         {listed ? <Holders chain={listed} address={coin?.contract || address} decimals={meta.tokenDecimals} /> : null}
+        {coin?.creator ? <CreatorHealth creator={coin.creator} highlight={coin.contract} /> : null}
       </div>
       <aside>
         {coin && coin.mode === "curve" && evm ? (

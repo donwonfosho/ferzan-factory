@@ -87,6 +87,8 @@ export async function ingestLaunch(body: unknown): Promise<{ ok: true; id: strin
 
 async function save(data: Required<Ingest>): Promise<{ ok: true; id: string }> {
   const sql = await getSql();
+  // EVM addresses are case-insensitive: store one spelling so the same coin can't be listed twice.
+  if (data.chain !== "solana") data = { ...data, contract: data.contract.toLowerCase() };
   const id = `${data.chain}-${data.contract.toLowerCase()}`;
   await sql`
     insert into coins (id, chain, mode, name, symbol, supply, contract, creator, image, blurb)

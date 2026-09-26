@@ -2,8 +2,19 @@ import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { listLaunched, loadProfile, type BoardCoin } from "@/lib/factory/board";
 import { CHAINS } from "@/lib/factory/catalog";
+import { creatorVerdict } from "./creator-health";
 import type { ChainId } from "@/lib/factory/types";
 import { Mark } from "./ui";
+
+function RecordLine({ coins }: { coins: BoardCoin[] }) {
+  const verdict = creatorVerdict(coins);
+  const tone = verdict.tone === "heavy" ? "text-sell" : verdict.tone === "clear" ? "text-cyan" : "text-fg";
+  return (
+    <p className={`mt-4 text-sm font-semibold ${tone}`}>
+      {verdict.title}. {verdict.line}
+    </p>
+  );
+}
 
 export function PublicProfile({ address }: { address: string }) {
   const [coins, setCoins] = useState<BoardCoin[] | null>(null);
@@ -47,6 +58,7 @@ export function PublicProfile({ address }: { address: string }) {
         </div>
       </div>
       <p className="mt-3 break-all text-sm text-muted">{address}</p>
+      {coins ? <RecordLine coins={coins} /> : null}
       {!valid ? <p className="mt-6 text-sm text-sell">That wallet address looks wrong.</p> : null}
       {valid && coins === null ? <p className="mt-6 text-sm text-muted">Loading launches.</p> : null}
       {coins && coins.length === 0 ? <p className="mt-6 text-sm text-muted">No coins from this wallet are on the board yet.</p> : null}

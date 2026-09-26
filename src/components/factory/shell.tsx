@@ -130,7 +130,8 @@ export function Shell({ children }: { children: ReactNode }) {
       <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-14">{children}</main>
       <footer className="mx-auto max-w-5xl px-4 pb-10 text-sm text-muted">
         <p>
-          1% on every curve trade. 60% treasury, 30% creator, 10% to a referrer when a buyer names a wallet. After graduation the creator keeps 30% of the pool.
+          Site curves: 1% on every trade. 60% treasury, 30% creator, 10% to a referrer when a buyer names a wallet. After graduation the creator keeps 30% of the pool.
+          Telegram curves: 1% on every trade. 50% creator, 50% platform, or 50% creator, 40% platform, 10% referrer when a buyer came from a referral link.
         </p>
         <p className="mt-2">
           <a className="text-cyan" href={COMMUNITY_URL}>
@@ -140,6 +141,14 @@ export function Shell({ children }: { children: ReactNode }) {
           <a className="text-cyan" href="https://t.me/Ferzan_Trade_Ecosystem">
             Hub
           </a>
+          {" · "}
+          <a className="text-cyan" href="https://t.me/Ferzan_Launches">
+            Launches
+          </a>
+          {" · "}
+          <Link to="/leaderboard" className="text-cyan">
+            Leaderboard
+          </Link>
           {" · "}
           <Link to="/terms" className="text-cyan">
             Terms

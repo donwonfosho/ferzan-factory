@@ -9,6 +9,10 @@ import { formatSmart, formatWhen, formatPrice, parsePrice } from "@/lib/factory/
 import { Button } from "./ui";
 import { PriceChart } from "./price-chart";
 
+function boardKey(contract: string): string {
+  return contract.startsWith("0x") ? contract.toLowerCase() : contract;
+}
+
 export function CoinTape({ contract, chain, createdAt, supply }: { contract: string; chain: string; createdAt?: string; supply?: string }) {
   const [rows, setRows] = useState<BoardTrade[]>([]);
   const [chainRows, setChainRows] = useState<Fill[]>([]);
@@ -18,7 +22,7 @@ export function CoinTape({ contract, chain, createdAt, supply }: { contract: str
     let stop = false;
     async function pull() {
       try {
-        const next = await listCoinTrades({ data: { contract: contract.toLowerCase() } });
+        const next = await listCoinTrades({ data: { contract: boardKey(contract) } });
         if (!stop) setRows([...next].reverse());
       } catch {
         /* keep the last tape */
@@ -46,7 +50,7 @@ export function CoinTape({ contract, chain, createdAt, supply }: { contract: str
     <section className="mt-8">
       <PriceChart contract={contract} chain={chain} createdAt={createdAt} native={meta?.native ?? ""} supply={supply} />
       <h2 className="mt-8 text-lg font-extrabold">Trades</h2>
-      <p className="mt-1 text-sm text-muted">Buys and sells on this contract, newest first.</p>
+      <p className="mt-1 text-sm text-muted">Same tape for every visitor. Buys elsewhere show here too.</p>
       {!history && rows.length === 0 ? <p className="mt-3 text-sm text-muted">No trades on this contract yet.</p> : null}
       <ul className="mt-3 divide-y divide-line border-y border-line">
         {history
@@ -96,7 +100,7 @@ export function CoinThread({ contract, chain }: { contract: string; chain: strin
     let stop = false;
     async function pull() {
       try {
-        const next = await listPosts({ data: { contract: contract.toLowerCase() } });
+        const next = await listPosts({ data: { contract: boardKey(contract) } });
         if (!stop) setPosts(next);
       } catch {
         /* keep the last thread */
@@ -114,7 +118,7 @@ export function CoinThread({ contract, chain }: { contract: string; chain: strin
     e.preventDefault();
     setError("");
     let author = wallet;
-    if (!author || !author.startsWith("0x")) {
+    if (!author || (!author.startsWith("0x") && !/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(author))) {
       setError("Create a wallet on Account before you post. Opening the site does not create one.");
       return;
     }
@@ -122,7 +126,7 @@ export function CoinThread({ contract, chain }: { contract: string; chain: strin
     try {
       await addPost({ data: { contract, chain, author, body } });
       setBody("");
-      const next = await listPosts({ data: { contract: contract.toLowerCase() } });
+      const next = await listPosts({ data: { contract: boardKey(contract) } });
       setPosts(next);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not post.");
@@ -134,7 +138,7 @@ export function CoinThread({ contract, chain }: { contract: string; chain: strin
   return (
     <section className="mt-4">
       <h2 className="text-lg font-extrabold">Thread</h2>
-      <p className="mt-1 text-sm text-muted">Replies stay on this coin. Newest first. Each one shows the wallet that posted.</p>
+      <p className="mt-1 text-sm text-muted">Same thread for every visitor. Each reply shows the wallet that posted.</p>
       <form onSubmit={submit} className="mt-3 space-y-3">
         <textarea
           value={body}

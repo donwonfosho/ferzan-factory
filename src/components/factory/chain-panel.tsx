@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { CHAINS } from "@/lib/factory/catalog";
 import { spot, quoteBuy, quoteSell } from "@/lib/factory/curve";
 import { recordTrade } from "@/lib/factory/board";
-import { buyData, claimData, curveGuardsMin, CURVE_POOL, explorerAddress, explorerTx, readCurve, readHeld, readPool, sellData, sendCurve, type ChainCurve, type EvmChainId } from "@/lib/factory/deploy";
+import { buyData, claimData, curveGuardsMin, CURVE_POOL, dexSwapUrl, explorerAddress, explorerTx, readClaimable, readCurve, readCurveWall, readHeld, readPool, sellData, sendCurve, type ChainCurve, type EvmChainId } from "@/lib/factory/deploy";
 import { useFactory } from "@/lib/factory/store";
 import { siteBalance, siteMatches, keySaved } from "@/lib/factory/site-wallet";
 import { formatPrice, formatSmart, formatTokensPerNative, parseDecimal, priceWire } from "@/lib/factory/units";
@@ -30,6 +30,8 @@ export function ChainPanel({ chain, address, symbol }: { chain: EvmChainId; addr
   const [held, setHeld] = useState<bigint | null>(null);
   const [slip, setSlip] = useState("1");
   const [pool, setPool] = useState("");
+  const [wall, setWall] = useState<{ maxBuy: bigint; startAt: bigint } | null>(null);
+  const [owed, setOwed] = useState(0n);
   const [txHash, setTxHash] = useState("");
   const [guards, setGuards] = useState(false);
   const meta = CHAINS[chain];
@@ -41,9 +43,11 @@ export function ChainPanel({ chain, address, symbol }: { chain: EvmChainId; addr
       try {
         const next = await readCurve(chain, address);
         const opened = next.graduated ? await readPool(chain, address) : null;
+        const cap = await readCurveWall(chain, address);
         if (!stop) {
           setState(next);
           setPool(opened ?? "");
+          setWall(cap);
           setCurveNote("");
         }
       } catch (err) {
@@ -72,6 +76,25 @@ export function ChainPanel({ chain, address, symbol }: { chain: EvmChainId; addr
       stop = true;
     };
   }, [chain, address]);
+
+  useEffect(() => {
+    if (!wallet || !wallet.startsWith("0x")) {
+      setOwed(0n);
+      return;
+    }
+    let stop = false;
+    void readClaimable(chain, address, wallet).then(
+      (next) => {
+        if (!stop) setOwed(next);
+      },
+      () => {
+        if (!stop) setOwed(0n);
+      },
+    );
+    return () => {
+      stop = true;
+    };
+  }, [chain, address, wallet, refresh]);
 
   useEffect(() => {
     if (!wallet) {
@@ -347,10 +370,27 @@ export function ChainPanel({ chain, address, symbol }: { chain: EvmChainId; addr
         native={meta.native}
         decimals={meta.nativeDecimals}
       />
+      {wall && wall.maxBuy > 0n ? (
+        <p className="text-sm text-muted">
+          Wallet cap {formatSmart(wall.maxBuy, meta.nativeDecimals)} {meta.native}. It stays until graduation. It does not lift after a few minutes.
+        </p>
+      ) : null}
+      {wall && wall.startAt * 1000n > BigInt(Date.now()) ? (
+        <p className="text-sm text-muted">Buys are held until {new Date(Number(wall.startAt) * 1000).toLocaleString()}.</p>
+      ) : null}
+      <p className="text-sm text-muted">
+        1% fee. Creator keeps 0.30% and can claim it. Referrer 0.10%. Treasury 0.60% is the Ferzan buyback bucket. That buy is not running yet.
+      </p>
       {pool ? (
-        <a className="inline-flex min-h-11 items-center text-sm font-semibold text-cyan" href={explorerAddress(chain, pool)}>
-          Open the {CURVE_POOL[chain].dex} pool
-        </a>
+        <p className="text-sm text-muted">
+          Graduated in the same buy that filled the curve. The pool is live.
+          {" "}
+          <a className="font-semibold text-cyan" href={dexSwapUrl(chain, address) || explorerAddress(chain, pool)} target="_blank" rel="noreferrer">
+            Trade on {CURVE_POOL[chain].dex}
+          </a>
+        </p>
+      ) : state?.graduated ? (
+        <p className="text-sm text-muted">This coin graduated before a pool could open. Selling stays on the curve.</p>
       ) : null}
       <KeyLock address={wallet}>
       <form onSubmit={submit} className="ticket space-y-4">
@@ -435,17 +475,20 @@ export function ChainPanel({ chain, address, symbol }: { chain: EvmChainId; addr
         <Button
           type="button"
           variant="ghost"
-          disabled={Boolean(busy) || !wallet}
+          disabled={Boolean(busy) || !wallet || owed === 0n}
           onClick={() => {
             setBusy("Approve the claim.");
             void sendCurve({ chain, address, data: claimData(), from: wallet || "" }).then((res) => {
               setBusy("");
               if (!res.ok) setError(res.error);
-              else setTxHash(res.hash);
+              else {
+                setTxHash(res.hash);
+                setRefresh((n) => n + 1);
+              }
             });
           }}
         >
-          Claim fees
+          {owed > 0n ? `Claim ${formatSmart(owed, meta.nativeDecimals)} ${meta.native}` : "Nothing to claim"}
         </Button>
       </form>
       </KeyLock>

@@ -7,6 +7,7 @@ import { siteMatches, keySaved } from "@/lib/factory/site-wallet";
 import { formatPrice, formatSmart, parseDecimal } from "@/lib/factory/units";
 import { cn } from "@/lib/cn";
 import { recordTrade } from "@/lib/factory/board";
+import { raydiumSwapUrl } from "@/lib/factory/deploy";
 import { Dollar } from "./dollar";
 import { GraduationMeter } from "./graduation-meter";
 import { GasStep } from "./gas-step";
@@ -204,6 +205,10 @@ export function SolanaPanel({ mint, symbol }: { mint: string; symbol: string }) 
         native="SOL"
         decimals={9}
       />
+      {state.maxBuy > 0n ? (
+        <p className="text-sm text-muted">Wallet cap {formatSmart(state.maxBuy, 9)} SOL. It stays until graduation.</p>
+      ) : null}
+      <p className="text-sm text-muted">1% fee. The creator cut is paid into their Solana wallet on the trade. Treasury’s 0.60% is not buying Ferzan yet.</p>
       {sol ? <GasStep address={sol} chain="solana" /> : null}
       <div className="grid grid-cols-2 gap-2">
         <button type="button" className={cn("min-h-11 font-semibold", side === "buy" ? "bg-cyan text-cyan-ink" : "bg-bg text-muted shadow-border")} onClick={() => setSide("buy")}>
@@ -278,7 +283,11 @@ export function SolanaPanel({ mint, symbol }: { mint: string; symbol: string }) 
           Open Raydium pool
         </Button>
       ) : null}
-      {state.pooled ? <p className="text-sm text-cyan">This curve is in a Raydium pool. The creator kept 30% of the LP. The rest was burned.</p> : null}
+      {state.pooled ? (
+        <a className="inline-flex min-h-11 items-center text-sm font-semibold text-cyan" href={raydiumSwapUrl(mint)} target="_blank" rel="noreferrer">
+          Trade on Raydium
+        </a>
+      ) : null}
       <p className="text-xs text-muted">Fees are paid in the same transaction. 60% treasury, 30% creator, 10% referrer on buys. Sells pay no referrer.</p>
     </form>
     </KeyLock>

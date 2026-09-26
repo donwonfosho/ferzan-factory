@@ -62,6 +62,8 @@ export const BOTS: BotMeta[] = [
   {
     id: "buy",
     name: "Buy alerts",
+    handle: "Ferzan_Buy_Bot",
+    href: "https://t.me/Ferzan_Buy_Bot",
     blurb: "Prints buys into the group the moment they land.",
   },
   {
@@ -88,6 +90,18 @@ export const PLACES = [
     handle: "Ferzan_Trade_Bot",
     href: "https://t.me/Ferzan_Trade_Bot",
     blurb: "Buy, sell, snipe, copy, limits, and trailing stops.",
+  },
+  {
+    name: "Buy Bot",
+    handle: "Ferzan_Buy_Bot",
+    href: "https://t.me/Ferzan_Buy_Bot",
+    blurb: "Posts every buy of your coin into your group.",
+  },
+  {
+    name: "Launches",
+    handle: "Ferzan_Launches",
+    href: "https://t.me/Ferzan_Launches",
+    blurb: "Every Telegram launch, milestone, and graduation.",
   },
   {
     name: "Guardian",

@@ -8,6 +8,7 @@ import { useFactory } from "@/lib/factory/store";
 import type { LiveChainId } from "@/lib/factory/types";
 import { formatSmart, formatUnits } from "@/lib/factory/units";
 import { Button } from "./ui";
+import { FundButton } from "./fund-wallet";
 
 export function GasStep({ address, chain = "base" }: { address: string; chain?: EvmChainId | "solana" }) {
   const [copied, setCopied] = useState(false);
@@ -61,6 +62,7 @@ export function GasStep({ address, chain = "base" }: { address: string; chain?: 
         {meta.label} balance {wei == null ? "…" : `${formatSmart(wei, meta.nativeDecimals)} ${meta.native}`}
         {wei === 0n ? ". This wallet cannot sign until that balance is above zero." : ""}
       </p>
+      <FundButton address={address} chain={chain} />
     </div>
   );
 }
@@ -148,6 +150,8 @@ export function WalletBalances({ evm, sol }: { evm: string; sol: string | null }
       <p className="text-sm font-medium text-cyan">Wallet balances</p>
       <p className="mt-2 break-all text-sm">{evm}</p>
       {sol ? <p className="mt-1 break-all text-sm text-muted">Solana {sol}</p> : null}
+      <FundButton address={evm} chain="base" />
+      {sol ? <FundButton address={sol} chain="solana" quiet /> : null}
       <ul className="mt-3 divide-y divide-line border-y border-line">
         {HOLDINGS.map((row) => {
           const raw = native[row.id];
