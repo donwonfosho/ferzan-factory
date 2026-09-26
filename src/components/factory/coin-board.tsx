@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { CHAINS } from "@/lib/factory/catalog";
 import { addPost, listCoinTrades, listPosts, type BoardPost, type BoardTrade } from "@/lib/factory/board";
+import { postBody, proofAddress } from "@/lib/factory/proof";
+import { signProof } from "@/lib/factory/proof-client";
 import { listFills, type Fill } from "@/lib/factory/market";
 import { creatorLabel } from "@/lib/factory/engine";
 import { useFactory } from "@/lib/factory/store";
@@ -124,7 +126,10 @@ export function CoinThread({ contract, chain }: { contract: string; chain: strin
     }
     setBusy(true);
     try {
-      await addPost({ data: { contract, chain, author, body } });
+      const text = postBody(body);
+      if (!text) throw new Error("Write something.");
+      const proof = await signProof("post", author, { contract: proofAddress(contract), chain, body: text });
+      await addPost({ data: { contract, chain, author, body: text, proof } });
       setBody("");
       const next = await listPosts({ data: { contract: boardKey(contract) } });
       setPosts(next);

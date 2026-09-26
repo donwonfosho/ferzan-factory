@@ -5,6 +5,8 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { readRemembered, useFactory } from "@/lib/factory/store";
 import { importSiteWallet, keySaved, knownSiteAddress, markKeySaved, openSiteWallet, readSiteWallet } from "@/lib/factory/site-wallet";
 import { listBoard, listLaunched, loadProfile, saveProfile, type BoardCoin } from "@/lib/factory/board";
+import { profileFields } from "@/lib/factory/proof";
+import { signProof } from "@/lib/factory/proof-client";
 import { CHAINS } from "@/lib/factory/catalog";
 import type { ChainId } from "@/lib/factory/types";
 import { Button, Mark } from "./ui";
@@ -144,12 +146,22 @@ export function AccountPage() {
           type="button"
           className="mt-4"
           onClick={() => {
-            const next = { name: name.trim(), bio: bio.trim(), image: useFactory.getState().profile.image };
+            const next = profileFields({ name, bio, image: useFactory.getState().profile.image ?? "" });
             setProfile(next);
             const jobs = [siteAddress, sol].filter((address): address is string => Boolean(address));
-            void Promise.all(jobs.map((address) => saveProfile({ data: { address, ...next } }))).then(
+            void Promise.all(
+              jobs.map(async (address) => {
+                const proof = await signProof("profile", address, next);
+                return saveProfile({ data: { address, ...next, proof } });
+              }),
+            ).then(
               () => setCopied("Saved to this wallet. Paste the key on another phone and it comes back."),
-              () => setCopied("Saved on this phone. The site could not store the profile."),
+              (err) =>
+                setCopied(
+                  err instanceof Error
+                    ? `Saved on this phone only. ${err.message}`
+                    : "Saved on this phone. The site could not store the profile.",
+                ),
             );
           }}
         >

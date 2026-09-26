@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { postBody, profileFields, readProof, type Proof } from "./proof";
 
 export type BoardCoin = {
   id: string;
@@ -474,19 +475,21 @@ export const listPosts = createServerFn({ method: "POST" })
   });
 
 export const addPost = createServerFn({ method: "POST" })
-  .validator((data: unknown): { contract: string; chain: string; author: string; body: string } => {
+  .validator((data: unknown): { contract: string; chain: string; author: string; body: string; proof: Proof } => {
     const row = clean(data);
     const contract = coinAddress(text(row, "contract", 48));
     const chain = text(row, "chain", 20);
     const author = coinAddress(text(row, "author", 48));
-    const body = text(row, "body", 280).replace(/\s+/g, " ");
+    const body = postBody(text(row, "body", 280));
     if (!CHAINS.has(chain)) throw new Error("That chain is not open.");
     if (body.length < 1) throw new Error("Write something.");
-    return { contract, chain, author, body };
+    return { contract, chain, author, body, proof: readProof(row.proof) };
   })
   .handler(async ({ data }): Promise<{ ok: true }> => {
     const { getSql } = await import("@/lib/db");
     const sql = await getSql();
+    const { requireProof } = await import("./proof.server");
+    await requireProof("post", data.author, { contract: data.contract, chain: data.chain, body: data.body }, data.proof);
     const coin = await sql<{ contract: string }>`
       select contract from coins where contract = ${data.contract} and chain = ${data.chain} limit 1
     `;
@@ -589,16 +592,19 @@ export const loadProfile = createServerFn({ method: "POST" })
   });
 
 export const saveProfile = createServerFn({ method: "POST" })
-  .validator((data: unknown): { address: string; name: string; bio: string; image: string } => {
+  .validator((data: unknown): { address: string; name: string; bio: string; image: string; proof: Proof } => {
     const row = clean(data);
     const address = coinAddress(text(row, "address", 48));
-    const name = typeof row.name === "string" ? row.name.trim().slice(0, 24) : "";
-    const bio = typeof row.bio === "string" ? row.bio.trim().slice(0, 80) : "";
-    const imageRaw = typeof row.image === "string" ? row.image : "";
-    const image = imageRaw.startsWith("data:image/") && imageRaw.length <= 200_000 ? imageRaw : "";
-    return { address, name, bio, image };
+    const fields = profileFields({
+      name: typeof row.name === "string" ? row.name : "",
+      bio: typeof row.bio === "string" ? row.bio : "",
+      image: typeof row.image === "string" ? row.image : "",
+    });
+    return { address, ...fields, proof: readProof(row.proof) };
   })
   .handler(async ({ data }): Promise<{ ok: true }> => {
+    const { requireProof } = await import("./proof.server");
+    await requireProof("profile", data.address, { name: data.name, bio: data.bio, image: data.image }, data.proof);
     const { getSql } = await import("@/lib/db");
     const sql = await getSql();
     await sql`
