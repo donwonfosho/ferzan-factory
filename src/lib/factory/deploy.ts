@@ -3,6 +3,7 @@ import { TREASURY } from "./catalog";
 import { FERZAN_TOKEN_BYTECODE } from "./token-bytecode";
 import { CURVE_SELECTOR, FERZAN_CURVE_BYTECODE } from "./curve-bytecode";
 import { fundMessage, sendWithSiteWallet, siteMatches } from "./site-wallet";
+import { accountWallets } from "./wallet-bridge";
 
 export type EvmChainId = Exclude<LiveChainId, "solana">;
 
@@ -174,6 +175,18 @@ async function broadcast(input: {
 }): Promise<{ hash: string; contractAddress: string | null; status: string }> {
   if (siteMatches(input.from)) {
     return sendWithSiteWallet(input);
+  }
+  // Signed in with a Ferzan account that owns `from`: its wallet signs (no extension needed).
+  const account = accountWallets();
+  if (account?.authenticated && account.evmAddress && account.evmAddress.toLowerCase() === input.from.toLowerCase()) {
+    const own = (await account.evmProvider()) as Provider;
+    await switchChain(own, input.chain);
+    const tx: { from: string; data: string; to?: string; value?: string } = { from: account.evmAddress, data: input.data };
+    if (input.to) tx.to = input.to;
+    if (input.value && input.value > 0n) tx.value = "0x" + input.value.toString(16);
+    const hash = (await own.request({ method: "eth_sendTransaction", params: [tx] })) as string;
+    const receipt = await waitReceipt(own, hash);
+    return { hash, contractAddress: receipt.contractAddress ?? null, status: receipt.status ?? "0x0" };
   }
   const eth = provider();
   if (!eth) throw new Error("Open a wallet on this site first.");

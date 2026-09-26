@@ -1,4 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
+import { useAccountWallets } from "@/lib/factory/wallet-bridge";
 import { useEffect, useState, type ReactNode } from "react";
 import { CHAINS, COMMUNITY_URL, X_URL } from "@/lib/factory/catalog";
 import { creatorLabel, owns } from "@/lib/factory/engine";
@@ -28,6 +29,7 @@ export function Shell({ children }: { children: ReactNode }) {
   const profile = useFactory((s) => s.profile);
   const [open, setOpen] = useState(false);
   const [sol, setSol] = useState<string | null>(null);
+  const account = useAccountWallets();
 
   useEffect(() => {
     const done = useFactory.persist.rehydrate();
@@ -135,7 +137,7 @@ export function Shell({ children }: { children: ReactNode }) {
                   Reset floor
                 </Button>
               </div>
-              {wallet.startsWith("0x") ? <WalletBalances evm={readSiteWallet()?.address ?? wallet} sol={sol} /> : null}
+              {wallet.startsWith("0x") ? <WalletBalances evm={wallet} sol={account?.authenticated ? account.solAddress : sol} /> : null}
             </div>
           </div>
         ) : null}

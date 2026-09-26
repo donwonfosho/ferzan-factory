@@ -153,3 +153,21 @@ export function fundMessage(err: unknown, address: string): string | null {
   }
   return null;
 }
+
+/**
+ * Moves the old browser wallet's whole coin balance on `chain` to `to` (the account wallet),
+ * keeping back the network fee plus a 20% cushion in case the gas price moves before it lands.
+ */
+export async function sweepSiteWallet(chain: EvmChainId, to: string): Promise<{ hash: string; sent: bigint }> {
+  const site = readSiteWallet();
+  if (!site) throw new Error("This browser has no old wallet key.");
+  if (!/^0x[a-fA-F0-9]{40}$/.test(to) || to.toLowerCase() === site.address.toLowerCase()) throw new Error("Pick a different wallet to move to.");
+  const balance = await siteBalance(chain, site.address);
+  const probe = await prepareTx({ data: { chain, from: site.address, to, data: "0x", value: "0" } });
+  const fee = BigInt(probe.gas) * BigInt(probe.gasPrice);
+  const value = balance - fee - fee / 5n;
+  if (value <= 0n) throw new Error("Not enough on this chain to cover the network fee.");
+  const receipt = await sendWithSiteWallet({ chain, from: site.address, to, data: "0x", value });
+  if (receipt.status === "0x0") throw new Error("The move failed on chain. The coins are still in the old wallet.");
+  return { hash: receipt.hash, sent: value };
+}

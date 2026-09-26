@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
-import { accountWallets } from "@/lib/factory/wallet-bridge";
+import { PRIVY_APP_ID, accountWallets, evmWallet, useAccountWallets } from "@/lib/factory/wallet-bridge";
+import { MoveFunds } from "./move-funds";
 import { AccountCard } from "./account-card";
 import { Link } from "@tanstack/react-router";
 import { GROK_PROVIDERS, authEnabled, signIn, signOut } from "@/lib/auth/client";
@@ -156,6 +157,7 @@ export function AccountPage() {
           <h1 className="text-4xl">Manage account</h1>
           <p className="mt-2 text-sm text-muted">Profile, wallets, rewards, and what the chart shows.</p>
           <AccountCard />
+          <MoveFunds />
           <MenuGroup label="Account">
             <MenuRow title="Edit profile" onClick={() => open("profile")} />
             <MenuRow title="Portfolio" detail="Balances, holdings, and launches" onClick={() => open("portfolio")} />
@@ -243,9 +245,14 @@ export function AccountPage() {
 
       {panel === "wallets" ? (
       <div className="ticket">
-        <h1 className="text-3xl">View wallets</h1>
+        <h1 className="text-3xl">{PRIVY_APP_ID ? "Old browser wallet" : "View wallets"}</h1>
+        {PRIVY_APP_ID ? (
+          <p className="mt-2 text-sm text-muted">
+            Your wallets now come with your Ferzan account (sign in on the Manage account page). This section is only for an older wallet kept in this browser: export its key, or restore one to move its funds.
+          </p>
+        ) : null}
         {!siteAddress && !siteKey ? (
-          agreed ? (
+          PRIVY_APP_ID ? null : agreed ? (
             <Button
               type="button"
               className="mt-4"
@@ -320,8 +327,7 @@ export function AccountPage() {
       </div>
       ) : null}
 
-      {panel === "send" && siteAddress ? <SendForm from={siteAddress} /> : null}
-      {panel === "send" && !siteAddress ? <p className="text-sm text-muted">Create a wallet first.</p> : null}
+      {panel === "send" ? <SendPanel siteAddress={siteAddress} /> : null}
 
       {panel === "portfolio" && siteAddress ? (
         <>
@@ -449,7 +455,15 @@ function SettingsPanel() {
 
 const SEND_CHAINS: EvmChainId[] = ["base", "ethereum", "bsc", "robinhood", "arc"];
 
-function SendForm({ from }: { from: string }) {
+/** Sends from the signed-in account wallet; falls back to the old browser wallet when not signed in. */
+function SendPanel({ siteAddress }: { siteAddress: string }) {
+  const account = useAccountWallets();
+  if (account?.authenticated && account.evmAddress) return <SendForm from={account.evmAddress} viaAccount />;
+  if (siteAddress) return <SendForm from={siteAddress} viaAccount={false} />;
+  return <p className="text-sm text-muted">{PRIVY_APP_ID ? "Sign in on the Manage account page first." : "Create a wallet first."}</p>;
+}
+
+function SendForm({ from, viaAccount }: { from: string; viaAccount: boolean }) {
   const [chain, setChain] = useState<EvmChainId>("base");
   const [to, setTo] = useState("");
   const [amount, setAmount] = useState("");
@@ -471,8 +485,15 @@ function SendForm({ from }: { from: string }) {
     setBusy(true);
     setNote("");
     try {
-      const receipt = await sendWithSiteWallet({ chain, from, to, data: "0x", value });
-      setNote(receipt.status === "0x0" ? "The send failed." : `Sent. ${receipt.hash}`);
+      if (viaAccount) {
+        const { address, provider: eth } = await evmWallet(chain);
+        if (address.toLowerCase() !== from.toLowerCase()) throw new Error("The wallet changed. Reopen this page.");
+        const hash = await eth.request({ method: "eth_sendTransaction", params: [{ from: address, to, value: "0x" + value.toString(16) }] });
+        setNote(typeof hash === "string" ? `Sent. ${hash}` : "The wallet did not send it.");
+      } else {
+        const receipt = await sendWithSiteWallet({ chain, from, to, data: "0x", value });
+        setNote(receipt.status === "0x0" ? "The send failed." : `Sent. ${receipt.hash}`);
+      }
     } catch (err) {
       setNote(err instanceof Error ? err.message : "The send failed.");
     } finally {
@@ -483,7 +504,9 @@ function SendForm({ from }: { from: string }) {
   return (
     <form onSubmit={(e) => void submit(e)} className="ticket space-y-3">
       <h1 className="text-3xl">Send</h1>
-      <p className="text-sm text-muted">Sends the chain coin from the EVM wallet on this profile. Solana sends are not on this form.</p>
+      <p className="text-sm text-muted">
+        Sends the chain coin from {viaAccount ? "your account wallet" : "the old browser wallet"} ({from.slice(0, 6)}…{from.slice(-4)}). Solana sends are not on this form.
+      </p>
       <div className="flex flex-wrap gap-2">
         {SEND_CHAINS.map((id) => (
           <button key={id} type="button" className={chain === id ? "chip-on min-h-11 px-3 text-sm font-semibold" : "min-h-11 bg-bg px-3 text-sm font-semibold text-muted shadow-border"} onClick={() => setChain(id)}>

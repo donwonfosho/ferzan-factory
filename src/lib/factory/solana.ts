@@ -1,6 +1,6 @@
 import { bufferReady } from "@/lib/factory/buffer-polyfill";
 import { createServerFn } from "@tanstack/react-start";
-import { Keypair, SystemProgram, Transaction } from "@solana/web3.js";
+import { Keypair, PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
 import {
   AuthorityType,
   MINT_SIZE,
@@ -243,4 +243,33 @@ export async function launchSolanaMint(input: {
   } catch (err) {
     return { ok: false, error: launchError(err, address) };
   }
+}
+
+/** Moves the old browser wallet's SOL to `to` (the account's Solana wallet), leaving only the fee. */
+export async function sweepSolanaSite(to: string): Promise<{ signature: string; sent: bigint }> {
+  const site = readSiteWallet();
+  if (!site) throw new Error("This browser has no old wallet key.");
+  const payer = keypairFromSite(site.privateKey);
+  if (!isSolanaAddress(to) || to === payer.publicKey.toBase58()) throw new Error("Pick a different wallet to move to.");
+  const balance = await solBalance(payer.publicKey.toBase58());
+  const lamports = balance - 5000n; // one signature's network fee
+  if (lamports <= 0n) throw new Error("Not enough SOL to cover the network fee.");
+  const block = await solanaRelay({ data: { method: "block" } });
+  if (!("blockhash" in block) || typeof block.blockhash !== "string" || typeof block.lastValidBlockHeight !== "number") {
+    throw new Error("Solana did not return a block.");
+  }
+  const tx = new Transaction({ feePayer: payer.publicKey, blockhash: block.blockhash, lastValidBlockHeight: block.lastValidBlockHeight }).add(
+    SystemProgram.transfer({ fromPubkey: payer.publicKey, toPubkey: new PublicKey(to), lamports: Number(lamports) }),
+  );
+  tx.sign(payer);
+  const sent = await solanaRelay({
+    data: {
+      method: "send",
+      raw: Buffer.from(tx.serialize()).toString("base64"),
+      blockhash: block.blockhash,
+      lastValidBlockHeight: block.lastValidBlockHeight,
+    },
+  });
+  if (!("signature" in sent) || typeof sent.signature !== "string") throw new Error("Solana did not take the move.");
+  return { signature: sent.signature, sent: lamports };
 }
