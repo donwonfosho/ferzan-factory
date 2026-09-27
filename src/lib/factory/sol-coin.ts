@@ -94,7 +94,7 @@ export const getSolCoin = createServerFn({ method: "POST" })
 
 /** Builds an unsigned buy (amount = lamports) or sell (amount = raw token units) for `wallet`. */
 export const buildSolSwap = createServerFn({ method: "POST" })
-  .validator((data: unknown): { mint: string; wallet: string; side: "buy" | "sell"; amount: string; slippageBps: number } => {
+  .validator((data: unknown): { mint: string; wallet: string; side: "buy" | "sell"; amount: string; slippageBps: number; simulate: boolean } => {
     const row = (data && typeof data === "object" ? data : {}) as Record<string, unknown>;
     const mint = String(row.mint ?? "");
     const wallet = String(row.wallet ?? "");
@@ -103,15 +103,22 @@ export const buildSolSwap = createServerFn({ method: "POST" })
     const slippageBps = Math.max(10, Math.min(5000, Math.floor(Number(row.slippageBps ?? 500))));
     if (!B58.test(mint) || !B58.test(wallet)) throw new Error("Coin or wallet looks wrong.");
     if (!/^\d{1,20}$/.test(amount) || amount === "0") throw new Error("Amount looks wrong.");
-    return { mint, wallet, side, amount, slippageBps };
+    return { mint, wallet, side, amount, slippageBps, simulate: row.simulate === true };
   })
-  .handler(async ({ data }): Promise<{ txB64: string; amountOut: string; minOut: string }> => {
+  .handler(async ({ data }): Promise<{ txB64: string; amountOut: string; minOut: string; simError: string }> => {
     await (await import("./guard.server")).guardRelay("send");
     // The swap is unsigned and built for the visitor's own wallet, so the Launch Bot needs no key for it.
     const res = await fetch(`${API}/sol-swap`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ mint: data.mint, wallet: data.wallet, side: data.side, amount: data.amount, slippage_bps: data.slippageBps }),
+      body: JSON.stringify({
+        mint: data.mint,
+        wallet: data.wallet,
+        side: data.side,
+        amount: data.amount,
+        slippage_bps: data.slippageBps,
+        simulate: data.simulate,
+      }),
       signal: AbortSignal.timeout(60_000),
     }).catch(() => null);
     if (!res) throw new Error("The trade service did not answer. Try again.");
@@ -123,5 +130,41 @@ export const buildSolSwap = createServerFn({ method: "POST" })
     if (!/^[A-Za-z0-9+/=]{100,}$/.test(txB64) || !/^\d+$/.test(amountOut) || !/^\d+$/.test(minOut)) {
       throw new Error("The trade service sent a transaction we cannot use.");
     }
-    return { txB64, amountOut, minOut };
+    // With simulate, the droplet dry-runs the trade for this wallet; say why Solana would reject it.
+    let simError = "";
+    if (out.sim_err) {
+      const logs = Array.isArray(out.sim_logs) ? out.sim_logs.map(String) : [];
+      const hint = logs.reverse().find((l) => /insufficient|error|failed|exceed/i.test(l)) ?? "";
+      simError = (hint || JSON.stringify(out.sim_err)).replace(/^Program log: /, "").slice(0, 200);
+    }
+    return { txB64, amountOut, minOut, simError };
+  });
+
+/**
+ * Broadcasts a wallet-signed Ferzan Meteora transaction (trade, launch or fee claim) through the
+ * Launch Bot's RPC, which is more reliable than the public one a browser can reach.
+ */
+export const sendSignedSolana = createServerFn({ method: "POST" })
+  .validator((data: unknown): { signedB64: string } => {
+    const row = (data && typeof data === "object" ? data : {}) as Record<string, unknown>;
+    const signedB64 = String(row.signedB64 ?? "");
+    if (!/^[A-Za-z0-9+/=]{100,2000}$/.test(signedB64)) throw new Error("Transaction looks wrong.");
+    return { signedB64 };
+  })
+  .handler(async ({ data }): Promise<{ signature: string }> => {
+    const guard = await import("./guard.server");
+    await guard.guardRelay("send");
+    await guard.assertAllowedSolanaTx(data.signedB64);
+    const res = await fetch(`${API}/sol-fees/send`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ signed_tx_b64: data.signedB64 }),
+      signal: AbortSignal.timeout(45_000),
+    }).catch(() => null);
+    if (!res) throw new Error("Solana did not answer. Try again.");
+    const out = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+    if (!res.ok) throw new Error(typeof out.detail === "string" ? out.detail.slice(0, 200) : `Sending failed (${res.status}).`);
+    const signature = str(out.signature, 100);
+    if (!B58.test(signature.slice(0, 44)) || signature.length < 64) throw new Error("Solana did not return a signature.");
+    return { signature };
   });

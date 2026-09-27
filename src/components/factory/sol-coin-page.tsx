@@ -102,7 +102,14 @@ export function SolCoinPage({ mint }: { mint: string }) {
         throw new Error(`You hold ${formatSmart(BigInt(coin.mine.tokenRaw), TOKEN_DECIMALS)} ${coin.symbol}.`);
       }
       setBusy("Preparing the trade.");
-      const built = await buildSolSwap({ data: { mint, wallet: w.address, side, amount: raw.toString(), slippageBps: slip } });
+      const built = await buildSolSwap({ data: { mint, wallet: w.address, side, amount: raw.toString(), slippageBps: slip, simulate: true } });
+      if (built.simError) {
+        throw new Error(
+          /insufficient/i.test(built.simError)
+            ? "Not enough SOL for this trade plus the network fee and token account (keep about 0.01 SOL extra)."
+            : `Solana would reject this trade: ${built.simError}`,
+        );
+      }
       setBusy("Approve it in your wallet.");
       const signature = await w.signAndSend(fromB64(built.txB64));
       setLastTx(signature);

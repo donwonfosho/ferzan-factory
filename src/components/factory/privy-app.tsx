@@ -4,6 +4,7 @@ import {
   toSolanaWalletConnectors,
   useExportWallet as useExportSolanaWallet,
   useSignAndSendTransaction,
+  useSignTransaction,
   useWallets as useSolanaWallets,
 } from "@privy-io/react-auth/solana";
 import { createSolanaRpc, createSolanaRpcSubscriptions } from "@solana/kit";
@@ -26,6 +27,7 @@ function Bridge() {
   const { wallets } = useWallets();
   const { wallets: solWallets } = useSolanaWallets();
   const { signAndSendTransaction } = useSignAndSendTransaction();
+  const { signTransaction } = useSignTransaction();
   const { exportWallet } = useExportWallet();
   const { exportWallet: exportSolanaWallet } = useExportSolanaWallet();
   const setWallet = useFactory((s) => s.setWallet);
@@ -51,6 +53,11 @@ function Bridge() {
         const { signature } = await signAndSendTransaction({ transaction: tx, wallet: sol, chain: "solana:mainnet" });
         return base58(signature);
       },
+      solSign: async (tx: Uint8Array) => {
+        if (!sol) throw new Error("This account has no Solana wallet yet.");
+        const { signedTransaction } = await signTransaction({ transaction: tx, wallet: sol });
+        return signedTransaction;
+      },
       login,
       logout,
       who: authenticated ? who : "",
@@ -64,7 +71,7 @@ function Bridge() {
     });
     // The rest of the site (threads, profile, portfolio) keys on this address.
     if (authenticated && evm) setWallet(evm.address);
-  }, [ready, authenticated, evm, sol, who, login, logout, signAndSendTransaction, exportWallet, exportSolanaWallet, setWallet]);
+  }, [ready, authenticated, evm, sol, who, login, logout, signAndSendTransaction, signTransaction, exportWallet, exportSolanaWallet, setWallet]);
 
   useEffect(() => () => setAccountWallets(null), []);
   return null;
@@ -87,8 +94,9 @@ export default function PrivyApp() {
         solana: {
           rpcs: {
             "solana:mainnet": {
-              rpc: createSolanaRpc("https://api.mainnet-beta.solana.com"),
-              rpcSubscriptions: createSolanaRpcSubscriptions("wss://api.mainnet-beta.solana.com"),
+              // The public mainnet-beta endpoint often refuses browsers, which breaks Privy's transaction preview.
+              rpc: createSolanaRpc("https://solana-rpc.publicnode.com"),
+              rpcSubscriptions: createSolanaRpcSubscriptions("wss://solana-rpc.publicnode.com"),
             },
           },
         },

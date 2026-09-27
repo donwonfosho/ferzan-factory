@@ -7,6 +7,13 @@
 import { useSyncExternalStore } from "react";
 import { Transaction, VersionedTransaction } from "@solana/web3.js";
 import { provider as injectedProvider, switchChain, type EvmChainId } from "./deploy";
+import { sendSignedSolana } from "./sol-coin";
+
+function toBase64(bytes: Uint8Array): string {
+  let text = "";
+  for (const b of bytes) text += String.fromCharCode(b);
+  return btoa(text);
+}
 
 /** Public Privy app id (not a secret). The deploy server builds without .grok/app-env.json, so it is the fallback here; a VITE_PRIVY_APP_ID in the build environment still wins. */
 export const PRIVY_APP_ID: string = import.meta.env.VITE_PRIVY_APP_ID || "cmuitovv501qx0cl6wnj2qvvt";
@@ -21,6 +28,8 @@ export type AccountWallets = {
   evmProvider: () => Promise<Eip1193>;
   /** Signs and sends serialized Solana transaction bytes; returns the base58 signature. */
   solSignAndSend: (tx: Uint8Array) => Promise<string>;
+  /** Signs serialized Solana transaction bytes without sending them; returns the signed bytes. */
+  solSign: (tx: Uint8Array) => Promise<Uint8Array>;
   login: () => void;
   logout: () => Promise<void>;
   /** Email, Google address or @handle of the signed-in user, for display only. */
@@ -120,7 +129,15 @@ function phantom(): PhantomLike | null {
 /** The Solana wallet to sign with. */
 export async function solanaWallet(): Promise<{ address: string; signAndSend: (tx: Uint8Array) => Promise<string> }> {
   if (account?.authenticated && account.solAddress) {
-    return { address: account.solAddress, signAndSend: account.solSignAndSend };
+    const signer = account;
+    // The account wallet signs; the Launch Bot's RPC sends. Privy's own send leans on the public RPC.
+    return {
+      address: account.solAddress,
+      signAndSend: async (bytes) => {
+        const signed = await signer.solSign(bytes);
+        return (await sendSignedSolana({ data: { signedB64: toBase64(signed) } })).signature;
+      },
+    };
   }
   const sol = phantom();
   if (!sol?.signAndSendTransaction) needSignIn("Solana");
