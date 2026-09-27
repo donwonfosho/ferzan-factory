@@ -6,7 +6,8 @@ const SQUADS_VAULT = "2vWqwX72ijo24vgvPQW6yBQh2qXE4jrEd18YDdEbWKLG";
 const FLAGSHIP_CONFIG = "8YoqjUBsyfgQv5s7fWR5nyjeMd43rKvMUEexAuYRCvbo";
 
 const SUPPLY = [
-  { pct: "35%", amount: "350,000,000", name: "Public curve", detail: "Every one of these is bought on the curve. No presale, no dev buy." },
+  { pct: "28%", amount: "279,991,997", name: "Public curve", detail: "Every one of these is bought on the curve. No presale, no dev buy." },
+  { pct: "7%", amount: "69,998,001", name: "Graduation liquidity", detail: "Paired with the SOL raised in the Meteora pool at graduation. The liquidity is locked forever." },
   { pct: "5%", amount: "50,000,000", name: "Unlocks at graduation", detail: "Airdrop and early rewards, held by the Ferzan multisig." },
   { pct: "60%", amount: "600,000,000", name: "Locked, 24 months", detail: "Meteora releases 25,000,000 a month to the multisig. Nobody can speed it up." },
 ] as const;
