@@ -105,7 +105,7 @@ export const buildSolSwap = createServerFn({ method: "POST" })
     if (!/^\d{1,20}$/.test(amount) || amount === "0") throw new Error("Amount looks wrong.");
     return { mint, wallet, side, amount, slippageBps, simulate: row.simulate === true };
   })
-  .handler(async ({ data }): Promise<{ txB64: string; amountOut: string; minOut: string; simError: string }> => {
+  .handler(async ({ data }): Promise<{ txB64: string; amountOut: string; minOut: string; simError: string; feeBps: number | null }> => {
     await (await import("./guard.server")).guardRelay("send");
     // The swap is unsigned and built for the visitor's own wallet, so the Launch Bot needs no key for it.
     const res = await fetch(`${API}/sol-swap`, {
@@ -137,7 +137,10 @@ export const buildSolSwap = createServerFn({ method: "POST" })
       const hint = logs.reverse().find((l) => /insufficient|error|failed|exceed/i.test(l)) ?? "";
       simError = (hint || JSON.stringify(out.sim_err)).replace(/^Program log: /, "").slice(0, 200);
     }
-    return { txB64, amountOut, minOut, simError };
+    // The fee this trade pays right now, launch fee included (older droplet builds do not send it).
+    const fee = Number(out.fee_bps);
+    const feeBps = Number.isInteger(fee) && fee >= 0 && fee <= 10_000 ? fee : null;
+    return { txB64, amountOut, minOut, simError, feeBps };
   });
 
 /**

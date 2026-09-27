@@ -49,6 +49,7 @@ export function SolCoinPage({ mint }: { mint: string }) {
   const [amount, setAmount] = useState("");
   const [slip, setSlip] = useState(500);
   const [quote, setQuote] = useState<bigint | null>(null);
+  const [feeBps, setFeeBps] = useState<number | null>(null);
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
   const [lastTx, setLastTx] = useState("");
@@ -81,8 +82,14 @@ export function SolCoinPage({ mint }: { mint: string }) {
     if (!raw || raw <= 0n || !knownWallet || !coin || coin.graduated) return;
     const id = window.setTimeout(() => {
       void buildSolSwap({ data: { mint, wallet: knownWallet, side, amount: raw.toString(), slippageBps: slip } }).then(
-        (q) => setQuote(BigInt(q.amountOut)),
-        () => setQuote(null),
+        (q) => {
+          setQuote(BigInt(q.amountOut));
+          setFeeBps(q.feeBps);
+        },
+        () => {
+          setQuote(null);
+          setFeeBps(null);
+        },
       );
     }, 600);
     return () => window.clearTimeout(id);
@@ -229,6 +236,12 @@ export function SolCoinPage({ mint }: { mint: string }) {
           {quote !== null ? (
             <p className="text-sm text-muted">
               ≈ {side === "buy" ? `${formatSmart(quote, TOKEN_DECIMALS)} ${coin.symbol}` : `${formatSmart(quote, SOL_DECIMALS)} SOL`}
+              {feeBps !== null ? ` · fee ${feeBps >= 1000 ? Math.round(feeBps / 100) : (feeBps / 100).toFixed(feeBps % 100 ? 2 : 0)}%` : ""}
+            </p>
+          ) : null}
+          {quote !== null && feeBps !== null && feeBps >= 300 ? (
+            <p className="text-sm text-sell">
+              The launch fee is still high. It keeps falling in the first minutes after launch and settles at 1%.
             </p>
           ) : null}
           <div className="flex items-center gap-2 text-sm text-muted">
