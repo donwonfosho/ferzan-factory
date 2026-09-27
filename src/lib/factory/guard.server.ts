@@ -6,13 +6,11 @@
  * 2. Each visitor (by Cloudflare's cf-connecting-ip) gets a per-minute budget, counted in the
  *    database so it holds across serverless instances. Addresses are stored as a salted hash.
  * 3. Transactions the relay prepares or broadcasts must be one of the things this site
- *    actually sends: a site curve or token deploy, buy/sell/claim on a coin on the board,
- *    or a plain transfer of the chain's coin.
+ *    actually sends: buy/sell/claim on a coin on the board, or a plain transfer of the chain's coin.
  */
 import { getRequest } from "@tanstack/react-start/server";
 import { assertSameSiteRequest } from "@/lib/auth/isolation.server";
-import { FERZAN_CURVE_BYTECODE, CURVE_SELECTOR } from "./curve-bytecode";
-import { FERZAN_TOKEN_BYTECODE } from "./token-bytecode";
+import { CURVE_SELECTOR } from "./curve-bytecode";
 
 export type RelayBucket = "read" | "send";
 
@@ -95,13 +93,11 @@ export async function guardRelay(bucket: RelayBucket): Promise<void> {
   if ((rows[0]?.hits ?? 0) > LIMITS[bucket]) throw new Error("Too many requests from here. Wait a minute and try again.");
 }
 
-/** EVM: only site deploys, and buy/sell/claim on a coin that is on the board. */
+/** EVM: buy/sell/claim on a coin that is on the board, or a plain coin transfer. */
 export async function assertAllowedEvmTx(chain: string, to: string | null | undefined, data: string): Promise<void> {
   const body = data.toLowerCase();
-  if (!to) {
-    if (body.startsWith(FERZAN_CURVE_BYTECODE.toLowerCase()) || body.startsWith(FERZAN_TOKEN_BYTECODE.toLowerCase())) return;
-    throw new Error("Only Ferzan coins can be created from this site.");
-  }
+  // Launches go through the Ferzan bots' factories now; the site's own contracts are no longer deployed.
+  if (!to) throw new Error("New coins launch through the Ferzan factory. Use the Launch page.");
   // A plain coin transfer (no calldata): the account menu's Send, and moving funds out of the old browser wallet.
   if (body === "0x" || body === "") return;
   if (!CURVE_CALLS.has(body.slice(0, 10))) throw new Error("This site only sends buy, sell and claim to a coin.");

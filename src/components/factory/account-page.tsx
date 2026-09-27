@@ -457,7 +457,8 @@ const SEND_CHAINS: EvmChainId[] = ["base", "ethereum", "bsc", "robinhood", "arc"
 function SendPanel({ siteAddress }: { siteAddress: string }) {
   const account = useAccountWallets();
   if (account?.authenticated && account.evmAddress) return <SendForm from={account.evmAddress} viaAccount />;
-  if (siteAddress) return <SendForm from={siteAddress} viaAccount={false} />;
+  // The old browser wallet no longer sends; its coins move with "Move funds" on Manage account.
+  if (siteAddress) return <p className="text-sm text-muted">Sign in first. To empty the old browser wallet, use Move funds on the Manage account page.</p>;
   return <p className="text-sm text-muted">{PRIVY_APP_ID ? "Sign in on the Manage account page first." : "Create a wallet first."}</p>;
 }
 

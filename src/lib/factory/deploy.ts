@@ -174,7 +174,7 @@ async function broadcast(input: {
   value?: bigint;
 }): Promise<{ hash: string; contractAddress: string | null; status: string }> {
   if (siteMatches(input.from)) {
-    return sendWithSiteWallet(input);
+    throw new Error("The old browser wallet is retired. Sign in, then move its coins on Manage account.");
   }
   // Signed in with a Ferzan account that owns `from`: its wallet signs (no extension needed).
   const account = accountWallets();
