@@ -5,7 +5,7 @@
  */
 import { createServerFn } from "@tanstack/react-start";
 
-export const BOT_CURVE_CHAINS = ["base", "bsc", "ethereum", "robinhood"] as const;
+export const BOT_CURVE_CHAINS = ["base", "bsc", "ethereum", "robinhood", "arc"] as const;
 export type BotCurveChain = (typeof BOT_CURVE_CHAINS)[number];
 
 /** Verified against contracts/FerzanCurve.sol and CurveToken.sol (keccak256 of each signature). */
@@ -33,8 +33,15 @@ export const addrWord = (a: string) => a.toLowerCase().replace(/^0x/, "").padSta
 
 /** Links from the bots (curve.html) that this site can show itself. */
 export function siteCoinHref(url: string): string | null {
-  const m = /curve\.html\?chain=(base|bsc|ethereum|robinhood)&curve=(0x[0-9a-fA-F]{40})/.exec(url);
+  const m = /curve\.html\?chain=(base|bsc|ethereum|robinhood|arc)&curve=(0x[0-9a-fA-F]{40})/.exec(url);
   if (m) return `/coin/${m[1]}/${m[2].toLowerCase()}`;
+  // Standard (fixed-supply) coins on Tron, TON and Arc: the bots link their explorer page; show ours instead.
+  const tron = /^https:\/\/tronscan\.org\/#\/token20\/(T[1-9A-HJ-NP-Za-km-z]{33})$/.exec(url);
+  if (tron) return `/token/tron/${tron[1]}`;
+  const ton = /^https:\/\/tonviewer\.com\/([A-Za-z0-9_-]{48})$/.exec(url);
+  if (ton) return `/token/ton/${ton[1]}`;
+  const arc = /^https:\/\/explorer\.arc\.io\/token\/(0x[0-9a-fA-F]{40})$/.exec(url);
+  if (arc) return `/token/arc/${arc[1].toLowerCase()}`;
   // The bots hand out Jupiter links for Solana coins; those get the on-site Solana page instead.
   const sol = /^https:\/\/jup\.ag\/tokens\/([1-9A-HJ-NP-Za-km-z]{32,44})$/.exec(url);
   return sol ? `/coin/solana/${sol[1]}` : null;

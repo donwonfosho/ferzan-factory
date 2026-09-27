@@ -4,7 +4,7 @@ import { createServerFn } from "@tanstack/react-start";
 export const FERZAN_API = "https://launch.ferzaneco.com/api";
 
 export type TelegramSort = "new" | "koth" | "trending" | "volume" | "graduated";
-export type TelegramChain = "" | "base" | "bsc" | "ethereum" | "robinhood" | "solana";
+export type TelegramChain = "" | "base" | "bsc" | "ethereum" | "robinhood" | "solana" | "arc" | "tron" | "ton";
 
 export type TelegramCoin = {
   chain: string;
@@ -40,7 +40,7 @@ export type TelegramLeader = {
 };
 
 const SORTS = new Set<string>(["new", "koth", "trending", "volume", "graduated"]);
-const CHAINS = new Set<string>(["", "base", "bsc", "ethereum", "robinhood", "solana"]);
+const CHAINS = new Set<string>(["", "base", "bsc", "ethereum", "robinhood", "solana", "arc", "tron", "ton"]);
 const PERIODS = new Set<string>(["7d", "30d", "all"]);
 const cache = new Map<string, { at: number; value: unknown }>();
 

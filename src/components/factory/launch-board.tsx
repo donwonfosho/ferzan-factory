@@ -20,9 +20,12 @@ export const BOARD_PICKS: { id: "all" | MarkChain; label: string }[] = [
   { id: "bsc", label: "BNB" },
   { id: "ethereum", label: "Ethereum" },
   { id: "robinhood", label: "Robinhood" },
+  { id: "arc", label: "Arc" },
+  { id: "tron", label: "Tron" },
+  { id: "ton", label: "TON" },
 ];
-const BOARD_CHAINS = new Set<string>(["base", "bsc", "ethereum", "robinhood", "solana"]);
-const MARKS = new Set<string>(["solana", "base", "bsc", "ethereum", "robinhood", "arc"]);
+const BOARD_CHAINS = new Set<string>(["base", "bsc", "ethereum", "robinhood", "solana", "arc", "tron", "ton"]);
+const MARKS = new Set<string>(["solana", "base", "bsc", "ethereum", "robinhood", "arc", "tron", "ton"]);
 
 /** Where a coin opens: its page on this site, or (only if this site cannot show it) the original link. */
 export function coinHref(coin: { url: string }): { href: string; external: boolean } {

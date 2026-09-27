@@ -15,7 +15,7 @@ import { ChainMark, type MarkChain } from "./chain-mark";
 import { compactUsd } from "./market-line";
 import { Button, Mark } from "./ui";
 
-const MARKS = new Set<string>(["solana", "base", "bsc", "ethereum", "robinhood", "arc"]);
+const MARKS = new Set<string>(["solana", "base", "bsc", "ethereum", "robinhood", "arc", "tron", "ton"]);
 const EMPTY: WalletPortfolio = { holdings: [], launches: [], valueUsd: 0, earnedUsd: 0, referralUsd: 0 };
 
 function amount(n: number): string {

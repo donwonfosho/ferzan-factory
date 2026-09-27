@@ -23,6 +23,7 @@ import { Route as PAddressRouteImport } from './routes/p/$address'
 import { Route as TIdRouteImport } from './routes/t/$id'
 import { Route as CChainAddressRouteImport } from './routes/c/$chain/$address'
 import { Route as CoinChainCurveRouteImport } from './routes/coin/$chain/$curve'
+import { Route as TokenChainAddressRouteImport } from './routes/token/$chain/$address'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -94,6 +95,11 @@ const CoinChainCurveRoute = CoinChainCurveRouteImport.update({
   path: '/coin/$chain/$curve',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TokenChainAddressRoute = TokenChainAddressRouteImport.update({
+  id: '/token/$chain/$address',
+  path: '/token/$chain/$address',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -110,6 +116,7 @@ export interface FileRoutesByFullPath {
   '/t/$id': typeof TIdRoute
   '/c/$chain/$address': typeof CChainAddressRoute
   '/coin/$chain/$curve': typeof CoinChainCurveRoute
+  '/token/$chain/$address': typeof TokenChainAddressRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -126,6 +133,7 @@ export interface FileRoutesByTo {
   '/t/$id': typeof TIdRoute
   '/c/$chain/$address': typeof CChainAddressRoute
   '/coin/$chain/$curve': typeof CoinChainCurveRoute
+  '/token/$chain/$address': typeof TokenChainAddressRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -143,6 +151,7 @@ export interface FileRoutesById {
   '/t/$id': typeof TIdRoute
   '/c/$chain/$address': typeof CChainAddressRoute
   '/coin/$chain/$curve': typeof CoinChainCurveRoute
+  '/token/$chain/$address': typeof TokenChainAddressRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -161,6 +170,7 @@ export interface FileRouteTypes {
     | '/t/$id'
     | '/c/$chain/$address'
     | '/coin/$chain/$curve'
+    | '/token/$chain/$address'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -177,6 +187,7 @@ export interface FileRouteTypes {
     | '/t/$id'
     | '/c/$chain/$address'
     | '/coin/$chain/$curve'
+    | '/token/$chain/$address'
   id:
     | '__root__'
     | '/'
@@ -193,6 +204,7 @@ export interface FileRouteTypes {
     | '/t/$id'
     | '/c/$chain/$address'
     | '/coin/$chain/$curve'
+    | '/token/$chain/$address'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -210,6 +222,7 @@ export interface RootRouteChildren {
   TIdRoute: typeof TIdRoute
   CChainAddressRoute: typeof CChainAddressRoute
   CoinChainCurveRoute: typeof CoinChainCurveRoute
+  TokenChainAddressRoute: typeof TokenChainAddressRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -312,6 +325,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CoinChainCurveRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/token/$chain/$address': {
+      id: '/token/$chain/$address'
+      path: '/token/$chain/$address'
+      fullPath: '/token/$chain/$address'
+      preLoaderRoute: typeof TokenChainAddressRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -330,6 +350,7 @@ const rootRouteChildren: RootRouteChildren = {
   TIdRoute: TIdRoute,
   CChainAddressRoute: CChainAddressRoute,
   CoinChainCurveRoute: CoinChainCurveRoute,
+  TokenChainAddressRoute: TokenChainAddressRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
