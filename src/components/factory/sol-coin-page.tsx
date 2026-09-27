@@ -165,18 +165,18 @@ export function SolCoinPage({ mint }: { mint: string }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
         <div className="ticket">
           <p className="text-xs text-muted">Market cap</p>
-          <p className="text-lg font-extrabold">{usd(coin.mcapUsd)}</p>
+          <p className="text-base font-extrabold tabular-nums sm:text-lg">{usd(coin.mcapUsd)}</p>
         </div>
         <div className="ticket">
           <p className="text-xs text-muted">Price</p>
-          <p className="text-lg font-extrabold">{coin.price ? coin.price.toPrecision(3) : "—"} SOL</p>
+          <p className="text-base font-extrabold tabular-nums sm:text-lg">{coin.price ? coin.price.toPrecision(3) : "—"} SOL</p>
         </div>
         <div className="ticket">
           <p className="text-xs text-muted">{coin.graduated ? "Graduated" : "To graduation"}</p>
-          <p className="text-lg font-extrabold">{coin.progress.toFixed(1)}%</p>
+          <p className="text-base font-extrabold tabular-nums sm:text-lg">{coin.progress.toFixed(1)}%</p>
         </div>
       </div>
       <div className="h-2 w-full bg-surface shadow-border">

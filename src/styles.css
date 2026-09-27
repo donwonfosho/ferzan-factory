@@ -64,16 +64,27 @@
   }
 }
 
-.ticket {
-  position: relative;
-  border-radius: 16px;
-  background: #11181a;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
-  padding: 1.25rem;
-}
+/* In the components layer so per-card utilities (px-2, py-3 ...) can override the default padding. */
+@layer components {
+  .ticket {
+    position: relative;
+    min-width: 0; /* grid and flex children may shrink on phones instead of pushing past the screen edge */
+    overflow-wrap: anywhere; /* long numbers and addresses wrap instead of being cut off */
+    border-radius: 16px;
+    background: #11181a;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+    padding: 1.25rem;
+  }
 
-.ticket::before {
-  content: none;
+  .ticket::before {
+    content: none;
+  }
+
+  @media (max-width: 480px) {
+    .ticket {
+      padding: 0.875rem; /* phones: more room for the numbers inside small cards */
+    }
+  }
 }
 
 .frame {

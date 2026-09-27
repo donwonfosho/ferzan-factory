@@ -247,18 +247,18 @@ export function BotCoinPage({ chain, curve }: { chain: BotCurveChain; curve: str
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
         <div className="ticket">
           <p className="text-xs text-muted">Market cap</p>
-          <p className="text-lg font-extrabold">{usd(state.mcapUsd)}</p>
+          <p className="text-base font-extrabold tabular-nums sm:text-lg">{usd(state.mcapUsd)}</p>
         </div>
         <div className="ticket">
           <p className="text-xs text-muted">Price</p>
-          <p className="text-lg font-extrabold">{state.price ? state.price.toPrecision(3) : "—"} {state.native}</p>
+          <p className="text-base font-extrabold tabular-nums sm:text-lg">{state.price ? state.price.toPrecision(3) : "—"} {state.native}</p>
         </div>
         <div className="ticket">
           <p className="text-xs text-muted">{state.graduated ? "Graduated" : "To graduation"}</p>
-          <p className="text-lg font-extrabold">{state.progress.toFixed(1)}%</p>
+          <p className="text-base font-extrabold tabular-nums sm:text-lg">{state.progress.toFixed(1)}%</p>
         </div>
       </div>
       <div className="h-2 w-full bg-surface shadow-border">
