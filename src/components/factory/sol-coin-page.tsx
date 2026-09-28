@@ -7,6 +7,7 @@ import { cn } from "@/lib/cn";
 import { CandleChart } from "./chart-pro";
 import { Button, TextInput } from "./ui";
 import { CreatorScoreBox } from "./creator-score";
+import { ShareCoin } from "./perks";
 
 const TIMEFRAMES = [
   { tf: 60, label: "1m" },
@@ -175,6 +176,7 @@ export function SolCoinPage({ mint }: { mint: string }) {
         </div>
       </div>
 
+      <ShareCoin chain="solana" token={coin.mint} symbol={coin.symbol} />
       <CreatorScoreBox token={coin.mint} />
 
       <div className="grid grid-cols-3 gap-2 sm:gap-3">

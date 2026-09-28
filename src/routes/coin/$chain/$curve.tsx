@@ -3,25 +3,7 @@ import { BotCoinPage } from "@/components/factory/bot-coin-page";
 import { SolCoinPage } from "@/components/factory/sol-coin-page";
 import { BOT_CURVE_CHAINS, type BotCurveChain } from "@/lib/factory/bot-curve";
 
-const OG_API = "https://launch.ferzaneco.com/api/og";
-const ogMeta = (chain: string, id: string) => {
-  const safe = /^[a-z]{2,12}$/.test(chain) && /^[0-9A-Za-z_-]{20,70}$/.test(id);
-  const img = safe ? `${OG_API}/${chain}/${id}.png` : "https://ferzan-factory.com/brand/lockup.jpg";
-  return [
-    { property: "og:type", content: "website" },
-    { property: "og:site_name", content: "Ferzan Factory" },
-    { property: "og:title", content: "Trade it on Ferzan Factory" },
-    { property: "og:image", content: img },
-    { property: "og:image:width", content: "1200" },
-    { property: "og:image:height", content: "630" },
-    { name: "twitter:card", content: "summary_large_image" },
-    { name: "twitter:image", content: img },
-  ];
-};
-
 export const Route = createFileRoute("/coin/$chain/$curve")({
-  // Link previews in Telegram and X show a live card for this coin (drawn by the Ferzan API).
-  head: ({ params }) => ({ meta: ogMeta(params.chain, params.curve) }),
   component: BotCoinRoute,
 });
 

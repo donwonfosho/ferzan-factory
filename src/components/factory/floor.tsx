@@ -11,7 +11,7 @@ import { ChainMark, type MarkChain } from "./chain-mark";
 import { CapChange, Spark } from "./market-line";
 import { FerzanHero, KingOfTheHill, OnlyOnFerzan } from "./floor-live";
 
-const OPEN_CHAINS = ["base", "bsc", "ethereum", "robinhood", "arc", "solana"] as const;
+const OPEN_CHAINS = ["solana", "base", "bsc", "ethereum", "robinhood", "arc", "tron", "ton"] as const;
 
 export function Floor() {
   const [chain, setChain] = useState<"all" | MarkChain>("all");
@@ -129,15 +129,36 @@ function EarlierCoins() {
   );
 }
 
+const OPEN_LABEL: Record<(typeof OPEN_CHAINS)[number], string> = {
+  solana: "SOL",
+  base: "Base",
+  bsc: "BNB",
+  ethereum: "ETH",
+  robinhood: "Hood",
+  arc: "Arc",
+  tron: "Tron",
+  ton: "TON",
+};
+
 function OpenContract() {
   const navigate = useNavigate();
   const [value, setValue] = useState("");
-  const [chain, setChain] = useState<(typeof OPEN_CHAINS)[number]>("base");
+  const [chain, setChain] = useState<(typeof OPEN_CHAINS)[number]>("solana");
   const [error, setError] = useState("");
 
   function open(e: React.FormEvent) {
     e.preventDefault();
     const address = value.trim();
+    if (chain === "tron" || chain === "ton") {
+      const ok = chain === "tron" ? /^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(address) : /^[A-Za-z0-9_-]{48}$/.test(address);
+      if (!ok) {
+        setError(chain === "tron" ? "Paste the Tron token address. It starts with T and is 34 characters." : "Paste the TON jetton address (48 characters, starts with EQ or UQ).");
+        return;
+      }
+      setError("");
+      void navigate({ to: "/token/$chain/$address", params: { chain, address } });
+      return;
+    }
     const evm = chain !== "solana";
     if (evm && !/^0x[a-fA-F0-9]{40}$/.test(address)) {
       setError("Paste the contract address. It starts with 0x and is 42 characters.");
@@ -154,8 +175,8 @@ function OpenContract() {
   return (
     <form id="open" onSubmit={open} className="ticket">
       <p className="text-sm font-medium text-cyan">Open a contract</p>
-      <p className="mt-2 text-sm text-muted">Pick the chain, then paste the contract. A curve on that chain can be traded here.</p>
-      <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-6">
+      <p className="mt-2 text-sm text-muted">Pick the chain, then paste the contract. Curves on Solana, Base, BNB, Ethereum, Robinhood and Arc trade right here; Tron and TON coins open their Ferzan page with a link to trade in the Trade Bot.</p>
+      <div className="mt-3 grid grid-cols-4 gap-2 sm:grid-cols-8">
         {OPEN_CHAINS.map((id) => (
           <button
             key={id}
@@ -165,7 +186,7 @@ function OpenContract() {
           >
             <ChainMark id={id} className="mx-auto h-7 w-7" />
             <span className="mt-1 block text-xs font-semibold">
-              {id === "ethereum" ? "ETH" : id === "bsc" ? "BNB" : id === "robinhood" ? "Hood" : id === "solana" ? "SOL" : CHAINS[id].label}
+              {OPEN_LABEL[id]}
             </span>
           </button>
         ))}
@@ -174,7 +195,7 @@ function OpenContract() {
         <input
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          placeholder={chain === "solana" ? "Mint address" : "0x…"}
+          placeholder={chain === "solana" ? "Mint address" : chain === "tron" ? "T…" : chain === "ton" ? "EQ… or UQ…" : "0x…"}
           spellCheck={false}
           className="min-h-11 w-full bg-bg px-3 shadow-border outline-none"
           aria-label="Contract address"

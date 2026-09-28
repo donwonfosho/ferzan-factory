@@ -17,6 +17,7 @@ import { cn } from "@/lib/cn";
 import { Button, TextInput } from "./ui";
 import { CandleChart, CurveGraphic } from "./chart-pro";
 import { CreatorScoreBox } from "./creator-score";
+import { ShareCoin } from "./perks";
 
 const ZERO = "0x0000000000000000000000000000000000000000";
 const TIMEFRAMES = [
@@ -251,6 +252,7 @@ export function BotCoinPage({ chain, curve }: { chain: BotCurveChain; curve: str
         </div>
       </div>
 
+      <ShareCoin chain={state.chain} token={state.token} symbol={state.symbol} />
       <CreatorScoreBox token={state.token} />
 
       <div className="grid grid-cols-3 gap-2 sm:gap-3">

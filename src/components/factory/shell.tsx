@@ -13,6 +13,7 @@ import { Button } from "./ui";
 import { WalletBalances } from "./gas-step";
 import { LaunchWatch } from "./launch-watch";
 import { GraduationBanner, TradeTape } from "./pulse-live";
+import { InstallApp } from "./perks";
 
 const LINKS = [
   { to: "/", label: "Floor" },
@@ -148,6 +149,9 @@ export function Shell({ children }: { children: ReactNode }) {
       <LaunchWatch />
       <GraduationBanner />
       <footer className="mx-auto max-w-5xl px-4 pb-10 text-sm text-muted">
+        <div className="mb-4">
+          <InstallApp compact />
+        </div>
         <p>
           Site curves: 1% on every trade. 60% treasury, 30% creator, 10% to a referrer when a buyer names a wallet. After graduation the creator keeps 30% of the pool.
           Telegram curves: 1% on every trade. 50% creator, 50% platform, or 50% creator, 40% platform, 10% referrer when a buyer came from a referral link.

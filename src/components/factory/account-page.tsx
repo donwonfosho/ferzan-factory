@@ -26,6 +26,7 @@ import { formatSmart, parseDecimal } from "@/lib/factory/units";
 import { readPrefs, writePrefs, type ChartPlot, type LaunchAlerts } from "@/lib/factory/prefs";
 import { FundButton } from "./fund-wallet";
 import type { EvmChainId } from "@/lib/factory/deploy";
+import { FerzanPerksCard, InstallApp } from "./perks";
 
 const PROFILE_ID = "ferzan-profile-id";
 
@@ -165,6 +166,7 @@ export function AccountPage() {
           <p className="mt-2 text-sm text-muted">Profile, wallets, rewards, and what the chart shows.</p>
           <AccountCard />
           <MoveFunds />
+          <FerzanPerksCard sol={mineSol} />
           <MenuGroup label="Account">
             <MenuRow title="Edit profile" onClick={() => open("profile")} />
             <MenuRow title="Portfolio" detail="Balances, holdings, and launches" onClick={() => open("portfolio")} />
@@ -177,6 +179,7 @@ export function AccountPage() {
           <MenuGroup label="Preferences">
             <MenuRow title="Settings" detail="Chart, launch alerts, and sound" onClick={() => open("settings")} />
           </MenuGroup>
+          <InstallApp />
         </>
       )}
 

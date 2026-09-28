@@ -24,6 +24,7 @@ import { ChainMark } from "./chain-mark";
 import { ProjectPicture } from "./launch-form";
 import { TermsGate } from "./terms";
 import { Button, Label, TextInput } from "./ui";
+import { LaunchPerksNote } from "./perks";
 
 function bytesFromHex(hex: string): Uint8Array<ArrayBuffer> {
   const out = new Uint8Array(hex.length / 2);
@@ -322,7 +323,10 @@ export function OwnWalletLaunch() {
           ))}
         </div>
         {chain === "solana" ? (
-          <p className="mt-2 text-xs text-muted">Meteora bonding curve: 1,000,000,000 supply, graduates to a locked pool. Supply and graduation are fixed by the Ferzan config.</p>
+          <>
+            <p className="mt-2 text-xs text-muted">Meteora bonding curve: 1,000,000,000 supply, graduates to a locked pool. Supply and graduation are fixed by the Ferzan config.</p>
+            <LaunchPerksNote />
+          </>
         ) : null}
         {plain ? (
           <p className="mt-2 text-xs text-muted">

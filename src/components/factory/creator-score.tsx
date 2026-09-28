@@ -23,7 +23,10 @@ export function CreatorScoreBox({ token }: { token: string }) {
   return (
     <div className="ticket space-y-2">
       <div className="flex items-baseline justify-between gap-3">
-        <p className="text-sm font-medium text-muted">Creator score</p>
+        <p className="text-sm font-medium text-muted">
+          Creator score
+          {cs.badge ? <span className="chip-on ml-2 rounded-full px-2 py-0.5 text-xs font-semibold">{cs.badge}</span> : null}
+        </p>
         <p className={`text-2xl font-extrabold tabular-nums ${TONE[cs.label]}`}>
           {cs.score}
           <span className="text-sm text-muted">/100 · {cs.label}</span>
