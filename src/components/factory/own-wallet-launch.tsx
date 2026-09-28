@@ -1,15 +1,18 @@
 import { useState } from "react";
 import { WalletNeeded, evmWallet, solanaWallet } from "@/lib/factory/wallet-bridge";
-import { CHAINS } from "@/lib/factory/catalog";
 import {
   BOT_LAUNCH_CHAINS,
   GRAD_PRESETS,
+  LAUNCH_CHAIN_META,
   finishBotLaunch,
+  isPlainLaunch,
   startBotLaunch,
   type BotLaunchChain,
+  type CurveLaunchChain,
   type EvmLaunchTx,
   type SolanaLaunchTx,
 } from "@/lib/factory/bot-launch";
+import { tonWallet, tronWallet } from "@/lib/factory/tron-ton-wallets";
 import { explorerTx, type EvmChainId } from "@/lib/factory/deploy";
 import { siteCoinHref } from "@/lib/factory/bot-curve";
 import { getReceipt } from "@/lib/factory/relay";
@@ -42,6 +45,32 @@ function walletAppLinks(): { metamask: string; phantom: string } {
 
 type Launched = { chain: BotLaunchChain; name: string; symbol: string; token: string; curve: string; url: string; hash: string };
 
+const SUPPLY_PRESETS = [
+  { label: "1M", value: "1000000" },
+  { label: "100M", value: "100000000" },
+  { label: "1B", value: "1000000000" },
+  { label: "1T", value: "1000000000000" },
+];
+
+/** Where a launch transaction can be looked at, per chain. */
+function txLink(chain: BotLaunchChain, hash: string, token = ""): string {
+  if (chain === "solana") return solanaExplorerTx(hash);
+  if (chain === "tron") return `https://tronscan.org/#/transaction/${hash}`;
+  if (chain === "ton") return `https://tonviewer.com/${token || hash}`;
+  return explorerTx(chain as EvmChainId, hash);
+}
+
+const WALLET_TEXT: Record<BotLaunchChain, string> = {
+  solana: "Phantom or any Solana wallet",
+  base: "MetaMask, Rabby or any EVM wallet",
+  bsc: "MetaMask, Rabby or any EVM wallet",
+  ethereum: "MetaMask, Rabby or any EVM wallet",
+  robinhood: "MetaMask, Rabby or any EVM wallet",
+  arc: "MetaMask, Rabby or any EVM wallet (gas is paid in USDC on Arc)",
+  tron: "TronLink",
+  ton: "Tonkeeper, Telegram Wallet or any TON Connect wallet",
+};
+
 export function OwnWalletLaunch() {
   const [chain, setChain] = useState<BotLaunchChain>("base");
   const [wallet, setWallet] = useState("");
@@ -56,24 +85,33 @@ export function OwnWalletLaunch() {
   const [website, setWebsite] = useState("");
   const [xHandle, setXHandle] = useState("");
   const [telegram, setTelegram] = useState("");
+  const [supply, setSupply] = useState("1000000000");
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
   const [hash, setHash] = useState("");
   const [needTerms, setNeedTerms] = useState(false);
   const [launched, setLaunched] = useState<Launched | null>(null);
 
-  const evm = chain !== "solana";
-  const meta = CHAINS[chain];
+  const plain = isPlainLaunch(chain);
+  const evm = chain !== "solana" && !plain;
+  const meta = LAUNCH_CHAIN_META[chain];
 
   function pickChain(next: BotLaunchChain) {
     setChain(next);
     setWallet("");
-    if (next !== "solana") setGrad(GRAD_PRESETS[next][1]);
+    if (next !== "solana" && !isPlainLaunch(next)) setGrad(GRAD_PRESETS[next as CurveLaunchChain][1]);
   }
 
   // Signed in -> the account's wallet; otherwise a browser extension; otherwise the sign-in opens.
   async function connect(): Promise<string> {
-    const account = evm ? (await evmWallet(chain as EvmChainId)).address : (await solanaWallet()).address;
+    const account =
+      chain === "tron"
+        ? (await tronWallet()).address
+        : chain === "ton"
+          ? (await tonWallet()).address
+          : evm
+            ? (await evmWallet(chain as EvmChainId)).address
+            : (await solanaWallet()).address;
     setWallet(account);
     return account;
   }
@@ -124,6 +162,7 @@ export function OwnWalletLaunch() {
     if (cleanName.length < 2 || cleanName.length > 32) return setError("Name needs 2–32 characters.");
     if (!/^[A-Z0-9]{2,10}$/.test(cleanSymbol)) return setError("Ticker is 2–10 letters or numbers.");
     if (evm && !(Number(grad) > 0)) return setError(`Pick how much ${meta.native} the curve collects before it graduates.`);
+    if (plain && !/^[1-9]\d{0,12}$/.test(supply.trim())) return setError("Supply is a whole number between 1 and 1,000,000,000,000.");
     if (evm && Number(startMinutes) > 0 && Number(devBuy) > 0) {
       return setError("A first buy needs trading to open right away. Clear the delay or the first buy.");
     }
@@ -140,17 +179,30 @@ export function OwnWalletLaunch() {
           description: description.trim(),
           image,
           gradNative: evm ? grad.trim() : "",
-          devBuy: devBuy.trim() || "0",
+          devBuy: plain ? "0" : devBuy.trim() || "0",
           maxBuy: evm ? maxBuy.trim() || "0" : "0",
           startMinutes: evm ? startMinutes.trim() || "0" : "0",
           website: website.trim(),
           x: xHandle.trim(),
           telegram: telegram.trim(),
+          supplyWhole: plain ? supply.trim() : "1000000000",
         },
       });
       let txHash: string;
       let mint = "";
-      if (built.kind === "evm") {
+      if (built.kind === "tron") {
+        setBusy(`Approve in TronLink: ${formatSmart(BigInt(built.feeSun), 6)} TRX launch fee + about 16 TRX of network energy.`);
+        const { signAndSend } = await tronWallet();
+        txHash = await signAndSend(built.transactionJson);
+        setHash(txHash);
+        setBusy("Sent. Waiting for Tron to confirm (up to a minute).");
+      } else if (built.kind === "ton") {
+        setBusy("Approve in your TON wallet: 0.3 TON launch fee + about 0.3 TON for the coin contract (most comes back).");
+        const { send } = await tonWallet();
+        await send({ validUntil: built.validUntil, network: built.network, messages: built.messages });
+        txHash = "ton-connect";
+        setBusy("Sent. Waiting for TON to confirm (up to two minutes).");
+      } else if (built.kind === "evm") {
         const fee = BigInt(built.launchFeeWei);
         const dev = BigInt(built.devBuyWei);
         setBusy(
@@ -165,14 +217,26 @@ export function OwnWalletLaunch() {
         txHash = await signSolana(built);
         setBusy("Sent. Waiting for Solana to confirm.");
       }
-      setBusy("Confirmed. Listing it everywhere.");
-      const done = await finishBotLaunch({ data: { requestId: built.requestId, chain, hash: txHash, mint } });
+      setBusy(plain ? "Waiting for the chain to confirm the coin. This can take a minute or two." : "Confirmed. Listing it everywhere.");
+      let done: { token: string; curve: string; url: string } | null = null;
+      for (let attempt = 0; attempt < (plain ? 4 : 1); attempt += 1) {
+        try {
+          done = await finishBotLaunch({ data: { requestId: built.requestId, chain, hash: txHash, mint } });
+          break;
+        } catch (err) {
+          const last = attempt === (plain ? 3 : 0);
+          const msg = err instanceof Error ? err.message : "";
+          if (last || !/not confirmed|has not confirmed|did not answer/i.test(msg)) throw err;
+          await new Promise((resolve) => setTimeout(resolve, 10_000));
+        }
+      }
+      if (!done) throw new Error("The launch was sent, but it is not confirmed yet. Check your wallet before trying again.");
       setLaunched({ chain, name: cleanName, symbol: cleanSymbol, token: done.token, curve: done.curve, url: done.url, hash: txHash });
     } catch (err) {
       const msg = err instanceof Error ? err.message : "The launch did not go through.";
       if (err instanceof WalletNeeded) {
         setError(err.message);
-      } else if (/user (rejected|denied)|rejected the request|4001/i.test(msg)) {
+      } else if (/user (rejected|denied|rejects)|declined|rejected the request|4001/i.test(msg)) {
         setError("You cancelled in the wallet. Nothing was launched.");
       } else {
         setError(msg);
@@ -192,7 +256,7 @@ export function OwnWalletLaunch() {
           {launched.name} <span className="text-muted">${launched.symbol}</span>
         </h2>
         <p className="mt-3 text-sm text-muted">
-          It is live on {CHAINS[launched.chain].label}. The @Ferzan_Launches channel, X and the Telegram bots pick it up like any other launch, and it shows on the floor as soon as the indexer sees it.
+          It is live on {LAUNCH_CHAIN_META[launched.chain].label}. The @Ferzan_Launches channel, X and the Telegram bots pick it up like any other launch, and it shows on the floor as soon as the indexer sees it.
         </p>
         <p className="mt-3 break-all text-xs text-muted">Token {launched.token}</p>
         <div className="mt-4 flex flex-wrap gap-3">
@@ -205,7 +269,7 @@ export function OwnWalletLaunch() {
           </a>
           <a
             className="btn-line"
-            href={launched.chain === "solana" ? solanaExplorerTx(launched.hash) : explorerTx(launched.chain as EvmChainId, launched.hash)}
+            href={txLink(launched.chain, launched.hash, launched.token)}
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -223,7 +287,10 @@ export function OwnWalletLaunch() {
   return (
     <form onSubmit={(e) => void submit(e)} className="ticket mt-6 space-y-5">
       <p className="text-sm text-muted">
-        Signs with your own wallet: {evm ? "MetaMask, Rabby or any EVM wallet" : "Phantom or any Solana wallet"}. No Telegram needed. The coin goes on the same curves as @Ferzan_Launch_Bot launches.
+        Signs with your own wallet: {WALLET_TEXT[chain]}. No Telegram needed.{" "}
+        {plain
+          ? "A standard coin: the whole supply is minted once to your wallet, with no owner and no way to mint more."
+          : "The coin goes on the same curves as @Ferzan_Launch_Bot launches."}
       </p>
       <ProjectPicture image={image} onChange={setImage} onError={setError} />
 
@@ -240,7 +307,7 @@ export function OwnWalletLaunch() {
 
       <div>
         <Label>Chain</Label>
-        <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+        <div className="grid grid-cols-4 gap-2">
           {BOT_LAUNCH_CHAINS.map((id) => (
             <button
               key={id}
@@ -250,14 +317,36 @@ export function OwnWalletLaunch() {
               className={cn("min-h-11 px-2 py-3 text-center", chain === id ? "bg-cyan text-cyan-ink" : "bg-bg text-fg shadow-border")}
             >
               <ChainMark id={id} className="mx-auto h-8 w-8" />
-              <span className="mt-2 block text-xs font-extrabold">{CHAINS[id].label}</span>
+              <span className="mt-2 block text-xs font-extrabold">{LAUNCH_CHAIN_META[id].label}</span>
             </button>
           ))}
         </div>
         {chain === "solana" ? (
           <p className="mt-2 text-xs text-muted">Meteora bonding curve: 1,000,000,000 supply, graduates to a locked pool. Supply and graduation are fixed by the Ferzan config.</p>
         ) : null}
+        {plain ? (
+          <p className="mt-2 text-xs text-muted">
+            {chain === "tron"
+              ? "Standard TRC-20 coin. Cost: 5 TRX launch fee + about 16 TRX of Tron energy. Open a SunSwap pool afterwards so people can trade it."
+              : "Standard TON jetton. Cost: 0.3 TON launch fee + about 0.3 TON for the coin contract (most of it comes back)."}
+          </p>
+        ) : null}
       </div>
+
+      {plain ? (
+        <div>
+          <Label>Supply</Label>
+          <div className="grid grid-cols-4 gap-2">
+            {SUPPLY_PRESETS.map((p) => (
+              <button key={p.value} type="button" onClick={() => setSupply(p.value)} className={cn("min-h-11", supply === p.value ? "btn-cyan" : "btn-line")}>
+                {p.label}
+              </button>
+            ))}
+          </div>
+          <TextInput className="mt-2" value={supply} onChange={(e) => setSupply(e.target.value.replace(/[^0-9]/g, ""))} inputMode="numeric" />
+          <p className="mt-1.5 text-xs text-muted">All of it goes to your wallet at launch.</p>
+        </div>
+      ) : null}
 
       <div>
         <Label>Description</Label>
@@ -268,7 +357,7 @@ export function OwnWalletLaunch() {
         <div>
           <Label>Graduates at ({meta.native})</Label>
           <div className="grid grid-cols-3 gap-2">
-            {GRAD_PRESETS[chain as Exclude<BotLaunchChain, "solana">].map((p) => (
+            {GRAD_PRESETS[chain as CurveLaunchChain].map((p) => (
               <button key={p} type="button" onClick={() => setGrad(p)} className={cn("min-h-11", grad === p ? "btn-cyan" : "btn-line")}>
                 {p} {meta.native}
               </button>
@@ -279,11 +368,13 @@ export function OwnWalletLaunch() {
         </div>
       ) : null}
 
-      <div>
-        <Label>First buy ({meta.native})</Label>
-        <TextInput value={devBuy} onChange={(e) => setDevBuy(e.target.value)} placeholder="0 — skip it" inputMode="decimal" />
-        <p className="mt-1.5 text-xs text-muted">Optional. It happens in the same transaction, so nobody can buy before you.</p>
-      </div>
+      {plain ? null : (
+        <div>
+          <Label>First buy ({meta.native})</Label>
+          <TextInput value={devBuy} onChange={(e) => setDevBuy(e.target.value)} placeholder="0 — skip it" inputMode="decimal" />
+          <p className="mt-1.5 text-xs text-muted">Optional. It happens in the same transaction, so nobody can buy before you.</p>
+        </div>
+      )}
 
       {evm ? (
         <div className="grid gap-4 sm:grid-cols-2">
@@ -315,7 +406,7 @@ export function OwnWalletLaunch() {
 
       {wallet ? <p className="break-all text-xs text-muted">Wallet {wallet}</p> : null}
       {error ? <p className="text-sm text-sell">{error}</p> : null}
-      {error.startsWith("No ") ? (
+      {error.startsWith("No ") && !plain ? (
         <p className="text-sm">
           <a className="font-semibold text-cyan" href={evm ? links.metamask : links.phantom}>
             Open in the {evm ? "MetaMask" : "Phantom"} app
@@ -326,7 +417,7 @@ export function OwnWalletLaunch() {
       {hash && busy ? (
         <a
           className="text-sm text-cyan"
-          href={chain === "solana" ? solanaExplorerTx(hash) : explorerTx(chain as EvmChainId, hash)}
+          href={txLink(chain, hash)}
           target="_blank"
           rel="noopener noreferrer"
         >

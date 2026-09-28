@@ -4,23 +4,39 @@
  */
 import { env } from "@/lib/env.server";
 import { chainRpc, type RelayChain } from "./relay";
-import type { BotLaunchChain, BotLaunchInput, EvmLaunchTx, SolanaLaunchTx } from "./bot-launch";
+import type { AnyLaunchTx, BotLaunchChain, BotLaunchInput, CurveLaunchChain, TonMessage } from "./bot-launch";
 
 const API = "https://launch.ferzaneco.com/api";
 
 /** The bots' curve factories (from the Launch Bot deploys). A build pointing anywhere else is refused. */
-const FACTORIES: Record<Exclude<BotLaunchChain, "solana">, string> = {
+const FACTORIES: Record<CurveLaunchChain, string> = {
   bsc: "0xb56b4184dbb5bc5c67168ae3a4960e69392118de",
   base: "0xb56b4184dbb5bc5c67168ae3a4960e69392118de",
   ethereum: "0xc774ad391868bdbe7f8a3b8e0edfc3b0c0bfb17a",
   robinhood: "0xc774ad391868bdbe7f8a3b8e0edfc3b0c0bfb17a",
+  arc: "0xb56b4184dbb5bc5c67168ae3a4960e69392118de",
 };
-const CHAIN_IDS: Record<Exclude<BotLaunchChain, "solana">, number> = { bsc: 56, base: 8453, ethereum: 1, robinhood: 4663 };
+const CHAIN_IDS: Record<CurveLaunchChain, number> = { bsc: 56, base: 8453, ethereum: 1, robinhood: 4663, arc: 5042 };
+/** Ferzan's Tron launch factory (TBcPG1XKutsns1dJtgJeWQDuGRxeESeMXn), as TronGrid writes it. */
+const TRON_FACTORY_HEX = "4112001441b5746c26ce9f287e48404e4fbc7d57d8";
+const TRON_MAX_FEE_SUN = 50_000_000n; // the launch fee is fixed in the factory (5 TRX); refuse anything above 50
+const TON_MAX_NANO = 1_500_000_000n; // a TON launch sends about 0.6 TON in total
+
+const B58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+function tronHex(address: string): string {
+  let n = 0n;
+  for (const ch of address) {
+    const i = B58.indexOf(ch);
+    if (i < 0) throw new Error("Tron wallet looks wrong.");
+    n = n * 58n + BigInt(i);
+  }
+  return n.toString(16).padStart(50, "0").slice(0, 42);
+}
 
 /** keccak256("CurveLaunched(address,address,address)") */
 const CURVE_LAUNCHED = "0x188ae4cd8aa7c0376e9501e76fb7a19dd1454add5c88bffbf75f391807a14475";
 
-async function call(path: string, body: unknown, secret = false): Promise<Record<string, unknown>> {
+async function call(path: string, body: unknown, secret = false, timeoutMs = 60_000): Promise<Record<string, unknown>> {
   const headers: Record<string, string> = { "content-type": "application/json", accept: "application/json" };
   // The Launch Bot no longer needs a shared key from the website: nothing is announced until it has
   // checked the launch on chain. A key is still sent if this deployment has one.
@@ -32,7 +48,7 @@ async function call(path: string, body: unknown, secret = false): Promise<Record
       method: "POST",
       headers,
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(60_000),
+      signal: AbortSignal.timeout(timeoutMs),
     });
   } catch {
     throw new Error("The launch service did not answer. Try again in a minute.");
@@ -52,7 +68,7 @@ const asBig = (v: unknown): string => {
   return s;
 };
 
-export async function startLaunch(input: BotLaunchInput): Promise<EvmLaunchTx | SolanaLaunchTx> {
+export async function startLaunch(input: BotLaunchInput): Promise<AnyLaunchTx> {
   const created = await call(
     "/site/launch-requests",
     {
@@ -69,6 +85,7 @@ export async function startLaunch(input: BotLaunchInput): Promise<EvmLaunchTx | 
       website: input.website,
       x: input.x,
       telegram: input.telegram,
+      supply_whole: input.supplyWhole || "1000000000",
     },
     true,
   );
@@ -76,6 +93,36 @@ export async function startLaunch(input: BotLaunchInput): Promise<EvmLaunchTx | 
   if (!/^[0-9a-f-]{36}$/.test(requestId)) throw new Error("The launch service did not start the launch.");
 
   const built = await call(`/launch-requests/${requestId}/build-tx`, { wallet_address: input.wallet });
+  if (input.chain === "tron") {
+    const tx = (built.transaction ?? {}) as Record<string, unknown>;
+    const raw = (tx.raw_data ?? {}) as { contract?: { type?: string; parameter?: { value?: Record<string, unknown> } }[] };
+    const c = raw.contract?.[0];
+    const v = c?.parameter?.value ?? {};
+    if (c?.type !== "TriggerSmartContract" || String(v.contract_address ?? "").toLowerCase() !== TRON_FACTORY_HEX) {
+      throw new Error("The launch transaction does not go to the Ferzan Tron factory.");
+    }
+    if (String(v.owner_address ?? "").toLowerCase() !== tronHex(input.wallet)) throw new Error("The launch was built for another wallet.");
+    const fee = BigInt(asBig(v.call_value ?? "0"));
+    if (fee > TRON_MAX_FEE_SUN) throw new Error("The launch fee looks wrong.");
+    if (!/^[0-9a-f]{64}$/.test(asString(tx.txID))) throw new Error("The launch service sent a transaction we cannot use.");
+    return { kind: "tron", requestId, transactionJson: JSON.stringify(tx), feeSun: fee.toString() };
+  }
+  if (input.chain === "ton") {
+    const list = Array.isArray(built.messages) ? built.messages : [];
+    const messages: TonMessage[] = list.map((m) => {
+      const r = (m ?? {}) as Record<string, unknown>;
+      const msg: TonMessage = { address: asString(r.address), amount: asBig(r.amount) };
+      if (typeof r.stateInit === "string") msg.stateInit = r.stateInit;
+      if (typeof r.payload === "string") msg.payload = r.payload;
+      return msg;
+    });
+    const total = messages.reduce((sum, m) => sum + BigInt(m.amount), 0n);
+    if (messages.length < 2 || messages.length > 3 || !messages[0].stateInit || total > TON_MAX_NANO) {
+      throw new Error("The TON launch looks wrong. Nothing was sent.");
+    }
+    if (!messages.every((m) => /^[A-Za-z0-9_-]{48}$/.test(m.address))) throw new Error("The TON launch looks wrong.");
+    return { kind: "ton", requestId, messages, validUntil: Number(built.valid_until) || Math.floor(Date.now() / 1000) + 600, network: asString(built.network) || "-239" };
+  }
   if (input.chain === "solana") {
     const txHex = asString(built.unsigned_transaction);
     const mint = asString(built.mint_address);
@@ -86,8 +133,9 @@ export async function startLaunch(input: BotLaunchInput): Promise<EvmLaunchTx | 
   }
   const tx = (built.unsigned_transaction ?? {}) as Record<string, unknown>;
   const to = asString(tx.to).toLowerCase();
-  if (to !== FACTORIES[input.chain]) throw new Error("The launch transaction does not go to the Ferzan factory.");
-  if (Number(tx.chainId) !== CHAIN_IDS[input.chain]) throw new Error("The launch was built for another network.");
+  const evmChain = input.chain as CurveLaunchChain;
+  if (to !== FACTORIES[evmChain]) throw new Error("The launch transaction does not go to the Ferzan factory.");
+  if (Number(tx.chainId) !== CHAIN_IDS[evmChain]) throw new Error("The launch was built for another network.");
   const data = asString(tx.data);
   if (!/^0x[0-9a-fA-F]+$/.test(data)) throw new Error("The launch service sent a transaction we cannot use.");
   // `value` arrives as a JSON number and can lose digits; the fee and dev buy come as exact strings.
@@ -100,7 +148,7 @@ export async function startLaunch(input: BotLaunchInput): Promise<EvmLaunchTx | 
     data,
     value: (BigInt(launchFeeWei) + BigInt(devBuyWei)).toString(),
     gas: asBig(tx.gas),
-    chainId: CHAIN_IDS[input.chain],
+    chainId: CHAIN_IDS[evmChain],
     launchFeeWei,
     devBuyWei,
   };
@@ -120,14 +168,26 @@ export async function finishLaunch(input: {
   mint: string;
 }): Promise<{ token: string; curve: string }> {
   // The bots verify the transaction on chain (sender, factory or mint) before they post anything.
-  await call(`/launch-requests/${input.requestId}/complete`, { tx_hash: input.hash, result_token_address: input.mint });
+  // Tron and TON: the Launch Bot waits for the chain itself (up to about 90 seconds) before it answers.
+  const slow = input.chain === "tron" || input.chain === "ton";
+  const out = await call(
+    `/launch-requests/${input.requestId}/complete`,
+    { tx_hash: input.hash, result_token_address: input.mint },
+    false,
+    slow ? 110_000 : 60_000,
+  );
   if (input.chain === "solana") return { token: input.mint, curve: "" };
+  if (input.chain === "tron" || input.chain === "ton") {
+    const token = asString(out.token);
+    if (!token) throw new Error("The coin launched, but its address is not readable yet. It will show on the floor shortly.");
+    return { token, curve: "" };
+  }
   const receipt = (await chainRpc(input.chain as RelayChain, "eth_getTransactionReceipt", [input.hash])) as {
     logs?: { address?: string; topics?: string[] }[];
   } | null;
   for (const log of receipt?.logs ?? []) {
     const t = log.topics ?? [];
-    if ((log.address ?? "").toLowerCase() === FACTORIES[input.chain] && (t[0] ?? "").toLowerCase() === CURVE_LAUNCHED && t.length >= 3) {
+    if ((log.address ?? "").toLowerCase() === FACTORIES[input.chain as CurveLaunchChain] && (t[0] ?? "").toLowerCase() === CURVE_LAUNCHED && t.length >= 3) {
       return { curve: "0x" + t[1].slice(-40), token: "0x" + t[2].slice(-40) };
     }
   }
