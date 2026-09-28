@@ -14,9 +14,13 @@ import { WalletBalances } from "./gas-step";
 import { LaunchWatch } from "./launch-watch";
 import { GraduationBanner, TradeTape } from "./pulse-live";
 import { InstallApp } from "./perks";
+import { MobileNav } from "./mobile-nav";
+import { QuickBuyToast } from "./quick-buy";
+import { SearchButton, SearchOverlay } from "./search";
 
 const LINKS = [
   { to: "/", label: "Floor" },
+  { to: "/pulse", label: "Pulse" },
   { to: "/ferzan", label: "FERZAN" },
   { to: "/launch", label: "Launch" },
   { to: "/bots", label: "Bots" },
@@ -82,6 +86,7 @@ export function Shell({ children }: { children: ReactNode }) {
               );
             })}
           </nav>
+          <SearchButton />
           <Link to="/launch" search={{ kind: "curve" }} className="btn-cyan hidden sm:inline-flex">
             Launch
           </Link>
@@ -145,10 +150,10 @@ export function Shell({ children }: { children: ReactNode }) {
         ) : null}
         <TradeTape />
       </header>
-      <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-14">{children}</main>
+      <main className={cn("mx-auto px-4 pt-10 pb-12 sm:px-6 sm:py-14", path.startsWith("/pulse") ? "max-w-7xl" : "max-w-5xl")}>{children}</main>
       <LaunchWatch />
       <GraduationBanner />
-      <footer className="mx-auto max-w-5xl px-4 pb-10 text-sm text-muted">
+      <footer className="mx-auto max-w-5xl px-4 pb-28 text-sm text-muted sm:pb-10">
         <div className="mb-4">
           <InstallApp compact />
         </div>
@@ -186,6 +191,9 @@ export function Shell({ children }: { children: ReactNode }) {
           </a>
         </p>
       </footer>
+      <MobileNav />
+      <SearchOverlay />
+      <QuickBuyToast />
     </div>
   );
 }

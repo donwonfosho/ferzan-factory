@@ -4,6 +4,7 @@ import { siteCoinHref } from "@/lib/factory/bot-curve";
 import { cn } from "@/lib/cn";
 import { ChainMark, type MarkChain } from "./chain-mark";
 import { compactUsd } from "./market-line";
+import { useLive } from "@/lib/factory/live";
 
 /* One shared poll for everything live on the page (tape, graduation banner, FERZAN hero). */
 let pulse: Pulse | null = null;
@@ -36,7 +37,8 @@ export function usePulse(): Pulse | null {
 
 const MARKS = new Set(["solana", "base", "bsc", "ethereum", "robinhood", "arc", "tron", "ton"]);
 
-function hrefOf(item: { url: string }) {
+function hrefOf(item: { url: string; path?: string }) {
+  if (item.path) return { href: item.path, ext: false };
   const site = siteCoinHref(item.url);
   return site ? { href: site, ext: false } : item.url ? { href: item.url, ext: true } : null;
 }
@@ -77,7 +79,15 @@ function TapeChip({ it, now }: { it: TapeItem; now: number }) {
 /** Scrolling strip of the latest trades on every Ferzan coin. Pauses on hover; static when motion is reduced. */
 export function TradeTape() {
   const p = usePulse();
-  const items = p?.tape ?? [];
+  const [fresh, setFresh] = useState<TapeItem[]>([]);
+  useLive((e) => {
+    if (e.type !== "trade") return;
+    const it: TapeItem = { chain: e.chain, ts: e.ts, side: e.side, symbol: e.symbol, token: e.token, native: e.native, unit: e.unit, usd: e.usd, who: e.who, url: "", path: e.path };
+    setFresh((list) => [it, ...list.filter((x) => !(x.ts === it.ts && x.token === it.token && x.who === it.who))].slice(0, 20));
+  });
+  // live trades first, then the last poll's (without the ones the live feed already showed)
+  const polled = (p?.tape ?? []).filter((x) => !fresh.some((f) => f.token === x.token && f.ts === x.ts && f.who === x.who));
+  const items = [...fresh, ...polled].slice(0, 30);
   if (!items.length) return null;
   const dur = Math.max(30, items.length * 4);
   return (
@@ -142,6 +152,20 @@ export function GraduationBanner() {
   const since = useRef<number>(Math.floor(Date.now() / 1000) - 600);
   const canvas = useRef<HTMLCanvasElement | null>(null);
 
+  useLive((e) => {
+    if (e.type !== "grad") return;
+    const key = `${e.chain}:${e.token}`;
+    if (seen.current.has(key)) return;
+    seen.current.add(key);
+    try {
+      if (window.sessionStorage.getItem(`grad:${key}`) === "1") return;
+      window.sessionStorage.setItem(`grad:${key}`, "1");
+    } catch {
+      /* show it anyway */
+    }
+    setShown({ chain: e.chain, token: e.token, symbol: e.symbol, name: e.name, ts: e.ts, image: "", raised: e.raised, unit: e.unit, url: "", path: e.path });
+  });
+
   useEffect(() => {
     if (!p) return;
     for (const g of p.graduations) {
@@ -178,7 +202,7 @@ export function GraduationBanner() {
   return (
     <>
       <canvas ref={canvas} className="pointer-events-none fixed inset-0 z-50" aria-hidden />
-      <div className="grad-pop fixed inset-x-4 bottom-4 z-50 mx-auto flex max-w-lg items-center gap-3 rounded-2xl bg-surface p-4 shadow-border-hover" role="status">
+      <div className="grad-pop fixed inset-x-4 bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] z-50 sm:bottom-4 mx-auto flex max-w-lg items-center gap-3 rounded-2xl bg-surface p-4 shadow-border-hover" role="status">
         {shown.image ? <img src={shown.image} alt="" className="h-12 w-12 rounded-xl object-cover" /> : <span className="text-3xl">🎓</span>}
         <span className="min-w-0 flex-1">
           <span className="block font-extrabold">${shown.symbol} just graduated</span>

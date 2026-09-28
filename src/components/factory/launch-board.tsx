@@ -5,6 +5,8 @@ import { cn } from "@/lib/cn";
 import { Mark } from "./ui";
 import { ChainMark, type MarkChain } from "./chain-mark";
 import { compactUsd } from "./market-line";
+import { useLive, useLiveConnected } from "@/lib/factory/live";
+import { QuickBuyBar, QuickBuyButton } from "./quick-buy";
 
 const TABS: { id: TelegramSort; label: string }[] = [
   { id: "new", label: "New" },
@@ -44,6 +46,44 @@ export function LaunchBoard({ chain, onChain }: { chain: "all" | MarkChain; onCh
   const lastTrades = useRef<Map<string, number>>(new Map());
   const [flashing, setFlashing] = useState<Set<string>>(new Set());
   const apiChain: TelegramChain = chain !== "all" && BOARD_CHAINS.has(chain) ? (chain as TelegramChain) : "";
+  const [bump, setBump] = useState(0);
+  const bumpTimer = useRef<number | null>(null);
+  const live = useLiveConnected();
+
+  // Live: a trade moves its card at once; a new launch or graduation refreshes the list shortly after.
+  useLive((e) => {
+    if (apiChain && e.chain !== apiChain) return;
+    if (e.type === "trade") {
+      const key = `${e.chain}-${e.token}`;
+      setCoins((list) => {
+        if (!list) return list;
+        const i = list.findIndex((c) => c.chain === e.chain && (c.token === e.token || c.token.toLowerCase() === e.token.toLowerCase()));
+        if (i < 0) return list;
+        const next = list.slice();
+        next[i] = { ...next[i], mcapUsd: e.mcapUsd || next[i].mcapUsd, progress: e.progress, trades: Math.max(next[i].trades + 1, e.trades) };
+        lastTrades.current.set(`${next[i].chain}-${next[i].token}`, next[i].trades);
+        return next;
+      });
+      setFlashing((f) => new Set(f).add(key));
+      window.setTimeout(() => setFlashing((f) => ((f = new Set(f)), f.delete(key), f)), 1300);
+      if (sort === "trending" || sort === "volume") queueBump();
+    } else if ((e.type === "launch" && sort === "new") || e.type === "grad") queueBump();
+  });
+  function queueBump() {
+    if (bumpTimer.current !== null) return;
+    bumpTimer.current = window.setTimeout(() => ((bumpTimer.current = null), setBump((b) => b + 1)), 3000);
+  }
+  useEffect(() => {
+    if (!bump) return;
+    let stop = false;
+    listTelegram({ data: { sort, chain: apiChain, q: q.trim() } })
+      .then((rows) => !stop && rows && setCoins(rows))
+      .catch(() => null);
+    return () => {
+      stop = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bump]);
 
   useEffect(() => {
     let stop = false;
@@ -66,13 +106,13 @@ export function LaunchBoard({ chain, onChain }: { chain: "all" | MarkChain; onCh
     setCoins(null);
     setMore(false);
     const first = window.setTimeout(() => void pull(), q ? 300 : 0);
-    const timer = window.setInterval(() => void pull(), 15_000);
+    const timer = window.setInterval(() => void pull(), live ? 45_000 : 15_000);
     return () => {
       stop = true;
       window.clearTimeout(first);
       window.clearInterval(timer);
     };
-  }, [sort, apiChain, q]);
+  }, [sort, apiChain, q, live]);
 
   const shown = coins ? coins.slice(0, more ? 30 : 12) : [];
   const empty = q.trim()
@@ -146,11 +186,14 @@ export function LaunchBoard({ chain, onChain }: { chain: "all" | MarkChain; onCh
       ) : shown.length === 0 ? (
         <p className="mt-4 text-sm text-muted">{empty}</p>
       ) : (
-        <div className="mt-4 grid gap-2 sm:grid-cols-2">
+        <>
+        <QuickBuyBar />
+        <div className="mt-3 grid gap-2 sm:grid-cols-2">
           {shown.map((coin) => (
             <LaunchCard key={`${coin.chain}-${coin.token}`} coin={coin} flash={flashing.has(`${coin.chain}-${coin.token}`)} />
           ))}
         </div>
+        </>
       )}
       {coins && coins.length > 12 && !more ? (
         <button type="button" className="btn-line mt-3 w-full sm:w-auto" onClick={() => setMore(true)}>
@@ -183,9 +226,11 @@ export function LaunchCard({ coin, flash = false }: { coin: TelegramCoin; flash?
           <span className="block text-muted">mcap</span>
         </span>
       </div>
+      <div className="mt-3 flex items-center gap-3">
+        <div className="min-w-0 flex-1">
       {progress !== null ? (
-        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-line" aria-label={`${progress.toFixed(0)}% to graduation`}>
-          <div className="h-full bg-cyan" style={{ width: `${Math.max(2, progress)}%` }} />
+        <div className="h-1.5 overflow-hidden rounded-full bg-line" aria-label={`${progress.toFixed(0)}% to graduation`}>
+          <div className="h-full bg-cyan transition-[width] duration-700" style={{ width: `${Math.max(2, progress)}%` }} />
         </div>
       ) : null}
       <p className="mt-2 truncate text-xs text-muted tabular-nums">
@@ -193,6 +238,9 @@ export function LaunchCard({ coin, flash = false }: { coin: TelegramCoin; flash?
         {coin.trades} trades
         {creator ? ` · by ${creator}` : ""}
       </p>
+        </div>
+        <QuickBuyButton coin={coin} />
+      </div>
     </a>
   );
 }

@@ -15,6 +15,7 @@ import { Route as DocsRouteImport } from './routes/docs'
 import { Route as FerzanRouteImport } from './routes/ferzan'
 import { Route as LaunchRouteImport } from './routes/launch'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
+import { Route as PulseRouteImport } from './routes/pulse'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as ApiLaunchesRouteImport } from './routes/api/launches'
@@ -53,6 +54,11 @@ const LaunchRoute = LaunchRouteImport.update({
 const LeaderboardRoute = LeaderboardRouteImport.update({
   id: '/leaderboard',
   path: '/leaderboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PulseRoute = PulseRouteImport.update({
+  id: '/pulse',
+  path: '/pulse',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -108,6 +114,7 @@ export interface FileRoutesByFullPath {
   '/ferzan': typeof FerzanRoute
   '/launch': typeof LaunchRoute
   '/leaderboard': typeof LeaderboardRoute
+  '/pulse': typeof PulseRoute
   '/login': typeof LoginRoute
   '/terms': typeof TermsRoute
   '/api/launches': typeof ApiLaunchesRoute
@@ -125,6 +132,7 @@ export interface FileRoutesByTo {
   '/ferzan': typeof FerzanRoute
   '/launch': typeof LaunchRoute
   '/leaderboard': typeof LeaderboardRoute
+  '/pulse': typeof PulseRoute
   '/login': typeof LoginRoute
   '/terms': typeof TermsRoute
   '/api/launches': typeof ApiLaunchesRoute
@@ -143,6 +151,7 @@ export interface FileRoutesById {
   '/ferzan': typeof FerzanRoute
   '/launch': typeof LaunchRoute
   '/leaderboard': typeof LeaderboardRoute
+  '/pulse': typeof PulseRoute
   '/login': typeof LoginRoute
   '/terms': typeof TermsRoute
   '/api/launches': typeof ApiLaunchesRoute
@@ -162,6 +171,7 @@ export interface FileRouteTypes {
     | '/ferzan'
     | '/launch'
     | '/leaderboard'
+    | '/pulse'
     | '/login'
     | '/terms'
     | '/api/launches'
@@ -179,6 +189,7 @@ export interface FileRouteTypes {
     | '/ferzan'
     | '/launch'
     | '/leaderboard'
+    | '/pulse'
     | '/login'
     | '/terms'
     | '/api/launches'
@@ -196,6 +207,7 @@ export interface FileRouteTypes {
     | '/ferzan'
     | '/launch'
     | '/leaderboard'
+    | '/pulse'
     | '/login'
     | '/terms'
     | '/api/launches'
@@ -214,6 +226,7 @@ export interface RootRouteChildren {
   FerzanRoute: typeof FerzanRoute
   LaunchRoute: typeof LaunchRoute
   LeaderboardRoute: typeof LeaderboardRoute
+  PulseRoute: typeof PulseRoute
   LoginRoute: typeof LoginRoute
   TermsRoute: typeof TermsRoute
   ApiLaunchesRoute: typeof ApiLaunchesRoute
@@ -267,6 +280,13 @@ declare module '@tanstack/react-router' {
       path: '/leaderboard'
       fullPath: '/leaderboard'
       preLoaderRoute: typeof LeaderboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pulse': {
+      id: '/pulse'
+      path: '/pulse'
+      fullPath: '/pulse'
+      preLoaderRoute: typeof PulseRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -342,6 +362,7 @@ const rootRouteChildren: RootRouteChildren = {
   FerzanRoute: FerzanRoute,
   LaunchRoute: LaunchRoute,
   LeaderboardRoute: LeaderboardRoute,
+  PulseRoute: PulseRoute,
   LoginRoute: LoginRoute,
   TermsRoute: TermsRoute,
   ApiLaunchesRoute: ApiLaunchesRoute,

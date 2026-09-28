@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { buildSolSwap, getSolCoin, type SolCoin } from "@/lib/factory/sol-coin";
 import { solanaExplorerMint, solanaExplorerTx } from "@/lib/factory/solana";
 import { formatSmart, parseDecimal } from "@/lib/factory/units";
@@ -8,6 +8,8 @@ import { CandleChart } from "./chart-pro";
 import { Button, TextInput } from "./ui";
 import { CreatorScoreBox } from "./creator-score";
 import { ShareCoin } from "./perks";
+import { useLive } from "@/lib/factory/live";
+import { HoldersPanel, PnlShare } from "./coin-extras";
 
 const TIMEFRAMES = [
   { tf: 60, label: "1m" },
@@ -76,6 +78,13 @@ export function SolCoinPage({ mint }: { mint: string }) {
     const timer = window.setInterval(() => void load(), 20_000);
     return () => window.clearInterval(timer);
   }, [load]);
+
+  // Live: reload a moment after any trade on this coin, so the chart and curve move right away.
+  const reloadTimer = useRef<number | null>(null);
+  useLive((e) => {
+    if (e.type !== "trade" || e.chain !== "solana" || e.token !== mint || reloadTimer.current !== null) return;
+    reloadTimer.current = window.setTimeout(() => ((reloadTimer.current = null), void load()), 1200);
+  });
 
   const decimals = side === "buy" ? SOL_DECIMALS : TOKEN_DECIMALS;
   const raw = parseDecimal(amount, decimals);
@@ -177,6 +186,8 @@ export function SolCoinPage({ mint }: { mint: string }) {
       </div>
 
       <ShareCoin chain="solana" token={coin.mint} symbol={coin.symbol} />
+      <PnlShare chain="solana" token={coin.mint} wallet={knownWallet} />
+      <HoldersPanel chain="solana" token={coin.mint} />
       <CreatorScoreBox token={coin.mint} />
 
       <div className="grid grid-cols-3 gap-2 sm:gap-3">

@@ -45,7 +45,7 @@ export function LaunchWatch() {
   if (!coin) return null;
   const chain = CHAINS[coin.chain as ChainId]?.label ?? coin.chain;
   return (
-    <div className="fixed right-4 bottom-4 z-50 w-[min(22rem,calc(100vw-2rem))] rounded-2xl bg-surface p-4 shadow-border">
+    <div className="fixed right-4 bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] z-50 sm:bottom-4 w-[min(22rem,calc(100vw-2rem))] rounded-2xl bg-surface p-4 shadow-border">
       <p className="text-sm font-extrabold text-cyan">New launch</p>
       <p className="mt-1 font-semibold">
         {coin.symbol} · {coin.name}

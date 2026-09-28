@@ -17,8 +17,10 @@ export type TapeItem = {
   usd: number;
   who: string;
   url: string;
+  /** on-site page, set for trades that arrive over the live feed */
+  path?: string;
 };
-export type Graduation = { chain: string; token: string; symbol: string; name: string; ts: number; image: string; raised: number; unit: string; url: string };
+export type Graduation = { chain: string; token: string; symbol: string; name: string; ts: number; image: string; raised: number; unit: string; url: string; path?: string };
 export type FerzanPulse = {
   launchAt: number;
   live: boolean;

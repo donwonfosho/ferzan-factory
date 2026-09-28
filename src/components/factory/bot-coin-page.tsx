@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CHAINS } from "@/lib/factory/catalog";
 import {
   SEL,
@@ -10,7 +10,7 @@ import {
   type BotCurveState,
 } from "@/lib/factory/bot-curve";
 import { dexSwapUrl, explorerAddress, explorerTx } from "@/lib/factory/deploy";
-import { evmWallet } from "@/lib/factory/wallet-bridge";
+import { evmWallet, useAccountWallets } from "@/lib/factory/wallet-bridge";
 import { getReceipt } from "@/lib/factory/relay";
 import { formatSmart, parseDecimal } from "@/lib/factory/units";
 import { cn } from "@/lib/cn";
@@ -18,6 +18,8 @@ import { Button, TextInput } from "./ui";
 import { CandleChart, CurveGraphic } from "./chart-pro";
 import { CreatorScoreBox } from "./creator-score";
 import { ShareCoin } from "./perks";
+import { useLive, sameCoin } from "@/lib/factory/live";
+import { HoldersPanel, PnlShare } from "./coin-extras";
 
 const ZERO = "0x0000000000000000000000000000000000000000";
 const TIMEFRAMES = [
@@ -115,6 +117,15 @@ export function BotCoinPage({ chain, curve }: { chain: BotCurveChain; curve: str
     const timer = window.setInterval(() => void load(), 15_000);
     return () => window.clearInterval(timer);
   }, [load]);
+
+  // Live: reload a moment after any trade on this coin, so the chart and curve move right away.
+  const reloadTimer = useRef<number | null>(null);
+  useLive((e) => {
+    if (e.type !== "trade" || !sameCoin(e, chain, curve) || reloadTimer.current !== null) return;
+    reloadTimer.current = window.setTimeout(() => ((reloadTimer.current = null), void load()), 1200);
+  });
+  const signedIn = useAccountWallets();
+  const pnlWallet = account || (signedIn?.authenticated ? (signedIn.evmAddress ?? "") : "");
 
   const sellable = state?.mine ? BigInt(state.mine.balance) - BigInt(state.mine.locked) : 0n;
   const raw = parseDecimal(amount, 18); // native coins and Ferzan curve tokens both use 18 decimals
@@ -253,6 +264,8 @@ export function BotCoinPage({ chain, curve }: { chain: BotCurveChain; curve: str
       </div>
 
       <ShareCoin chain={state.chain} token={state.token} symbol={state.symbol} />
+      <PnlShare chain={state.chain} token={state.token} wallet={pnlWallet} />
+      <HoldersPanel chain={state.chain} token={state.token} />
       <CreatorScoreBox token={state.token} />
 
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
