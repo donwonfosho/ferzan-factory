@@ -6,6 +6,7 @@ import { WalletNeeded, solanaWallet, useAccountWallets } from "@/lib/factory/wal
 import { cn } from "@/lib/cn";
 import { Chart } from "./bot-coin-page";
 import { Button, TextInput } from "./ui";
+import { CreatorScoreBox } from "./creator-score";
 
 const TIMEFRAMES = [
   { tf: 300, label: "5m" },
@@ -171,6 +172,8 @@ export function SolCoinPage({ mint }: { mint: string }) {
           </p>
         </div>
       </div>
+
+      <CreatorScoreBox token={coin.mint} />
 
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
         <div className="ticket">

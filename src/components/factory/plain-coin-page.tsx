@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getPlainCoin, type PlainChain, type PlainCoin } from "@/lib/factory/plain-coin";
 import { ChainMark } from "./chain-mark";
+import { CreatorScoreBox } from "./creator-score";
 
 const short = (a: string) => (a.length > 12 ? `${a.slice(0, 4)}…${a.slice(-4)}` : a);
 
@@ -71,6 +72,8 @@ export function PlainCoinPage({ chain, token }: { chain: PlainChain; token: stri
           </p>
         </div>
       </div>
+
+      <CreatorScoreBox token={coin.token} />
 
       <div className="grid grid-cols-2 gap-2 sm:gap-3">
         <div className="ticket">

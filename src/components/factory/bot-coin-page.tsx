@@ -15,6 +15,7 @@ import { getReceipt } from "@/lib/factory/relay";
 import { formatSmart, parseDecimal } from "@/lib/factory/units";
 import { cn } from "@/lib/cn";
 import { Button, TextInput } from "./ui";
+import { CreatorScoreBox } from "./creator-score";
 
 const ZERO = "0x0000000000000000000000000000000000000000";
 const TIMEFRAMES = [
@@ -246,6 +247,8 @@ export function BotCoinPage({ chain, curve }: { chain: BotCurveChain; curve: str
           </p>
         </div>
       </div>
+
+      <CreatorScoreBox token={state.token} />
 
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
         <div className="ticket">
