@@ -18,6 +18,7 @@ import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as PulseRouteImport } from './routes/pulse'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as AboutRouteImport } from './routes/about'
 import { Route as ApiLaunchesRouteImport } from './routes/api/launches'
 import { Route as ApiRelayStatusRouteImport } from './routes/api/relay-status'
 import { Route as PAddressRouteImport } from './routes/p/$address'
@@ -71,6 +72,11 @@ const TermsRoute = TermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiLaunchesRoute = ApiLaunchesRouteImport.update({
   id: '/api/launches',
   path: '/api/launches',
@@ -117,6 +123,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/pulse': typeof PulseRoute
   '/terms': typeof TermsRoute
+  '/about': typeof AboutRoute
   '/api/launches': typeof ApiLaunchesRoute
   '/api/relay-status': typeof ApiRelayStatusRoute
   '/p/$address': typeof PAddressRoute
@@ -135,6 +142,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/pulse': typeof PulseRoute
   '/terms': typeof TermsRoute
+  '/about': typeof AboutRoute
   '/api/launches': typeof ApiLaunchesRoute
   '/api/relay-status': typeof ApiRelayStatusRoute
   '/p/$address': typeof PAddressRoute
@@ -154,6 +162,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/pulse': typeof PulseRoute
   '/terms': typeof TermsRoute
+  '/about': typeof AboutRoute
   '/api/launches': typeof ApiLaunchesRoute
   '/api/relay-status': typeof ApiRelayStatusRoute
   '/p/$address': typeof PAddressRoute
@@ -174,6 +183,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/pulse'
     | '/terms'
+    | '/about'
     | '/api/launches'
     | '/api/relay-status'
     | '/p/$address'
@@ -192,6 +202,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/pulse'
     | '/terms'
+    | '/about'
     | '/api/launches'
     | '/api/relay-status'
     | '/p/$address'
@@ -210,6 +221,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/pulse'
     | '/terms'
+    | '/about'
     | '/api/launches'
     | '/api/relay-status'
     | '/p/$address'
@@ -229,6 +241,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   PulseRoute: typeof PulseRoute
   TermsRoute: typeof TermsRoute
+  AboutRoute: typeof AboutRoute
   ApiLaunchesRoute: typeof ApiLaunchesRoute
   ApiRelayStatusRoute: typeof ApiRelayStatusRoute
   PAddressRoute: typeof PAddressRoute
@@ -303,6 +316,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/launches': {
       id: '/api/launches'
       path: '/api/launches'
@@ -365,6 +385,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   PulseRoute: PulseRoute,
   TermsRoute: TermsRoute,
+  AboutRoute: AboutRoute,
   ApiLaunchesRoute: ApiLaunchesRoute,
   ApiRelayStatusRoute: ApiRelayStatusRoute,
   PAddressRoute: PAddressRoute,

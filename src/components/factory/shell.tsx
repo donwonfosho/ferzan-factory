@@ -182,12 +182,22 @@ export function Shell({ children }: { children: ReactNode }) {
             Docs
           </Link>
           {" · "}
+          <Link to="/about" className="text-cyan">
+            About
+          </Link>
+          {" · "}
           <Link to="/terms" className="text-cyan">
             Terms
           </Link>
           {" · "}
           <a className="text-cyan" href={X_URL}>
             X
+          </a>
+        </p>
+        <p className="mt-2">
+          Contact:{" "}
+          <a className="text-cyan" href="mailto:Ferzantrade@gmail.com">
+            Ferzantrade@gmail.com
           </a>
         </p>
       </footer>
