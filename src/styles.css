@@ -300,3 +300,39 @@ select {
     transition: none !important;
   }
 }
+
+/* ---- Batch A: live floor ---- */
+.tape { overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent); }
+.tape .tape-track { gap: 0; padding: 0.4rem 0; }
+.tape:hover .tape-track { animation-play-state: paused; }
+
+.hero-live, .hero-count { background:
+  radial-gradient(ellipse 80% 90% at 85% 0%, rgba(62, 224, 230, 0.18), transparent 60%), #0d1416;
+  box-shadow: 0 0 0 1px rgba(62, 224, 230, 0.3), 0 20px 60px -30px rgba(62, 224, 230, 0.45); }
+.count-box { min-width: 4.25rem; border-radius: 12px; background: #07090b; padding: 0.6rem 0.8rem; text-align: center;
+  font-variant-numeric: tabular-nums; box-shadow: 0 0 0 1px rgba(62, 224, 230, 0.22); }
+
+.koth { position: relative; background: radial-gradient(ellipse 60% 120% at 0% 50%, rgba(62, 224, 230, 0.12), transparent 70%), #11181a; }
+.koth .crown { animation: crown-bob 2.6s ease-in-out infinite; }
+@keyframes crown-bob { 0%, 100% { transform: translateY(0) rotate(-8deg); } 50% { transform: translateY(-3px) rotate(6deg); } }
+.koth-new { animation: koth-flash 2.4s ease-out; }
+@keyframes koth-flash { 0% { box-shadow: 0 0 0 2px #3ee0e6, 0 0 40px rgba(62, 224, 230, 0.6); transform: scale(1.02); }
+  100% { box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08); transform: scale(1); } }
+
+.card-flash { animation: card-flash 1.2s ease-out; }
+@keyframes card-flash { 0% { box-shadow: 0 0 0 2px #3ee0e6, 0 0 28px rgba(62, 224, 230, 0.45); transform: translateY(-2px); }
+  30% { transform: translateY(0) rotate(-0.4deg); } 45% { transform: rotate(0.4deg); }
+  100% { box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08); transform: none; } }
+
+.grad-pop { animation: grad-in 0.5s cubic-bezier(0.2, 1.4, 0.4, 1); }
+@keyframes grad-in { from { transform: translateY(120%); opacity: 0; } to { transform: none; opacity: 1; } }
+
+.curve-pulse { transform-box: fill-box; transform-origin: center; animation: curve-pulse 1.8s ease-out infinite; }
+@keyframes curve-pulse { from { transform: scale(0.6); opacity: 0.9; } to { transform: scale(1.9); opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .tape { overflow-x: auto; }
+  .tape-track > [aria-hidden="true"] { display: none; }
+}

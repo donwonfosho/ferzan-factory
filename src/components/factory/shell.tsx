@@ -6,12 +6,13 @@ import { creatorLabel, owns } from "@/lib/factory/engine";
 import { useFactory } from "@/lib/factory/store";
 import { readSiteWallet } from "@/lib/factory/site-wallet";
 import { solanaAddress } from "@/lib/factory/solana";
-import type { ChainId, Launch } from "@/lib/factory/types";
+import type { ChainId } from "@/lib/factory/types";
 import { formatSmart } from "@/lib/factory/units";
 import { cn } from "@/lib/cn";
 import { Button } from "./ui";
 import { WalletBalances } from "./gas-step";
 import { LaunchWatch } from "./launch-watch";
+import { GraduationBanner, TradeTape } from "./pulse-live";
 
 const LINKS = [
   { to: "/", label: "Floor" },
@@ -141,10 +142,11 @@ export function Shell({ children }: { children: ReactNode }) {
             </div>
           </div>
         ) : null}
+        <TradeTape />
       </header>
-      <Tape launches={launches} />
       <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-14">{children}</main>
       <LaunchWatch />
+      <GraduationBanner />
       <footer className="mx-auto max-w-5xl px-4 pb-10 text-sm text-muted">
         <p>
           Site curves: 1% on every trade. 60% treasury, 30% creator, 10% to a referrer when a buyer names a wallet. After graduation the creator keeps 30% of the pool.
@@ -180,34 +182,6 @@ export function Shell({ children }: { children: ReactNode }) {
           </a>
         </p>
       </footer>
-    </div>
-  );
-}
-
-function Tape({ launches }: { launches: Launch[] }) {
-  const items = launches
-    .flatMap((launch) =>
-      launch.tape
-        .filter((tick) => tick.side === "buy" || tick.side === "sell" || tick.side === "grad")
-        .map((tick) => ({
-          key: `${launch.id}-${tick.t}-${tick.side}-${tick.who}`,
-          label: `${tick.side} ${launch.symbol}`,
-          detail: tick.detail,
-        })),
-    )
-    .slice(0, 16);
-  if (items.length < 2) return null;
-  const loop = [...items, ...items];
-  return (
-    <div className="tape-viewport" aria-label="Recent trades">
-      <div className="tape-track">
-        {loop.map((item, index) => (
-          <span key={`${item.key}-${index}`} className="flex items-baseline gap-2 text-xs whitespace-nowrap">
-            <span className="font-semibold text-cyan">{item.label}</span>
-            <span className="text-muted">{item.detail}</span>
-          </span>
-        ))}
-      </div>
     </div>
   );
 }

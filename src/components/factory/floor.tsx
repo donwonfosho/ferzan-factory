@@ -9,6 +9,7 @@ import { LaunchBoard } from "./launch-board";
 import { Mark } from "./ui";
 import { ChainMark, type MarkChain } from "./chain-mark";
 import { CapChange, Spark } from "./market-line";
+import { FerzanHero, KingOfTheHill, OnlyOnFerzan } from "./floor-live";
 
 const OPEN_CHAINS = ["base", "bsc", "ethereum", "robinhood", "arc", "solana"] as const;
 
@@ -27,7 +28,7 @@ export function Floor() {
           Launch a coin. Trade it here.
         </h1>
         <p className="mt-4 max-w-xl text-lg text-muted">
-          Base, Ethereum, BNB, Solana and Robinhood. Sign in, launch, and trade with your own account wallet.
+          Solana, Base, BNB, Ethereum, Robinhood, Arc, Tron and TON. Sign in, launch, and trade with your own account wallet.
         </p>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <Link to="/launch" search={{ kind: "curve" }} className="btn-cyan w-full sm:w-auto">
@@ -39,7 +40,13 @@ export function Floor() {
         </div>
       </section>
 
+      <FerzanHero />
+
+      <KingOfTheHill />
+
       <LaunchBoard chain={chain} onChain={setChain} />
+
+      <OnlyOnFerzan />
 
       <OpenContract />
 

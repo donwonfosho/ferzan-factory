@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { OnlyOnFerzan } from "./floor-live";
 
 /** FERZAN launch: Friday, October 9, 2026, 7:00 PM Eastern (23:00 UTC). */
 const LAUNCH_AT = Date.UTC(2026, 9, 9, 23, 0, 0);
@@ -154,6 +155,8 @@ export function FerzanPage() {
           <li>No transfer tax. No staking promises. Nothing here is a promise of price or profit.</li>
         </ul>
       </section>
+
+      <OnlyOnFerzan />
 
       <section>
         <h2 className="text-xl font-extrabold">On-chain addresses</h2>

@@ -15,11 +15,14 @@ import { getReceipt } from "@/lib/factory/relay";
 import { formatSmart, parseDecimal } from "@/lib/factory/units";
 import { cn } from "@/lib/cn";
 import { Button, TextInput } from "./ui";
+import { CandleChart, CurveGraphic } from "./chart-pro";
 import { CreatorScoreBox } from "./creator-score";
 
 const ZERO = "0x0000000000000000000000000000000000000000";
 const TIMEFRAMES = [
+  { tf: 60, label: "1m" },
   { tf: 300, label: "5m" },
+  { tf: 900, label: "15m" },
   { tf: 3600, label: "1h" },
   { tf: 14400, label: "4h" },
 ];
@@ -274,15 +277,31 @@ export function BotCoinPage({ chain, curve }: { chain: BotCurveChain; curve: str
       </p>
 
       <div className="ticket">
-        <div className="mb-2 flex gap-2">
+        <div className="mb-2 flex gap-2 overflow-x-auto">
           {TIMEFRAMES.map((t) => (
             <button key={t.tf} type="button" onClick={() => setTf(t.tf)} className={cn("min-h-9 px-3 text-sm", tf === t.tf ? "btn-cyan" : "btn-line")}>
               {t.label}
             </button>
           ))}
         </div>
-        <Chart candles={state.candles} />
+        <CandleChart
+          candles={state.candles}
+          trades={state.trades}
+          tf={tf}
+          native={state.native}
+          toCap={state.price > 0 ? state.mcapUsd / state.price : 0}
+        />
       </div>
+
+      <CurveGraphic
+        progress={state.progress}
+        gradNative={Number(BigInt(state.gradTarget)) / 1e18}
+        price={state.price}
+        native={state.native}
+        symbol={state.symbol}
+        supply={state.price > 0 && state.nativeUsd > 0 ? state.mcapUsd / (state.price * state.nativeUsd) : 0}
+        graduated={state.graduated}
+      />
 
       {state.graduated ? (
         <div className="ticket">

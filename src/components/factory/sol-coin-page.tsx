@@ -4,12 +4,14 @@ import { solanaExplorerMint, solanaExplorerTx } from "@/lib/factory/solana";
 import { formatSmart, parseDecimal } from "@/lib/factory/units";
 import { WalletNeeded, solanaWallet, useAccountWallets } from "@/lib/factory/wallet-bridge";
 import { cn } from "@/lib/cn";
-import { Chart } from "./bot-coin-page";
+import { CandleChart } from "./chart-pro";
 import { Button, TextInput } from "./ui";
 import { CreatorScoreBox } from "./creator-score";
 
 const TIMEFRAMES = [
+  { tf: 60, label: "1m" },
   { tf: 300, label: "5m" },
+  { tf: 900, label: "15m" },
   { tf: 3600, label: "1h" },
   { tf: 14400, label: "4h" },
 ];
@@ -199,14 +201,14 @@ export function SolCoinPage({ mint }: { mint: string }) {
       </p>
 
       <div className="ticket">
-        <div className="mb-2 flex gap-2">
+        <div className="mb-2 flex gap-2 overflow-x-auto">
           {TIMEFRAMES.map((t) => (
             <button key={t.tf} type="button" onClick={() => setTf(t.tf)} className={cn("min-h-9 px-3 text-sm", tf === t.tf ? "btn-cyan" : "btn-line")}>
               {t.label}
             </button>
           ))}
         </div>
-        <Chart candles={coin.candles} />
+        <CandleChart candles={coin.candles} tf={tf} native="SOL" toCap={coin.price > 0 ? coin.mcapUsd / coin.price : 0} />
       </div>
 
       {coin.graduated ? (

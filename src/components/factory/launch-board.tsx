@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { siteCoinHref } from "@/lib/factory/bot-curve";
 import { listTelegram, type TelegramChain, type TelegramCoin, type TelegramSort } from "@/lib/factory/telegram-feed";
 import { cn } from "@/lib/cn";
@@ -40,13 +40,28 @@ export function LaunchBoard({ chain, onChain }: { chain: "all" | MarkChain; onCh
   const [coins, setCoins] = useState<TelegramCoin[] | null>(null);
   const [more, setMore] = useState(false);
   const [chainsOpen, setChainsOpen] = useState(false);
+  // Cards whose trade count went up since the last refresh flash once, so the board visibly moves.
+  const lastTrades = useRef<Map<string, number>>(new Map());
+  const [flashing, setFlashing] = useState<Set<string>>(new Set());
   const apiChain: TelegramChain = chain !== "all" && BOARD_CHAINS.has(chain) ? (chain as TelegramChain) : "";
 
   useEffect(() => {
     let stop = false;
     async function pull() {
       const rows = await listTelegram({ data: { sort, chain: apiChain, q: q.trim() } }).catch(() => null);
-      if (!stop && rows) setCoins(rows);
+      if (stop || !rows) return;
+      const moved = new Set<string>();
+      for (const c of rows) {
+        const key = `${c.chain}-${c.token}`;
+        const before = lastTrades.current.get(key);
+        if (before !== undefined && c.trades > before) moved.add(key);
+        lastTrades.current.set(key, c.trades);
+      }
+      setCoins(rows);
+      if (moved.size) {
+        setFlashing(moved);
+        window.setTimeout(() => setFlashing(new Set()), 1300);
+      }
     }
     setCoins(null);
     setMore(false);
@@ -133,7 +148,7 @@ export function LaunchBoard({ chain, onChain }: { chain: "all" | MarkChain; onCh
       ) : (
         <div className="mt-4 grid gap-2 sm:grid-cols-2">
           {shown.map((coin) => (
-            <LaunchCard key={`${coin.chain}-${coin.token}`} coin={coin} />
+            <LaunchCard key={`${coin.chain}-${coin.token}`} coin={coin} flash={flashing.has(`${coin.chain}-${coin.token}`)} />
           ))}
         </div>
       )}
@@ -146,12 +161,12 @@ export function LaunchBoard({ chain, onChain }: { chain: "all" | MarkChain; onCh
   );
 }
 
-export function LaunchCard({ coin }: { coin: TelegramCoin }) {
+export function LaunchCard({ coin, flash = false }: { coin: TelegramCoin; flash?: boolean }) {
   const progress = coin.graduated ? 100 : coin.progress;
   const creator = coin.creator ? `${coin.creator.slice(0, 4)}…${coin.creator.slice(-4)}` : "";
   const link = coinHref(coin);
   return (
-    <a href={link.href} {...(link.external ? { target: "_blank", rel: "noopener noreferrer" } : {})} className="ticket block min-w-0">
+    <a href={link.href} {...(link.external ? { target: "_blank", rel: "noopener noreferrer" } : {})} className={cn("ticket block min-w-0", flash && "card-flash")}>
       <div className="flex items-center gap-3">
         <Mark symbol={coin.symbol} image={coin.image || undefined} />
         <span className="min-w-0 flex-1">
