@@ -1,3 +1,4 @@
+/** Live floor sections. File revision so a cached 404 of the previous script name is not reused. */
 import { Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { listTelegram, type TelegramCoin } from "@/lib/factory/telegram-feed";
