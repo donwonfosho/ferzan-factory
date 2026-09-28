@@ -3,6 +3,7 @@ import { Label } from "./ui";
 import type { MarkChain } from "./chain-mark";
 import type { Mode } from "@/lib/factory/types";
 
+import { tr } from "@/lib/i18n";
 /**
  * Launch page. Every launch goes through the Ferzan bots' factories (and Meteora on Solana)
  * with the visitor's own account wallet, so one flow covers every chain.
@@ -11,14 +12,14 @@ import type { Mode } from "@/lib/factory/types";
 export function LaunchForm(_props: { initialMode?: Mode; initialChain?: MarkChain }) {
   return (
     <div className="mx-auto max-w-xl">
-      <p className="text-sm font-medium text-cyan">Curve</p>
-      <h1 className="mt-2 text-4xl">Launch a coin</h1>
+      <p className="text-sm font-medium text-cyan">{tr("Curve")}</p>
+      <h1 className="mt-2 text-4xl">{tr("Launch a coin")}</h1>
       <p className="mt-2 text-sm text-muted">
-        Prefer Telegram?{" "}
+        {tr("Prefer Telegram?")}{" "}
         <a className="font-semibold text-cyan" href="https://t.me/Ferzan_Launch_Bot" target="_blank" rel="noopener noreferrer">
-          Launch with @Ferzan_Launch_Bot
+          {tr("Launch with @Ferzan_Launch_Bot")}
         </a>
-        . Both land on the same board.
+        {tr(". Both land on the same board.")}
       </p>
       <OwnWalletLaunch />
     </div>
@@ -41,13 +42,13 @@ export function ProjectPicture({
         onChange(next);
         onError("");
       },
-      (err: unknown) => onError(err instanceof Error ? err.message : "Could not read that picture."),
+      (err: unknown) => onError(err instanceof Error ? err.message : tr("Could not read that picture.")),
     );
   }
 
   return (
     <div>
-      <Label>Project picture</Label>
+      <Label>{tr("Project picture")}</Label>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <label
           className="grid h-32 w-32 shrink-0 cursor-pointer place-items-center overflow-hidden bg-bg shadow-border"
@@ -58,9 +59,9 @@ export function ProjectPicture({
           }}
         >
           {image ? (
-            <img src={image} alt="Project picture" className="h-full w-full object-cover" />
+            <img src={image} alt={tr("Project picture")} className="h-full w-full object-cover" />
           ) : (
-            <span className="px-3 text-center text-xs font-semibold text-muted">Add a picture</span>
+            <span className="px-3 text-center text-xs font-semibold text-muted">{tr("Add a picture")}</span>
           )}
           <input
             type="file"
@@ -73,13 +74,13 @@ export function ProjectPicture({
           />
         </label>
         <div className="text-sm text-muted">
-          <p>PNG or JPG. People see this on the floor and on the coin page.</p>
+          <p>{tr("PNG or JPG. People see this on the floor and on the coin page.")}</p>
           {image ? (
             <button type="button" className="mt-2 min-h-11 font-semibold text-cyan" onClick={() => onChange("")}>
-              Remove picture
+              {tr("Remove picture")}
             </button>
           ) : (
-            <p className="mt-2">Click the square or drop a file on it.</p>
+            <p className="mt-2">{tr("Click the square or drop a file on it.")}</p>
           )}
         </div>
       </div>
@@ -91,9 +92,9 @@ function readMark(file: File): Promise<string> {
   const type = file.type || "";
   const name = file.name.toLowerCase();
   if (!type.startsWith("image/") && !/\.(png|jpe?g|webp)$/.test(name)) {
-    return Promise.reject(new Error("Use a PNG or JPG."));
+    return Promise.reject(new Error(tr("Use a PNG or JPG.")));
   }
-  if (file.size > 12_000_000) return Promise.reject(new Error("That picture is too large. Try one under 12 MB."));
+  if (file.size > 12_000_000) return Promise.reject(new Error(tr("That picture is too large. Try one under 12 MB.")));
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
     const img = new Image();
@@ -105,7 +106,7 @@ function readMark(file: File): Promise<string> {
       const ctx = canvas.getContext("2d");
       if (!ctx) {
         URL.revokeObjectURL(url);
-        reject(new Error("Could not read that picture."));
+        reject(new Error(tr("Could not read that picture.")));
         return;
       }
       const scale = Math.max(size / img.width, size / img.height);
@@ -120,14 +121,14 @@ function readMark(file: File): Promise<string> {
         data = canvas.toDataURL("image/jpeg", quality);
       }
       if (!data.startsWith("data:image/") || data.length > 180_000) {
-        reject(new Error("That picture is still too heavy. Try a simpler image."));
+        reject(new Error(tr("That picture is still too heavy. Try a simpler image.")));
         return;
       }
       resolve(data);
     };
     img.onerror = () => {
       URL.revokeObjectURL(url);
-      reject(new Error("Could not read that picture. Use a PNG or JPG."));
+      reject(new Error(tr("Could not read that picture. Use a PNG or JPG.")));
     };
     img.src = url;
   });

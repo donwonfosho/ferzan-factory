@@ -1,5 +1,6 @@
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from "react";
 import { cn } from "@/lib/cn";
+import { tr } from "@/lib/i18n";
 
 export function Button({
   variant = "cyan",
@@ -71,7 +72,7 @@ export function Choice({
         disabled && "opacity-40",
       )}
     >
-      <div className="text-sm font-semibold">{title}</div>
+      <div className="text-sm font-semibold">{tr(title)}</div>
       {detail ? <div className={cn("mt-0.5 text-xs", on ? "text-cyan-ink/80" : "text-muted")}>{detail}</div> : null}
     </button>
   );

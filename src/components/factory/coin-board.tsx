@@ -11,6 +11,7 @@ import { formatSmart, formatWhen, formatPrice, parsePrice } from "@/lib/factory/
 import { Button } from "./ui";
 import { PriceChart } from "./price-chart";
 
+import { tr } from "@/lib/i18n";
 function boardKey(contract: string): string {
   return contract.startsWith("0x") ? contract.toLowerCase() : contract;
 }
@@ -51,20 +52,20 @@ export function CoinTape({ contract, chain, createdAt, supply }: { contract: str
   return (
     <section className="mt-8">
       <PriceChart contract={contract} chain={chain} createdAt={createdAt} native={meta?.native ?? ""} supply={supply} />
-      <h2 className="mt-8 text-lg font-extrabold">Trades</h2>
-      <p className="mt-1 text-sm text-muted">Same tape for every visitor. Buys elsewhere show here too.</p>
-      {!history && rows.length === 0 ? <p className="mt-3 text-sm text-muted">No trades on this contract yet.</p> : null}
+      <h2 className="mt-8 text-lg font-extrabold">{tr("Trades")}</h2>
+      <p className="mt-1 text-sm text-muted">{tr("Same tape for every visitor. Buys elsewhere show here too.")}</p>
+      {!history && rows.length === 0 ? <p className="mt-3 text-sm text-muted">{tr("No trades on this contract yet.")}</p> : null}
       <ul className="mt-3 divide-y divide-line border-y border-line">
         {history
           ? chainRows.map((row, index) => (
               <li key={`${row.t}-${index}`} className="flex items-start justify-between gap-3 py-3 text-sm">
                 <span>
                   <span className={row.side === "sell" ? "font-semibold text-sell" : "font-semibold text-cyan"}>
-                    {row.side === "sell" ? "Sell" : "Buy"}
+                    {row.side === "sell" ? tr("Sell") : tr("Buy")}
                   </span>{" "}
-                  {row.who ? creatorLabel(row.who) : row.venue === "market" ? "Market" : "Wallet"}
+                  {row.who ? creatorLabel(row.who) : row.venue === "market" ? tr("Market") : tr("Wallet")}
                   <span className="mt-0.5 block text-muted tabular-nums">
-                    {formatSmart(BigInt(row.native || "0"), meta?.nativeDecimals ?? 18)} {meta?.native ?? "ETH"}
+                    {formatSmart(BigInt(row.native || "0"), meta?.nativeDecimals ?? 18)} {meta?.native ?? tr("ETH")}
                     {row.price ? ` · ${formatPrice(row.price)}` : ""}
                   </span>
                 </span>
@@ -75,9 +76,9 @@ export function CoinTape({ contract, chain, createdAt, supply }: { contract: str
               <li key={`${row.createdAt}-${index}`} className="flex items-start justify-between gap-3 py-3 text-sm">
                 <span>
                   <span className={row.side === "sell" ? "font-semibold text-sell" : "font-semibold text-cyan"}>
-                    {row.side === "sell" ? "Sell" : "Buy"}
+                    {row.side === "sell" ? tr("Sell") : tr("Buy")}
                   </span>{" "}
-                  {row.who ? creatorLabel(row.who) : "Wallet"}
+                  {row.who ? creatorLabel(row.who) : tr("Wallet")}
                   <span className="mt-0.5 block text-muted tabular-nums">
                     {amountLabel(row, meta?.native ?? "", meta?.nativeDecimals ?? 18)}
                     {row.price ? ` · ${shownPrice(row.price)}` : ""}
@@ -121,20 +122,20 @@ export function CoinThread({ contract, chain }: { contract: string; chain: strin
     setError("");
     let author = wallet;
     if (!author || (!author.startsWith("0x") && !/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(author))) {
-      setError("Create a wallet on Account before you post. Opening the site does not create one.");
+      setError(tr("Create a wallet on Account before you post. Opening the site does not create one."));
       return;
     }
     setBusy(true);
     try {
       const text = postBody(body);
-      if (!text) throw new Error("Write something.");
+      if (!text) throw new Error(tr("Write something."));
       const proof = await signProof("post", author, { contract: proofAddress(contract), chain, body: text });
       await addPost({ data: { contract, chain, author, body: text, proof } });
       setBody("");
       const next = await listPosts({ data: { contract: boardKey(contract) } });
       setPosts(next);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not post.");
+      setError(err instanceof Error ? err.message : tr("Could not post."));
     } finally {
       setBusy(false);
     }
@@ -142,27 +143,27 @@ export function CoinThread({ contract, chain }: { contract: string; chain: strin
 
   return (
     <section className="mt-4">
-      <h2 className="text-lg font-extrabold">Thread</h2>
-      <p className="mt-1 text-sm text-muted">Same thread for every visitor. Each reply shows the wallet that posted.</p>
+      <h2 className="text-lg font-extrabold">{tr("Thread")}</h2>
+      <p className="mt-1 text-sm text-muted">{tr("Same thread for every visitor. Each reply shows the wallet that posted.")}</p>
       <form onSubmit={submit} className="mt-3 space-y-3">
         <textarea
           value={body}
           onChange={(e) => setBody(e.target.value.slice(0, 280))}
-          placeholder="Say something about this coin"
+          placeholder={tr("Say something about this coin")}
           rows={3}
           className="w-full bg-bg px-3 py-3 text-sm shadow-border outline-none"
         />
-        {error ? <p className="text-sm text-sell">{error}</p> : null}
+        {error ? <p className="text-sm text-sell">{tr(error)}</p> : null}
         <Button type="submit" disabled={busy || body.trim().length === 0}>
-          {busy ? "Posting" : "Reply"}
+          {busy ? tr("Posting") : tr("Reply")}
         </Button>
       </form>
-      {posts.length === 0 ? <p className="mt-4 text-sm text-muted">No replies yet.</p> : null}
+      {posts.length === 0 ? <p className="mt-4 text-sm text-muted">{tr("No replies yet.")}</p> : null}
       <ul className="mt-3 space-y-3">
         {posts.map((post) => (
           <li key={post.id} className="bg-surface px-3 py-3 shadow-border">
             <p className="text-xs font-semibold text-cyan">{creatorLabel(post.author)}</p>
-            <p className="mt-1 text-sm">{post.body}</p>
+            <p className="mt-1 text-sm">{tr(post.body)}</p>
             <p className="mt-1 text-xs text-muted tabular-nums">{when(post.createdAt)}</p>
           </li>
         ))}

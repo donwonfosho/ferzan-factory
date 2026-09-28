@@ -6,6 +6,7 @@ import { ChainMark, type MarkChain } from "./chain-mark";
 import { compactUsd } from "./market-line";
 import { Mark } from "./ui";
 
+import { tr } from "@/lib/i18n";
 let isOpen = false;
 const subs = new Set<() => void>();
 export function openSearch(v = true) {
@@ -27,12 +28,12 @@ const MARKS = new Set(["solana", "base", "bsc", "ethereum", "robinhood", "arc", 
 
 export function SearchButton({ className }: { className?: string }) {
   return (
-    <button type="button" onClick={() => openSearch()} className={cn("btn-line", className)} aria-label="Search coins">
+    <button type="button" onClick={() => openSearch()} className={cn("btn-line", className)} aria-label={tr("Search coins")}>
       <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden>
         <circle cx="11" cy="11" r="7" />
         <path d="m20 20-3.5-3.5" strokeLinecap="round" />
       </svg>
-      <span className="hidden lg:inline">Search</span>
+      <span className="hidden lg:inline">{tr("Search")}</span>
       <kbd className="hidden rounded bg-bg px-1.5 text-[10px] text-muted shadow-border lg:inline">/</kbd>
     </button>
   );
@@ -100,7 +101,7 @@ export function SearchOverlay() {
   const list = hits ?? [];
   return (
     <div className="fixed inset-0 z-[70] flex items-start justify-center bg-bg/80 px-4 pt-[12vh] backdrop-blur-sm" onClick={() => openSearch(false)}>
-      <div className="w-full max-w-xl overflow-hidden rounded-2xl bg-surface shadow-border-hover" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Search coins">
+      <div className="w-full max-w-xl overflow-hidden rounded-2xl bg-surface shadow-border-hover" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={tr("Search coins")}>
         <div className="flex items-center gap-3 border-b border-line px-4">
           <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0 text-muted" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden>
             <circle cx="11" cy="11" r="7" />
@@ -115,20 +116,20 @@ export function SearchOverlay() {
               if (e.key === "ArrowUp") (e.preventDefault(), setSel((s) => Math.max(0, s - 1)));
               if (e.key === "Enter") go(list[sel]);
             }}
-            placeholder="Ticker, name or contract address"
+            placeholder={tr("Ticker, name or contract address")}
             spellCheck={false}
             className="min-h-14 w-full bg-transparent text-base outline-none"
-            aria-label="Search"
+            aria-label={tr("Search")}
           />
           <button type="button" className="shrink-0 text-xs text-muted" onClick={() => openSearch(false)}>
-            Esc
+            {tr("Esc")}
           </button>
         </div>
         <ul className="max-h-[60vh] overflow-y-auto p-2">
           {hits === null ? (
-            <li className="px-3 py-6 text-center text-sm text-muted">Every Ferzan coin on Solana, Base, BNB, Ethereum, Robinhood, Arc, Tron and TON.</li>
+            <li className="px-3 py-6 text-center text-sm text-muted">{tr("Every Ferzan coin on Solana, Base, BNB, Ethereum, Robinhood, Arc, Tron and TON.")}</li>
           ) : list.length === 0 ? (
-            <li className="px-3 py-6 text-center text-sm text-muted">No Ferzan coin matches “{q.trim()}”.</li>
+            <li className="px-3 py-6 text-center text-sm text-muted">{tr("No Ferzan coin matches “")}{q.trim()}”.</li>
           ) : (
             list.map((h, i) => (
               <li key={`${h.chain}-${h.token}`}>
@@ -143,7 +144,7 @@ export function SearchOverlay() {
                     <span className="flex items-center gap-2">
                       <span className="font-semibold">${h.symbol}</span>
                       {MARKS.has(h.chain) ? <ChainMark id={h.chain as MarkChain} className="h-4 w-4" /> : null}
-                      {h.graduated ? <span className="text-xs text-cyan">Graduated</span> : null}
+                      {h.graduated ? <span className="text-xs text-cyan">{tr("Graduated")}</span> : null}
                     </span>
                     <span className="block truncate text-xs text-muted">{h.name}</span>
                   </span>

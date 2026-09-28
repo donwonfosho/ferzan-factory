@@ -4,6 +4,7 @@ import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { Shell } from "@/components/factory/shell";
 import appCss from "../styles.css?url";
+import { LangRoot } from "@/components/factory/lang";
 
 const APP_NAME = "Ferzan Factory";
 
@@ -42,9 +43,11 @@ export const Route = createRootRoute({
         <PreviewHostBridge />
         <AuthProvider>
           <PrivyRoot>
-            <Shell>
-              <Outlet />
-            </Shell>
+            <LangRoot>
+              <Shell>
+                <Outlet />
+              </Shell>
+            </LangRoot>
           </PrivyRoot>
         </AuthProvider>
         <Scripts />

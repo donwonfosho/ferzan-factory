@@ -6,12 +6,13 @@ import { creatorVerdict } from "./creator-health";
 import type { ChainId } from "@/lib/factory/types";
 import { Mark } from "./ui";
 
+import { tr } from "@/lib/i18n";
 function RecordLine({ coins }: { coins: BoardCoin[] }) {
   const verdict = creatorVerdict(coins);
   const tone = verdict.tone === "heavy" ? "text-sell" : verdict.tone === "clear" ? "text-cyan" : "text-fg";
   return (
     <p className={`mt-4 text-sm font-semibold ${tone}`}>
-      {verdict.title}. {verdict.line}
+      {tr(verdict.title)}. {verdict.line}
     </p>
   );
 }
@@ -53,18 +54,18 @@ export function PublicProfile({ address }: { address: string }) {
       <div className="flex items-center gap-4">
         {image ? <img src={image} alt="" className="h-16 w-16 object-cover shadow-border" /> : null}
         <div>
-          <h1 className="text-4xl">{name || "Profile"}</h1>
+          <h1 className="text-4xl">{name || tr("Profile")}</h1>
           <a className="mt-1 inline-block text-sm text-cyan" href={`/creator/${address}`}>
-            Full Ferzan launch record →
+            {tr("Full Ferzan launch record →")}
           </a>
           {bio ? <p className="mt-2 text-muted">{bio}</p> : null}
         </div>
       </div>
       <p className="mt-3 break-all text-sm text-muted">{address}</p>
       {coins ? <RecordLine coins={coins} /> : null}
-      {!valid ? <p className="mt-6 text-sm text-sell">That wallet address looks wrong.</p> : null}
-      {valid && coins === null ? <p className="mt-6 text-sm text-muted">Loading launches.</p> : null}
-      {coins && coins.length === 0 ? <p className="mt-6 text-sm text-muted">No coins from this wallet are on the board yet.</p> : null}
+      {!valid ? <p className="mt-6 text-sm text-sell">{tr("That wallet address looks wrong.")}</p> : null}
+      {valid && coins === null ? <p className="mt-6 text-sm text-muted">{tr("Loading launches.")}</p> : null}
+      {coins && coins.length === 0 ? <p className="mt-6 text-sm text-muted">{tr("No coins from this wallet are on the board yet.")}</p> : null}
       <div className="mt-4 divide-y divide-line border-y border-line">
         {coins?.map((coin) => (
           <Link key={coin.id} to="/c/$chain/$address" params={{ chain: coin.chain, address: coin.contract }} className="flex items-center gap-3 py-3">
@@ -72,7 +73,7 @@ export function PublicProfile({ address }: { address: string }) {
             <span className="min-w-0 flex-1">
               <span className="block font-semibold">{coin.symbol}</span>
               <span className="block truncate text-sm text-muted">
-                {coin.name} · {CHAINS[coin.chain as ChainId]?.label ?? coin.chain}
+                {coin.name} · {tr(CHAINS[coin.chain as ChainId]?.label) ?? coin.chain}
               </span>
             </span>
           </Link>

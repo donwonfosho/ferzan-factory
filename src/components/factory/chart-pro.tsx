@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
 import { cn } from "@/lib/cn";
 
+import { tr } from "@/lib/i18n";
 type Candle = [number, number, number, number, number, number];
 type Trade = { ts: number; buy: boolean; native: number };
 
@@ -86,7 +87,7 @@ export function CandleChart({
     [candles, k, maxBars],
   );
 
-  if (data.length === 0) return <p className="py-12 text-center text-sm text-muted">Not enough trades for a chart yet.</p>;
+  if (data.length === 0) return <p className="py-12 text-center text-sm text-muted">{tr("Not enough trades for a chart yet.")}</p>;
 
   let lo = Math.min(...data.map((d) => d.low));
   let hi = Math.max(...data.map((d) => d.high));
@@ -135,7 +136,7 @@ export function CandleChart({
               {clock(h.time, tf)} · O <span className="text-fg">{label(h.open)}</span> H <span className="text-fg">{label(h.high)}</span> L{" "}
               <span className="text-fg">{label(h.low)}</span> C{" "}
               <span className={h.close >= h.open ? "text-cyan" : "text-sell"}>{label(h.close)}</span>
-              {h.vol > 0 ? ` · vol ${fmt(h.vol)} ${native}` : ""}
+              {h.vol > 0 ? tr(" · vol {0} {1}", fmt(h.vol), native) : ""}
             </span>
           ) : (
             <span>
@@ -144,7 +145,7 @@ export function CandleChart({
                 {change >= 0 ? "+" : ""}
                 {change.toFixed(1)}%
               </span>{" "}
-              over the shown range
+              {tr("over the shown range")}
             </span>
           )}
         </div>
@@ -157,7 +158,7 @@ export function CandleChart({
                 onClick={() => setMode(m)}
                 className={cn("rounded-full px-3 py-1 text-xs", mode === m ? "bg-cyan text-cyan-ink" : "bg-bg text-muted shadow-border")}
               >
-                {m === "price" ? `Price (${native})` : "Market cap ($)"}
+                {m === "price" ? tr("Price ({0})", native) : tr("Market cap ($)")}
               </button>
             ))}
           </div>
@@ -173,7 +174,7 @@ export function CandleChart({
           onPointerDown={onMove}
           onPointerLeave={() => setHover(null)}
           role="img"
-          aria-label={`Candle chart, last ${label(last.close)}`}
+          aria-label={tr("Candle chart, last {0}", label(last.close))}
         >
           <defs>
             <linearGradient id="cc-glow" x1="0" x2="0" y1="0" y2="1">
@@ -222,7 +223,7 @@ export function CandleChart({
                 fill={t.buy ? UP : DOWN}
               >
                 <title>
-                  {t.buy ? "Buy" : "Sell"} {fmt(t.native)} {native}
+                  {t.buy ? tr("Buy") : tr("Sell")} {fmt(t.native)} {native}
                 </title>
               </path>
             );
@@ -299,11 +300,11 @@ export function CurveGraphic({
   return (
     <div className="ticket">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <p className="font-extrabold">Bonding curve</p>
-        <p className="text-xs text-muted">Price grows 16x from launch to graduation</p>
+        <p className="font-extrabold">{tr("Bonding curve")}</p>
+        <p className="text-xs text-muted">{tr("Price grows 16x from launch to graduation")}</p>
       </div>
       <div className="mt-2 overflow-x-auto">
-        <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full min-w-[320px]" role="img" aria-label={`${symbol} is ${progress.toFixed(0)}% along its bonding curve`}>
+        <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full min-w-[320px]" role="img" aria-label={tr("{0} is {1}% along its bonding curve", symbol, progress.toFixed(0))}>
           <defs>
             <linearGradient id="curve-fill" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#3ee0e6" stopOpacity="0.45" />
@@ -324,7 +325,7 @@ export function CurveGraphic({
             </text>
           ))}
           <text x={L} y={H - 6} fontSize="11" fill="#93a4a7">
-            raised
+            {tr("raised")}
           </text>
           {area ? <path d={area} fill="url(#curve-fill)" /> : null}
           {ghost ? <path d={ghost} fill="#3ee0e6" fillOpacity="0.18" /> : null}
@@ -337,7 +338,7 @@ export function CurveGraphic({
           />
           <line x1={x(1)} x2={x(1)} y1={T - 6} y2={H - B} stroke="#f4f7f7" strokeOpacity="0.4" strokeDasharray="4 4" />
           <text x={x(1) - 6} y={T + 6} textAnchor="end" fontSize="12" fontWeight="700" fill="#f4f7f7">
-            🎓 Graduation
+            {tr("🎓 Graduation")}
           </text>
           {r2 > r ? <circle cx={x(r2)} cy={y(mult(r2))} r="6" fill="none" stroke="#f4f7f7" strokeWidth="2" strokeDasharray="3 3" /> : null}
           <circle cx={x(r)} cy={y(mult(r))} r="11" fill="#3ee0e6" fillOpacity="0.25" className={graduated ? "" : "curve-pulse"} />
@@ -349,14 +350,14 @@ export function CurveGraphic({
             fontWeight="700"
             fill="#f4f7f7"
           >
-            {graduated ? "Graduated" : `Now · ${progress.toFixed(1)}%`}
+            {graduated ? tr("Graduated") : tr("Now · {0}%", progress.toFixed(1))}
           </text>
         </svg>
       </div>
       {!graduated && p0 > 0 ? (
         <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto] sm:items-center">
           <label className="flex items-center gap-2 text-sm">
-            <span className="shrink-0 text-muted">If you buy</span>
+            <span className="shrink-0 text-muted">{tr("If you buy")}</span>
             <input
               id="curve-sim"
               value={buy}
@@ -370,11 +371,11 @@ export function CurveGraphic({
           <p className="text-sm tabular-nums text-muted">
             {amt > 0 ? (
               <>
-                ≈ <b className="text-fg">{fmt(tokens)}</b> ${symbol} · price +{impact.toFixed(1)}%
-                {r2 >= 1 ? <b className="text-cyan"> · fills the curve</b> : null}
+                ≈ <b className="text-fg">{fmt(tokens)}</b> ${symbol}{" "}{tr("· price +")}{impact.toFixed(1)}%
+                {r2 >= 1 ? <b className="text-cyan">{" "}{tr("· fills the curve")}</b> : null}
               </>
             ) : (
-              "Type an amount to see where the dot moves."
+              tr("Type an amount to see where the dot moves.")
             )}
           </p>
         </div>

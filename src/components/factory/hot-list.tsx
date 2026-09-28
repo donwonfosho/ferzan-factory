@@ -8,6 +8,7 @@ import { compactUsd } from "./market-line";
 import { useNativeUsd } from "@/lib/factory/usd";
 import { Mark } from "./ui";
 
+import { tr } from "@/lib/i18n";
 export function HotList({ chain = "all" }: { chain?: string }) {
   const [coins, setCoins] = useState<BoardCoin[]>([]);
   const [prints, setPrints] = useState<BoardPrint[]>([]);
@@ -55,8 +56,8 @@ export function HotList({ chain = "all" }: { chain?: string }) {
     <section className="space-y-8">
       {prints.length > 0 ? (
         <div>
-          <h2 className="text-2xl">Tape</h2>
-          <p className="mt-1 text-sm text-muted">Buys as they land.</p>
+          <h2 className="text-2xl">{tr("Tape")}</h2>
+          <p className="mt-1 text-sm text-muted">{tr("Buys as they land.")}</p>
           <ul className="mt-3 divide-y divide-line border-y border-line">
             {prints.map((print, index) => (
               <TapeRow key={`${print.contract}-${print.createdAt}-${index}`} print={print} mark={marks[print.contract]} />
@@ -66,8 +67,8 @@ export function HotList({ chain = "all" }: { chain?: string }) {
       ) : null}
       {hot[0] ? (
         <div>
-          <h2 className="text-2xl">Lead</h2>
-          <p className="mt-1 text-sm text-muted">Most buys on this floor.</p>
+          <h2 className="text-2xl">{tr("Lead")}</h2>
+          <p className="mt-1 text-sm text-muted">{tr("Most buys on this floor.")}</p>
           <div className="mt-4">
             <Lead coin={hot[0]} />
           </div>
@@ -82,7 +83,7 @@ export function HotList({ chain = "all" }: { chain?: string }) {
       ) : null}
       {fresh.length > 0 ? (
         <div className="mt-4">
-          <p className="text-sm font-medium text-cyan">Just launched</p>
+          <p className="text-sm font-medium text-cyan">{tr("Just launched")}</p>
           <div className="mt-2 grid gap-2 sm:grid-cols-2">
             {fresh.map((coin) => (
               <CoinCard key={coin.id} coin={coin} />
@@ -105,7 +106,7 @@ function TapeRow({ print, mark }: { print: BoardPrint; mark?: BoardMark }) {
         <Mark symbol={print.symbol} image={print.image} />
         <span className="min-w-0 flex-1">
           <span className="block truncate">
-            <span className="font-semibold">{who}</span> bought <span className="font-semibold">{print.symbol}</span>
+            <span className="font-semibold">{who}</span>{" "}{tr("bought")}{" "}<span className="font-semibold">{print.symbol}</span>
           </span>
           <span className="block truncate text-sm text-muted">{money(print.nativeWei, print.chain)}</span>
         </span>
@@ -121,7 +122,7 @@ function Lead({ coin }: { coin: BoardCoin }) {
     <Link to="/c/$chain/$address" params={{ chain: coin.chain, address: coin.contract }} className="grid items-center gap-4 bg-surface p-5 shadow-border sm:grid-cols-[auto_1fr_auto]">
       <Mark symbol={coin.symbol} image={coin.image} className="h-20 w-20 text-xl" />
       <span className="min-w-0">
-        <span className="text-sm font-medium text-cyan">Lead · {chain?.label ?? coin.chain}</span>
+        <span className="text-sm font-medium text-cyan">{tr("Lead ·")}{" "}{tr(chain?.label) ?? coin.chain}</span>
         <span className="mt-1 block truncate text-3xl">{coin.symbol}</span>
         <span className="block truncate text-sm text-muted">{coin.name}</span>
       </span>
@@ -140,9 +141,9 @@ function CoinRow({ coin }: { coin: BoardCoin }) {
       <Mark symbol={coin.symbol} image={coin.image} />
       <span className="min-w-0 flex-1">
         <span className="block font-extrabold">{coin.symbol}</span>
-        <span className="block truncate text-sm text-muted">{coin.name} · {chain?.label ?? coin.chain}</span>
+        <span className="block truncate text-sm text-muted">{coin.name} · {tr(chain?.label) ?? coin.chain}</span>
       </span>
-      <span className="shrink-0 text-sm tabular-nums text-muted">{coin.buys} buys</span>
+      <span className="shrink-0 text-sm tabular-nums text-muted">{coin.buys}{" "}{tr("buys")}</span>
     </Link>
   );
 }
@@ -156,7 +157,7 @@ function CoinCard({ coin }: { coin: BoardCoin }) {
         <span className="min-w-0">
           <span className="block font-extrabold">{coin.symbol}</span>
           <span className="block truncate text-sm text-muted">
-            {coin.name} · {chain?.label ?? coin.chain} · {coin.mode === "curve" ? "Curve" : "Pool"}
+            {coin.name} · {tr(chain?.label) ?? coin.chain} · {coin.mode === "curve" ? tr("Curve") : tr("Pool")}
           </span>
         </span>
       </div>

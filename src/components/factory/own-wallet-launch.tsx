@@ -27,6 +27,7 @@ import { Button, Label, TextInput } from "./ui";
 import { LaunchPerksNote } from "./perks";
 import { LaunchCelebration, LaunchPreview } from "./launch-preview";
 
+import { tr } from "@/lib/i18n";
 function bytesFromHex(hex: string): Uint8Array<ArrayBuffer> {
   const out = new Uint8Array(hex.length / 2);
   for (let i = 0; i < out.length; i += 1) out[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
@@ -122,24 +123,24 @@ export function OwnWalletLaunch() {
     for (let i = 0; i < 72; i += 1) {
       const receipt = await getReceipt({ data: { chain: chain as EvmChainId, hash: hashValue } }).catch(() => null);
       if (receipt) {
-        if (receipt.status !== "0x1") throw new Error("The launch failed on chain. Nothing was created.");
+        if (receipt.status !== "0x1") throw new Error(tr("The launch failed on chain. Nothing was created."));
         return;
       }
       await new Promise((resolve) => setTimeout(resolve, 2500));
     }
-    throw new Error("Still confirming after 3 minutes. Check the transaction before you try again.");
+    throw new Error(tr("Still confirming after 3 minutes. Check the transaction before you try again."));
   }
 
   async function signEvm(built: EvmLaunchTx, from: string): Promise<string> {
     const { address, provider: eth } = await evmWallet(chain as EvmChainId);
-    if (address.toLowerCase() !== from.toLowerCase()) throw new Error("The wallet changed. Press Launch again.");
+    if (address.toLowerCase() !== from.toLowerCase()) throw new Error(tr("The wallet changed. Press Launch again."));
     const sent = await eth.request({
       method: "eth_sendTransaction",
       params: [{ from, to: built.to, data: built.data, value: "0x" + BigInt(built.value).toString(16), gas: "0x" + BigInt(built.gas).toString(16) }],
     });
-    if (typeof sent !== "string") throw new Error("The wallet did not send the launch.");
+    if (typeof sent !== "string") throw new Error(tr("The wallet did not send the launch."));
     setHash(sent);
-    setBusy("Sent. Waiting for the chain to confirm.");
+    setBusy(tr("Sent. Waiting for the chain to confirm."));
     await waitEvm(sent);
     return sent;
   }
@@ -161,17 +162,17 @@ export function OwnWalletLaunch() {
     }
     const cleanName = name.trim();
     const cleanSymbol = symbol.trim().toUpperCase();
-    if (cleanName.length < 2 || cleanName.length > 32) return setError("Name needs 2–32 characters.");
-    if (!/^[A-Z0-9]{2,10}$/.test(cleanSymbol)) return setError("Ticker is 2–10 letters or numbers.");
-    if (evm && !(Number(grad) > 0)) return setError(`Pick how much ${meta.native} the curve collects before it graduates.`);
-    if (plain && !/^[1-9]\d{0,12}$/.test(supply.trim())) return setError("Supply is a whole number between 1 and 1,000,000,000,000.");
+    if (cleanName.length < 2 || cleanName.length > 32) return setError(tr("Name needs 2–32 characters."));
+    if (!/^[A-Z0-9]{2,10}$/.test(cleanSymbol)) return setError(tr("Ticker is 2–10 letters or numbers."));
+    if (evm && !(Number(grad) > 0)) return setError(tr("Pick how much {0} the curve collects before it graduates.", meta.native));
+    if (plain && !/^[1-9]\d{0,12}$/.test(supply.trim())) return setError(tr("Supply is a whole number between 1 and 1,000,000,000,000."));
     if (evm && Number(startMinutes) > 0 && Number(devBuy) > 0) {
-      return setError("A first buy needs trading to open right away. Clear the delay or the first buy.");
+      return setError(tr("A first buy needs trading to open right away. Clear the delay or the first buy."));
     }
     try {
-      setBusy("Connect your wallet.");
+      setBusy(tr("Connect your wallet."));
       const account = await connect();
-      setBusy("Preparing the launch.");
+      setBusy(tr("Preparing the launch."));
       const built = await startBotLaunch({
         data: {
           chain,
@@ -193,17 +194,17 @@ export function OwnWalletLaunch() {
       let txHash: string;
       let mint = "";
       if (built.kind === "tron") {
-        setBusy(`Approve in TronLink: ${formatSmart(BigInt(built.feeSun), 6)} TRX launch fee + about 16 TRX of network energy.`);
+        setBusy(tr("Approve in TronLink: {0} TRX launch fee + about 16 TRX of network energy.", formatSmart(BigInt(built.feeSun), 6)));
         const { signAndSend } = await tronWallet();
         txHash = await signAndSend(built.transactionJson);
         setHash(txHash);
-        setBusy("Sent. Waiting for Tron to confirm (up to a minute).");
+        setBusy(tr("Sent. Waiting for Tron to confirm (up to a minute)."));
       } else if (built.kind === "ton") {
-        setBusy("Approve in your TON wallet: 0.3 TON launch fee + about 0.3 TON for the coin contract (most comes back).");
+        setBusy(tr("Approve in your TON wallet: 0.3 TON launch fee + about 0.3 TON for the coin contract (most comes back)."));
         const { send } = await tonWallet();
         await send({ validUntil: built.validUntil, network: built.network, messages: built.messages });
         txHash = "ton-connect";
-        setBusy("Sent. Waiting for TON to confirm (up to two minutes).");
+        setBusy(tr("Sent. Waiting for TON to confirm (up to two minutes)."));
       } else if (built.kind === "evm") {
         const fee = BigInt(built.launchFeeWei);
         const dev = BigInt(built.devBuyWei);
@@ -214,12 +215,12 @@ export function OwnWalletLaunch() {
         );
         txHash = await signEvm(built, account);
       } else {
-        setBusy(`Approve in your wallet. ${built.costText}`);
+        setBusy(tr("Approve in your wallet. {0}", built.costText));
         mint = built.mint;
         txHash = await signSolana(built);
-        setBusy("Sent. Waiting for Solana to confirm.");
+        setBusy(tr("Sent. Waiting for Solana to confirm."));
       }
-      setBusy(plain ? "Waiting for the chain to confirm the coin. This can take a minute or two." : "Confirmed. Listing it everywhere.");
+      setBusy(plain ? tr("Waiting for the chain to confirm the coin. This can take a minute or two.") : tr("Confirmed. Listing it everywhere."));
       let done: { token: string; curve: string; url: string } | null = null;
       for (let attempt = 0; attempt < (plain ? 4 : 1); attempt += 1) {
         try {
@@ -232,16 +233,16 @@ export function OwnWalletLaunch() {
           await new Promise((resolve) => setTimeout(resolve, 10_000));
         }
       }
-      if (!done) throw new Error("The launch was sent, but it is not confirmed yet. Check your wallet before trying again.");
+      if (!done) throw new Error(tr("The launch was sent, but it is not confirmed yet. Check your wallet before trying again."));
       setLaunched({ chain, name: cleanName, symbol: cleanSymbol, token: done.token, curve: done.curve, url: done.url, hash: txHash });
     } catch (err) {
       const msg = err instanceof Error ? err.message : "The launch did not go through.";
       if (err instanceof WalletNeeded) {
         setError(err.message);
       } else if (/user (rejected|denied|rejects)|declined|rejected the request|4001/i.test(msg)) {
-        setError("You cancelled in the wallet. Nothing was launched.");
+        setError(tr("You cancelled in the wallet. Nothing was launched."));
       } else {
-        setError(msg);
+        setError(tr(msg));
       }
     } finally {
       setBusy("");
@@ -253,21 +254,21 @@ export function OwnWalletLaunch() {
   if (launched) {
     return (
       <div className="ticket mt-6">
-        <p className="text-sm font-medium text-cyan">Launched</p>
+        <p className="text-sm font-medium text-cyan">{tr("Launched")}</p>
         <h2 className="mt-2 text-3xl">
           {launched.name} <span className="text-muted">${launched.symbol}</span>
         </h2>
         <p className="mt-3 text-sm text-muted">
-          It is live on {LAUNCH_CHAIN_META[launched.chain].label}. The @Ferzan_Launches channel, X and the Telegram bots pick it up like any other launch, and it shows on the floor as soon as the indexer sees it.
+          {tr("It is live on")}{" "}{tr(LAUNCH_CHAIN_META[launched.chain].label)}{tr(". The @Ferzan_Launches channel, X and the Telegram bots pick it up like any other launch, and it shows on the floor as soon as the indexer sees it.")}
         </p>
-        <p className="mt-3 break-all text-xs text-muted">Token {launched.token}</p>
+        <p className="mt-3 break-all text-xs text-muted">{tr("Token")}{" "}{launched.token}</p>
         <div className="mt-4 flex flex-wrap gap-3">
           <a
             className="btn-cyan"
             href={siteCoinHref(launched.url) ?? launched.url}
             {...(siteCoinHref(launched.url) ? {} : { target: "_blank", rel: "noopener noreferrer" })}
           >
-            Trade it
+            {tr("Trade it")}
           </a>
           <a
             className="btn-line"
@@ -275,10 +276,10 @@ export function OwnWalletLaunch() {
             target="_blank"
             rel="noopener noreferrer"
           >
-            View transaction
+            {tr("View transaction")}
           </a>
           <button type="button" className="btn-line" onClick={() => setLaunched(null)}>
-            Launch another
+            {tr("Launch another")}
           </button>
         </div>
         <LaunchCelebration chain={launched.chain} token={launched.token} symbol={launched.symbol} />
@@ -290,26 +291,26 @@ export function OwnWalletLaunch() {
   return (
     <form onSubmit={(e) => void submit(e)} className="ticket mt-6 space-y-5">
       <p className="text-sm text-muted">
-        Signs with your own wallet: {WALLET_TEXT[chain]}. No Telegram needed.{" "}
+        {tr("Signs with your own wallet:")}{" "}{WALLET_TEXT[chain]}{tr(". No Telegram needed.")}{" "}
         {plain
-          ? "A standard coin: the whole supply is minted once to your wallet, with no owner and no way to mint more."
-          : "The coin goes on the same curves as @Ferzan_Launch_Bot launches."}
+          ? tr("A standard coin: the whole supply is minted once to your wallet, with no owner and no way to mint more.")
+          : tr("The coin goes on the same curves as @Ferzan_Launch_Bot launches.")}
       </p>
       <ProjectPicture image={image} onChange={setImage} onError={setError} />
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <Label>Name</Label>
-          <TextInput value={name} onChange={(e) => setName(e.target.value)} placeholder="Forged Rail" required />
+          <Label>{tr("Name")}</Label>
+          <TextInput value={name} onChange={(e) => setName(e.target.value)} placeholder={tr("Forged Rail")} required />
         </div>
         <div>
-          <Label>Ticker</Label>
-          <TextInput value={symbol} onChange={(e) => setSymbol(e.target.value.toUpperCase())} placeholder="FORGE" required />
+          <Label>{tr("Ticker")}</Label>
+          <TextInput value={symbol} onChange={(e) => setSymbol(e.target.value.toUpperCase())} placeholder={tr("FORGE")} required />
         </div>
       </div>
 
       <div>
-        <Label>Chain</Label>
+        <Label>{tr("Chain")}</Label>
         <div className="grid grid-cols-4 gap-2">
           {BOT_LAUNCH_CHAINS.map((id) => (
             <button
@@ -320,48 +321,48 @@ export function OwnWalletLaunch() {
               className={cn("min-h-11 px-2 py-3 text-center", chain === id ? "bg-cyan text-cyan-ink" : "bg-bg text-fg shadow-border")}
             >
               <ChainMark id={id} className="mx-auto h-8 w-8" />
-              <span className="mt-2 block text-xs font-extrabold">{LAUNCH_CHAIN_META[id].label}</span>
+              <span className="mt-2 block text-xs font-extrabold">{tr(LAUNCH_CHAIN_META[id].label)}</span>
             </button>
           ))}
         </div>
         {chain === "solana" ? (
           <>
-            <p className="mt-2 text-xs text-muted">Meteora bonding curve: 1,000,000,000 supply, graduates to a locked pool. Supply and graduation are fixed by the Ferzan config.</p>
+            <p className="mt-2 text-xs text-muted">{tr("Meteora bonding curve: 1,000,000,000 supply, graduates to a locked pool. Supply and graduation are fixed by the Ferzan config.")}</p>
             <LaunchPerksNote />
           </>
         ) : null}
         {plain ? (
           <p className="mt-2 text-xs text-muted">
             {chain === "tron"
-              ? "Standard TRC-20 coin. Cost: 5 TRX launch fee + about 16 TRX of Tron energy. Open a SunSwap pool afterwards so people can trade it."
-              : "Standard TON jetton. Cost: 0.3 TON launch fee + about 0.3 TON for the coin contract (most of it comes back)."}
+              ? tr("Standard TRC-20 coin. Cost: 5 TRX launch fee + about 16 TRX of Tron energy. Open a SunSwap pool afterwards so people can trade it.")
+              : tr("Standard TON jetton. Cost: 0.3 TON launch fee + about 0.3 TON for the coin contract (most of it comes back).")}
           </p>
         ) : null}
       </div>
 
       {plain ? (
         <div>
-          <Label>Supply</Label>
+          <Label>{tr("Supply")}</Label>
           <div className="grid grid-cols-4 gap-2">
             {SUPPLY_PRESETS.map((p) => (
               <button key={p.value} type="button" onClick={() => setSupply(p.value)} className={cn("min-h-11", supply === p.value ? "btn-cyan" : "btn-line")}>
-                {p.label}
+                {tr(p.label)}
               </button>
             ))}
           </div>
           <TextInput className="mt-2" value={supply} onChange={(e) => setSupply(e.target.value.replace(/[^0-9]/g, ""))} inputMode="numeric" />
-          <p className="mt-1.5 text-xs text-muted">All of it goes to your wallet at launch.</p>
+          <p className="mt-1.5 text-xs text-muted">{tr("All of it goes to your wallet at launch.")}</p>
         </div>
       ) : null}
 
       <div>
-        <Label>Description</Label>
-        <TextInput value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Optional" />
+        <Label>{tr("Description")}</Label>
+        <TextInput value={description} onChange={(e) => setDescription(e.target.value)} placeholder={tr("Optional")} />
       </div>
 
       {evm ? (
         <div>
-          <Label>Graduates at ({meta.native})</Label>
+          <Label>{tr("Graduates at (")}{meta.native})</Label>
           <div className="grid grid-cols-3 gap-2">
             {GRAD_PRESETS[chain as CurveLaunchChain].map((p) => (
               <button key={p} type="button" onClick={() => setGrad(p)} className={cn("min-h-11", grad === p ? "btn-cyan" : "btn-line")}>
@@ -370,26 +371,26 @@ export function OwnWalletLaunch() {
             ))}
           </div>
           <TextInput className="mt-2" value={grad} onChange={(e) => setGrad(e.target.value)} inputMode="decimal" />
-          <p className="mt-1.5 text-xs text-muted">The curve moves to a DEX pool once it has collected this much. Supply is 1,000,000,000.</p>
+          <p className="mt-1.5 text-xs text-muted">{tr("The curve moves to a DEX pool once it has collected this much. Supply is 1,000,000,000.")}</p>
         </div>
       ) : null}
 
       {plain ? null : (
         <div>
-          <Label>First buy ({meta.native})</Label>
-          <TextInput value={devBuy} onChange={(e) => setDevBuy(e.target.value)} placeholder="0 — skip it" inputMode="decimal" />
-          <p className="mt-1.5 text-xs text-muted">Optional. It happens in the same transaction, so nobody can buy before you.</p>
+          <Label>{tr("First buy (")}{meta.native})</Label>
+          <TextInput value={devBuy} onChange={(e) => setDevBuy(e.target.value)} placeholder={tr("0 — skip it")} inputMode="decimal" />
+          <p className="mt-1.5 text-xs text-muted">{tr("Optional. It happens in the same transaction, so nobody can buy before you.")}</p>
         </div>
       )}
 
       {evm ? (
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <Label>Max buy per wallet ({meta.native})</Label>
-            <TextInput value={maxBuy} onChange={(e) => setMaxBuy(e.target.value)} placeholder="0 — no limit" inputMode="decimal" />
+            <Label>{tr("Max buy per wallet (")}{meta.native})</Label>
+            <TextInput value={maxBuy} onChange={(e) => setMaxBuy(e.target.value)} placeholder={tr("0 — no limit")} inputMode="decimal" />
           </div>
           <div>
-            <Label>Open trading after (minutes)</Label>
+            <Label>{tr("Open trading after (minutes)")}</Label>
             <TextInput value={startMinutes} onChange={(e) => setStartMinutes(e.target.value)} inputMode="numeric" />
           </div>
         </div>
@@ -397,7 +398,7 @@ export function OwnWalletLaunch() {
 
       <div className="grid gap-4 sm:grid-cols-3">
         <div>
-          <Label>Website</Label>
+          <Label>{tr("Website")}</Label>
           <TextInput value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://" />
         </div>
         <div>
@@ -405,47 +406,47 @@ export function OwnWalletLaunch() {
           <TextInput value={xHandle} onChange={(e) => setXHandle(e.target.value)} placeholder="@handle" />
         </div>
         <div>
-          <Label>Telegram</Label>
+          <Label>{tr("Telegram")}</Label>
           <TextInput value={telegram} onChange={(e) => setTelegram(e.target.value)} placeholder="@group" />
         </div>
       </div>
 
       <LaunchPreview chain={chain} name={name} symbol={symbol} image={image} description={description} devBuy={devBuy} startMinutes={startMinutes} plain={plain} />
-      {wallet ? <p className="break-all text-xs text-muted">Wallet {wallet}</p> : null}
-      {error ? <p className="text-sm text-sell">{error}</p> : null}
+      {wallet ? <p className="break-all text-xs text-muted">{tr("Wallet")}{" "}{wallet}</p> : null}
+      {error ? <p className="text-sm text-sell">{tr(error)}</p> : null}
       {error.startsWith("No Tron wallet") ? (
         <div className="space-y-1 text-sm">
           <p>
-            <b>On a phone:</b>{" "}
+            <b>{tr("On a phone:")}</b>{" "}
             <a className="font-semibold text-cyan" href={tronLinkAppLink()}>
-              Open this page in the TronLink app
+              {tr("Open this page in the TronLink app")}
             </a>{" "}
-            (install TronLink first if you don't have it).
+            {tr("(install TronLink first if you don't have it).")}
           </p>
           <p>
-            <b>On a computer:</b> add the{" "}
+            <b>{tr("On a computer:")}</b>{" "}{tr("add the")}{" "}
             <a className="font-semibold text-cyan" href="https://www.tronlink.org/" target="_blank" rel="noopener noreferrer">
-              TronLink extension
+              {tr("TronLink extension")}
             </a>
-            , unlock it, then reload this page.
+            {tr(", unlock it, then reload this page.")}
           </p>
           <p>
-            <b>No TronLink?</b> Launch from your Ferzan Trade Bot wallet in{" "}
+            <b>{tr("No TronLink?")}</b>{" "}{tr("Launch from your Ferzan Trade Bot wallet in")}{" "}
             <a className="font-semibold text-cyan" href="https://t.me/Ferzan_Launch_Bot?start=launch" target="_blank" rel="noopener noreferrer">
-              @Ferzan_Launch_Bot
+              {tr("@Ferzan_Launch_Bot")}
             </a>{" "}
-            (pick Tron).
+            {tr("(pick Tron).")}
           </p>
         </div>
       ) : null}
       {error.startsWith("No ") && !error.startsWith("No Tron") && !plain ? (
         <p className="text-sm">
           <a className="font-semibold text-cyan" href={evm ? links.metamask : links.phantom}>
-            Open in the {evm ? "MetaMask" : "Phantom"} app
+            {tr("Open in the")}{" "}{evm ? tr("MetaMask") : tr("Phantom")}{" "}{tr("app")}
           </a>
         </p>
       ) : null}
-      {busy ? <p className="text-sm text-cyan">{busy}</p> : null}
+      {busy ? <p className="text-sm text-cyan">{tr(busy)}</p> : null}
       {hash && busy ? (
         <a
           className="text-sm text-cyan"
@@ -453,11 +454,11 @@ export function OwnWalletLaunch() {
           target="_blank"
           rel="noopener noreferrer"
         >
-          View transaction
+          {tr("View transaction")}
         </a>
       ) : null}
       <Button type="submit" className="w-full" disabled={Boolean(busy)}>
-        {wallet ? "Launch" : "Connect wallet and launch"}
+        {wallet ? tr("Launch") : tr("Connect wallet and launch")}
       </Button>
     </form>
   );

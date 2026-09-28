@@ -6,6 +6,7 @@ import { ChainMark, type MarkChain } from "./chain-mark";
 import { compactUsd } from "./market-line";
 import { useLive } from "@/lib/factory/live";
 
+import { tr } from "@/lib/i18n";
 /* One shared poll for everything live on the page (tape, graduation banner, FERZAN hero). */
 let pulse: Pulse | null = null;
 let timer: number | null = null;
@@ -91,7 +92,7 @@ export function TradeTape() {
   if (!items.length) return null;
   const dur = Math.max(30, items.length * 4);
   return (
-    <div className="tape border-b border-line bg-bg/80" aria-label="Latest trades">
+    <div className="tape border-b border-line bg-bg/80" aria-label={tr("Latest trades")}>
       <div className="tape-track" style={{ animationDuration: `${dur}s` }}>
         {[0, 1].map((copy) => (
           <div key={copy} className="flex shrink-0 gap-2 pr-2" aria-hidden={copy === 1}>
@@ -205,17 +206,17 @@ export function GraduationBanner() {
       <div className="grad-pop fixed inset-x-4 bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] z-50 sm:bottom-4 mx-auto flex max-w-lg items-center gap-3 rounded-2xl bg-surface p-4 shadow-border-hover" role="status">
         {shown.image ? <img src={shown.image} alt="" className="h-12 w-12 rounded-xl object-cover" /> : <span className="text-3xl">🎓</span>}
         <span className="min-w-0 flex-1">
-          <span className="block font-extrabold">${shown.symbol} just graduated</span>
+          <span className="block font-extrabold">${shown.symbol}{" "}{tr("just graduated")}</span>
           <span className="block text-sm text-muted">
-            The curve filled at {shown.raised.toPrecision(4)} {shown.unit}. Liquidity is live on the DEX.
+            {tr("The curve filled at")}{" "}{shown.raised.toPrecision(4)} {shown.unit}{tr(". Liquidity is live on the DEX.")}
           </span>
         </span>
         {link ? (
           <a className="btn-cyan shrink-0" href={link.href} {...(link.ext ? { target: "_blank", rel: "noopener noreferrer" } : {})}>
-            See it
+            {tr("See it")}
           </a>
         ) : null}
-        <button type="button" className="shrink-0 px-1 text-muted" onClick={() => setShown(null)} aria-label="Close">
+        <button type="button" className="shrink-0 px-1 text-muted" onClick={() => setShown(null)} aria-label={tr("Close")}>
           ✕
         </button>
       </div>

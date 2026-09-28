@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { COMMUNITY_URL, X_URL } from "@/lib/factory/catalog";
 
+import { tr } from "@/lib/i18n";
 export const Route = createFileRoute("/about")({
   component: AboutPage,
 });
@@ -22,43 +23,40 @@ function AboutPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-10">
       <header>
-        <h1 className="text-4xl">About Ferzan</h1>
+        <h1 className="text-4xl">{tr("About Ferzan")}</h1>
         <p className="mt-3 text-lg text-muted">
-          Ferzan Factory is a launchpad for crypto coins. Anyone can launch a coin on Solana, Base, BNB Chain, Ethereum, Robinhood Chain, Arc, Tron or TON,
-          from this website or from the Ferzan Telegram bots, and trade it here with their own wallet.
+          {tr("Ferzan Factory is a launchpad for crypto coins. Anyone can launch a coin on Solana, Base, BNB Chain, Ethereum, Robinhood Chain, Arc, Tron or TON, from this website or from the Ferzan Telegram bots, and trade it here with their own wallet.")}
         </p>
       </header>
 
       <section className="space-y-3">
-        <h2 className="text-2xl">What we run</h2>
+        <h2 className="text-2xl">{tr("What we run")}</h2>
         <ul className="list-disc space-y-2 pl-5 text-muted">
           <li>
-            <span className="text-fg">Ferzan Factory</span>: this website. Launch a coin, follow every Ferzan coin live, and trade it with a wallet only you control.
+            <span className="text-fg">{tr("Ferzan Factory")}</span>{tr(": this website. Launch a coin, follow every Ferzan coin live, and trade it with a wallet only you control.")}
           </li>
           <li>
-            <span className="text-fg">Telegram bots</span>: a Launch Bot, a Trade Bot, a Buy Bot that posts buys in project chats, and Guardian, which moderates
-            Telegram groups.
+            <span className="text-fg">{tr("Telegram bots")}</span>{tr(": a Launch Bot, a Trade Bot, a Buy Bot that posts buys in project chats, and Guardian, which moderates Telegram groups.")}
           </li>
           <li>
-            <span className="text-fg">FERZAN</span>: the platform's token, launching on Solana on Friday, October 9, 2026 at 7:00 PM ET.{" "}
+            <span className="text-fg">{tr("FERZAN")}</span>{tr(": the platform's token, launching on Solana on Friday, October 9, 2026 at 7:00 PM ET.")}{" "}
             <Link to="/ferzan" className="text-cyan">
-              How it works
+              {tr("How it works")}
             </Link>
           </li>
         </ul>
         <p className="text-sm">
           <Link to="/transparency" className="font-semibold text-cyan">
-            Every number behind Ferzan, with receipts →
+            {tr("Every number behind Ferzan, with receipts →")}
           </Link>
         </p>
         <p className="text-sm text-muted">
-          Ferzan never holds your funds. Every launch and trade is signed by your own wallet. Nothing on this site is financial advice or a promise of price or
-          profit.
+          {tr("Ferzan never holds your funds. Every launch and trade is signed by your own wallet. Nothing on this site is financial advice or a promise of price or profit.")}
         </p>
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-2xl">Team</h2>
+        <h2 className="text-2xl">{tr("Team")}</h2>
         <div className="grid gap-3 sm:grid-cols-2">
           {["Don", "Dre"].map((name) => (
             <div key={name} className="ticket flex items-center gap-3">
@@ -70,45 +68,45 @@ function AboutPage() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-2xl">Official links</h2>
-        <p className="text-sm text-muted">These are the only official Ferzan accounts. Anything else using the Ferzan name is not us.</p>
+        <h2 className="text-2xl">{tr("Official links")}</h2>
+        <p className="text-sm text-muted">{tr("These are the only official Ferzan accounts. Anything else using the Ferzan name is not us.")}</p>
         <ul className="divide-y divide-line border-y border-line">
           {OFFICIAL.map((o) => (
             <li key={o.label} className="flex flex-wrap items-baseline justify-between gap-2 py-3 text-sm">
-              <span className="text-muted">{o.label}</span>
+              <span className="text-muted">{tr(o.label)}</span>
               <a className="break-all text-cyan" href={o.href} target="_blank" rel="noopener noreferrer">
-                {o.text}
+                {tr(o.text)}
               </a>
             </li>
           ))}
           <li className="flex flex-wrap items-baseline justify-between gap-2 py-3 text-sm">
-            <span className="text-muted">Ferzan multisig (Squads, Solana)</span>
+            <span className="text-muted">{tr("Ferzan multisig (Squads, Solana)")}</span>
             <span className="break-all font-mono text-xs">{MULTISIG}</span>
           </li>
         </ul>
       </section>
 
       <section className="ticket space-y-2">
-        <h2 className="text-xl">Stay safe</h2>
+        <h2 className="text-xl">{tr("Stay safe")}</h2>
         <ul className="list-disc space-y-1 pl-5 text-sm text-muted">
-          <li>Ferzan admins never DM you first and never ask for a seed phrase, private key or payment.</li>
-          <li>The FERZAN contract address is posted only on this site, by @ferzaneco on X and in the Ferzan Telegram chat, at 7:00 PM ET on October 9. Any address before that is fake.</li>
-          <li>Ferzan does not sell listings, guaranteed pumps or "recovery" services. Anyone offering them in our name is a scammer.</li>
+          <li>{tr("Ferzan admins never DM you first and never ask for a seed phrase, private key or payment.")}</li>
+          <li>{tr("The FERZAN contract address is posted only on this site, by @ferzaneco on X and in the Ferzan Telegram chat, at 7:00 PM ET on October 9. Any address before that is fake.")}</li>
+          <li>{tr("Ferzan does not sell listings, guaranteed pumps or \"recovery\" services. Anyone offering them in our name is a scammer.")}</li>
         </ul>
       </section>
 
       <section className="space-y-2">
-        <h2 className="text-2xl">Contact</h2>
+        <h2 className="text-2xl">{tr("Contact")}</h2>
         <p className="text-muted">
-          Email{" "}
+          {tr("Email")}{" "}
           <a className="text-cyan" href={`mailto:${EMAIL}`}>
             {EMAIL}
           </a>{" "}
-          or message us in the{" "}
+          {tr("or message us in the")}{" "}
           <a className="text-cyan" href={COMMUNITY_URL} target="_blank" rel="noopener noreferrer">
-            Ferzan Telegram chat
+            {tr("Ferzan Telegram chat")}
           </a>
-          . Security issues and wrongly blocked pages can be reported to the same email.
+          {tr(". Security issues and wrongly blocked pages can be reported to the same email.")}
         </p>
       </section>
     </div>

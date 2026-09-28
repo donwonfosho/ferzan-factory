@@ -4,6 +4,7 @@ import { useLive, sameCoin } from "@/lib/factory/live";
 import { cn } from "@/lib/cn";
 import { compactUsd } from "./market-line";
 
+import { tr } from "@/lib/i18n";
 const TAG: Record<string, { label: string; cls: string }> = {
   curve: { label: "Curve", cls: "bg-cyan/15 text-cyan" },
   program: { label: "Pool / lock", cls: "bg-bg text-muted shadow-border" },
@@ -47,13 +48,13 @@ export function HoldersPanel({ chain, token }: { chain: string; token: string })
   return (
     <section className="ticket space-y-3">
       <div className="flex items-baseline justify-between gap-3">
-        <p className="text-sm font-medium text-muted">Holders and safety</p>
-        {h.holderCount ? <p className="text-xs text-muted">{h.holderCount.toLocaleString()} holders traded on the curve</p> : null}
+        <p className="text-sm font-medium text-muted">{tr("Holders and safety")}</p>
+        {h.holderCount ? <p className="text-xs text-muted">{h.holderCount.toLocaleString()}{" "}{tr("holders traded on the curve")}</p> : null}
       </div>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {stats.map((s) => (
           <div key={s.label} className="rounded-xl bg-bg p-3 shadow-border">
-            <p className="text-xs text-muted">{s.label}</p>
+            <p className="text-xs text-muted">{tr(s.label)}</p>
             <p className={cn("mt-1 text-lg font-extrabold tabular-nums", s.cls)}>{s.value}</p>
           </div>
         ))}
@@ -62,11 +63,11 @@ export function HoldersPanel({ chain, token }: { chain: string; token: string })
         {shown.map((r, i) => (
           <li key={`${r.wallet}-${i}`} className="flex items-center gap-2 py-2">
             <span className="w-5 shrink-0 text-xs tabular-nums text-muted">{i + 1}</span>
-            <span className="min-w-0 flex-1 truncate font-mono text-xs">{r.tags.includes("curve") ? "Bonding curve" : r.short}</span>
+            <span className="min-w-0 flex-1 truncate font-mono text-xs">{r.tags.includes("curve") ? tr("Bonding curve") : r.short}</span>
             {r.tags.map((t) =>
               TAG[t] ? (
                 <span key={t} className={cn("shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold", TAG[t].cls)}>
-                  {TAG[t].label}
+                  {tr(TAG[t].label)}
                 </span>
               ) : null,
             )}
@@ -76,11 +77,11 @@ export function HoldersPanel({ chain, token }: { chain: string; token: string })
       </ul>
       {h.holders.length > 8 ? (
         <button type="button" className="text-xs text-cyan" onClick={() => setAll(!all)}>
-          {all ? "Show fewer" : `Show all ${h.holders.length}`}
+          {all ? tr("Show fewer") : tr("Show all {0}", h.holders.length)}
         </button>
       ) : null}
       <p className="text-xs text-muted">
-        Snipers bought in the first 15 seconds; bundled wallets bought in the launch block itself. {h.note}
+        {tr("Snipers bought in the first 15 seconds; bundled wallets bought in the launch block itself.")}{" "}{tr(h.note)}
       </p>
     </section>
   );
@@ -119,7 +120,7 @@ export function PnlShare({ chain, token, wallet }: { chain: string; token: strin
   async function copy() {
     try {
       await navigator.clipboard.writeText(share);
-      setDone("Link copied");
+      setDone(tr("Link copied"));
     } catch {
       setDone(share);
     }
@@ -128,23 +129,23 @@ export function PnlShare({ chain, token, wallet }: { chain: string; token: strin
   return (
     <section className="ticket space-y-3">
       <div className="flex items-baseline justify-between gap-3">
-        <p className="text-sm font-medium text-muted">Your position</p>
+        <p className="text-sm font-medium text-muted">{tr("Your position")}</p>
         <p className={cn("text-2xl font-extrabold tabular-nums", up ? "text-cyan" : "text-sell")}>{pct}</p>
       </div>
       <p className="text-sm text-muted">
-        Put in {fmt(p.spent)} {p.unit} · now worth {fmt(p.received + p.holdingValue)} {p.unit} ({up ? "+" : ""}
-        {compactUsd(Math.abs(p.pnlUsd)).replace("$", up ? "$" : "-$")}) · bought at {compactUsd(p.entryMcapUsd)} market cap
+        {tr("Put in")}{" "}{fmt(p.spent)} {p.unit}{" "}{tr("· now worth")}{" "}{fmt(p.received + p.holdingValue)} {p.unit} ({up ? "+" : ""}
+        {compactUsd(Math.abs(p.pnlUsd)).replace("$", up ? "$" : "-$")}{tr(") · bought at")}{" "}{compactUsd(p.entryMcapUsd)}{" "}{tr("market cap")}
       </p>
-      <img src={img} alt={`Profit card: ${text}`} className="w-full rounded-xl shadow-border" loading="lazy" />
+      <img src={img} alt={tr("Profit card: {0}", text)} className="w-full rounded-xl shadow-border" loading="lazy" />
       <div className="flex flex-wrap gap-2">
         <a className="btn-cyan" href={`https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(share)}`} target="_blank" rel="noopener noreferrer">
-          Post it on X
+          {tr("Post it on X")}
         </a>
         <a className="btn-line" href={`https://t.me/share/url?url=${encodeURIComponent(share)}&text=${encodeURIComponent(text)}`} target="_blank" rel="noopener noreferrer">
-          Telegram
+          {tr("Telegram")}
         </a>
         <button type="button" className="btn-line" onClick={() => void copy()}>
-          {done || "Copy link"}
+          {tr(done) || tr("Copy link")}
         </button>
       </div>
     </section>

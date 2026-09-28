@@ -10,6 +10,7 @@ import { formatSmart, formatUnits } from "@/lib/factory/units";
 import { Button } from "./ui";
 import { FundButton } from "./fund-wallet";
 
+import { tr } from "@/lib/i18n";
 export function GasStep({ address, chain = "base" }: { address: string; chain?: EvmChainId | "solana" }) {
   const [copied, setCopied] = useState(false);
   const [wei, setWei] = useState<bigint | null>(null);
@@ -36,7 +37,7 @@ export function GasStep({ address, chain = "base" }: { address: string; chain?: 
 
   return (
     <div className="ticket">
-      <p className="text-sm font-medium text-cyan">Gas</p>
+      <p className="text-sm font-medium text-cyan">{tr("Gas")}</p>
       <p className="mt-2 break-all font-semibold">{address}</p>
       <Button
         type="button"
@@ -49,18 +50,18 @@ export function GasStep({ address, chain = "base" }: { address: string; chain?: 
           );
         }}
       >
-        {copied ? "Address copied" : "Copy address"}
+        {copied ? tr("Address copied") : tr("Copy address")}
       </Button>
       <p className="mt-3 text-sm text-muted">
         {solana
-          ? "Send SOL to this Solana address before a Solana launch. It is not the ETH address."
-          : `Send ${meta.native} on ${meta.label} to this address before you launch or trade.`}
-        {!solana && chain === "base" ? " Base is the default chain." : ""}
-        {!solana ? " Ethereum, BNB Chain, Robinhood, and Arc each need their own gas in this same wallet. Arc gas is USDC." : ""}
+          ? tr("Send SOL to this Solana address before a Solana launch. It is not the ETH address.")
+          : tr("Send {0} on {1} to this address before you launch or trade.", meta.native, meta.label)}
+        {!solana && chain === "base" ? tr(" Base is the default chain.") : ""}
+        {!solana ? tr(" Ethereum, BNB Chain, Robinhood, and Arc each need their own gas in this same wallet. Arc gas is USDC.") : ""}
       </p>
       <p className="mt-2 text-sm tabular-nums">
-        {meta.label} balance {wei == null ? "…" : `${formatSmart(wei, meta.nativeDecimals)} ${meta.native}`}
-        {wei === 0n ? ". This wallet cannot sign until that balance is above zero." : ""}
+        {tr(meta.label)}{" "}{tr("balance")}{" "}{wei == null ? "…" : `${formatSmart(wei, meta.nativeDecimals)} ${meta.native}`}
+        {wei === 0n ? tr(". This wallet cannot sign until that balance is above zero.") : ""}
       </p>
       <FundButton address={address} chain={chain} />
     </div>
@@ -147,9 +148,9 @@ export function WalletBalances({ evm, sol }: { evm: string; sol: string | null }
 
   return (
     <div className="ticket">
-      <p className="text-sm font-medium text-cyan">Wallet balances</p>
+      <p className="text-sm font-medium text-cyan">{tr("Wallet balances")}</p>
       <p className="mt-2 break-all text-sm">{evm}</p>
-      {sol ? <p className="mt-1 break-all text-sm text-muted">Solana {sol}</p> : null}
+      {sol ? <p className="mt-1 break-all text-sm text-muted">{tr("Solana")}{" "}{sol}</p> : null}
       <FundButton address={evm} chain="base" />
       {sol ? <FundButton address={sol} chain="solana" quiet /> : null}
       <ul className="mt-3 divide-y divide-line border-y border-line">
@@ -170,14 +171,14 @@ export function WalletBalances({ evm, sol }: { evm: string; sol: string | null }
         {tokens.map((row) => (
           <li key={`${row.chain}:${row.symbol}`} className="flex items-center justify-between gap-3 py-2 text-sm">
             <span>
-              {row.symbol} on {CHAINS[row.chain as LiveChainId]?.label ?? row.chain}
+              {row.symbol}{" "}{tr("on")}{" "}{tr(CHAINS[row.chain as LiveChainId]?.label) ?? row.chain}
             </span>
             <span className="tabular-nums font-semibold">{formatSmart(BigInt(row.raw), 18)}</span>
           </li>
         ))}
       </ul>
       <p className="mt-2 text-xs text-muted">
-        Read from the chain every few seconds. Base ETH is not Ethereum ETH. SOL is a different address. A zero means nothing has arrived there yet.
+        {tr("Read from the chain every few seconds. Base ETH is not Ethereum ETH. SOL is a different address. A zero means nothing has arrived there yet.")}
       </p>
     </div>
   );

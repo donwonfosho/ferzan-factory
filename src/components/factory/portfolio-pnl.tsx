@@ -4,6 +4,7 @@ import { cn } from "@/lib/cn";
 import { compactUsd } from "./market-line";
 import { WatchlistStrip } from "./watch";
 
+import { tr } from "@/lib/i18n";
 const pct = (v: number) => `${v >= 0 ? "+" : ""}${v.toFixed(Math.abs(v) >= 10 ? 0 : 1)}%`;
 const usd = (v: number) => `${v < 0 ? "-" : "+"}${compactUsd(Math.abs(v)) === "—" ? "$0" : compactUsd(Math.abs(v))}`;
 
@@ -52,17 +53,17 @@ export function PortfolioPnl({ wallets }: { wallets: string[] }) {
       <WatchlistStrip />
       <div className="ticket space-y-4">
         <div className="flex items-baseline justify-between gap-3">
-          <h2 className="text-xl">Your trades on Ferzan</h2>
+          <h2 className="text-xl">{tr("Your trades on Ferzan")}</h2>
           {data && data.all.coins ? <p className={cn("text-2xl font-extrabold tabular-nums", data.all.pnlUsd >= 0 ? "text-cyan" : "text-sell")}>{usd(data.all.pnlUsd)}</p> : null}
         </div>
         {data === undefined ? (
-          <p className="text-sm text-muted">Loading your trades…</p>
+          <p className="text-sm text-muted">{tr("Loading your trades…")}</p>
         ) : !data || data.all.coins === 0 ? (
-          <p className="text-sm text-muted">No trades on Ferzan curves from this account yet. Solana trades count from Sept 28, 2026.</p>
+          <p className="text-sm text-muted">{tr("No trades on Ferzan curves from this account yet. Solana trades count from Sept 28, 2026.")}</p>
         ) : (
           <>
             <p className="text-sm text-muted">
-              {data.all.coins} coin{data.all.coins === 1 ? "" : "s"} · {data.all.wins} in profit · put in {compactUsd(data.all.spentUsd)} · now worth {compactUsd(data.all.valueUsd)} ({pct(data.all.pnlPct)})
+              {data.all.coins}{" "}{tr("coin")}{data.all.coins === 1 ? "" : "s"} · {data.all.wins}{" "}{tr("in profit · put in")}{" "}{compactUsd(data.all.spentUsd)}{" "}{tr("· now worth")}{" "}{compactUsd(data.all.valueUsd)} ({pct(data.all.pnlPct)})
             </p>
             <ul className="divide-y divide-line">
               {data.all.items.slice(0, 50).map((it, i) => {
@@ -73,10 +74,10 @@ export function PortfolioPnl({ wallets }: { wallets: string[] }) {
                   <li key={`${it.chain}-${it.token}`} className="flex flex-wrap items-center gap-3 py-3">
                     <a href={it.path} className="min-w-0 flex-1">
                       <span className="block font-semibold">
-                        ${it.symbol} {it.holding ? <span className="text-xs text-muted">holding</span> : <span className="text-xs text-muted">sold</span>}
+                        ${it.symbol} {it.holding ? <span className="text-xs text-muted">{tr("holding")}</span> : <span className="text-xs text-muted">{tr("sold")}</span>}
                       </span>
                       <span className="block text-xs text-muted tabular-nums">
-                        {it.trades} trades · put in {it.spent.toPrecision(3)} {it.unit}
+                        {it.trades}{" "}{tr("trades · put in")}{" "}{it.spent.toPrecision(3)} {it.unit}
                       </span>
                     </a>
                     <span className={cn("text-right font-extrabold tabular-nums", it.pnl >= 0 ? "text-cyan" : "text-sell")}>
@@ -85,7 +86,7 @@ export function PortfolioPnl({ wallets }: { wallets: string[] }) {
                     </span>
                     {i < 10 && it.pnl > 0 && w ? (
                       <a className="btn-line shrink-0" href={`https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(share)}`} target="_blank" rel="noopener noreferrer">
-                        Share
+                        {tr("Share")}
                       </a>
                     ) : null}
                   </li>

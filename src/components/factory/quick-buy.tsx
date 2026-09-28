@@ -5,6 +5,7 @@ import { explorerTx, type EvmChainId } from "@/lib/factory/deploy";
 import { solanaExplorerTx } from "@/lib/factory/solana";
 import { cn } from "@/lib/cn";
 
+import { tr } from "@/lib/i18n";
 /* ---- one toast for all quick buys ---- */
 type Toast = { id: number; symbol: string; msg: string; tone: "busy" | "ok" | "err"; href: string };
 let toast: Toast | null = null;
@@ -40,10 +41,10 @@ export function QuickBuyToast() {
       </span>
       {t.href ? (
         <a className="shrink-0 text-cyan" href={t.href} target="_blank" rel="noopener noreferrer">
-          View
+          {tr("View")}
         </a>
       ) : null}
-      <button type="button" className="shrink-0 px-1 text-muted" aria-label="Close" onClick={() => setToast(null)}>
+      <button type="button" className="shrink-0 px-1 text-muted" aria-label={tr("Close")} onClick={() => setToast(null)}>
         ✕
       </button>
     </div>
@@ -72,14 +73,14 @@ export function QuickBuyButton({
     const id = ++seq;
     const show = (msg: string, tone: Toast["tone"] = "busy", href = "") => setToast({ id, symbol: coin.symbol, msg, tone, href });
     try {
-      show(`Buying ${amount} ${unit}…`);
+      show(tr("Buying {0} {1}…", amount, unit));
       const tx = await quickBuy(target, amount, (m) => show(m));
       const href = target.chain === "solana" ? solanaExplorerTx(tx) : explorerTx(target.chain as EvmChainId, tx);
-      show(`Bought with ${amount} ${unit}.`, "ok", href);
+      show(tr("Bought with {0} {1}.", amount, unit), "ok", href);
       window.setTimeout(() => toast?.id === id && setToast(null), 8000);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "The buy did not go through.";
-      show(err instanceof WalletNeeded ? msg : /user (rejected|denied)|rejected the request|4001/i.test(msg) ? "You cancelled in the wallet." : msg.split("\n")[0], "err");
+      show(err instanceof WalletNeeded ? tr(msg) : /user (rejected|denied)|rejected the request|4001/i.test(msg) ? tr("You cancelled in the wallet.") : msg.split("\n")[0], "err");
     } finally {
       busy = false;
     }
@@ -90,7 +91,7 @@ export function QuickBuyButton({
       type="button"
       onClick={(e) => void go(e)}
       className={cn("inline-flex min-h-9 shrink-0 items-center gap-1 rounded-lg bg-cyan/15 px-2.5 text-xs font-bold text-cyan hover:bg-cyan hover:text-cyan-ink", className)}
-      aria-label={`Quick buy ${coin.symbol} with ${amount} ${unit}`}
+      aria-label={tr("Quick buy {0} with {1} {2}", coin.symbol, amount, unit)}
     >
       ⚡ {amount} {unit}
     </button>
@@ -106,7 +107,7 @@ export function QuickBuyBar() {
   return (
     <div className="mt-3 text-xs">
       <button type="button" className="text-muted hover:text-fg" onClick={() => (setDraft(amounts), setOpen(!open))} aria-expanded={open}>
-        ⚡ Quick buy: {units.map((u) => `${amounts[u]} ${u}`).join(" · ")} <span className="text-cyan">{open ? "Done" : "Change"}</span>
+        {tr("⚡ Quick buy:")}{" "}{units.map((u) => `${amounts[u]} ${u}`).join(" · ")} <span className="text-cyan">{open ? tr("Done") : tr("Change")}</span>
       </button>
       {open ? (
         <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -121,12 +122,12 @@ export function QuickBuyBar() {
                   if (validAmount(u, v)) setQuickAmount(u, v);
                 }}
                 className={cn("min-h-9 w-full bg-transparent tabular-nums outline-none", !validAmount(u, draft[u]) && "text-sell")}
-                aria-label={`Quick buy amount in ${u}`}
+                aria-label={tr("Quick buy amount in {0}", u)}
               />
               <span className="text-muted">{u}</span>
             </label>
           ))}
-          <p className="col-span-2 text-muted sm:col-span-4">One tap on ⚡ buys this much. Your wallet still asks you to approve each buy. Slippage 15%.</p>
+          <p className="col-span-2 text-muted sm:col-span-4">{tr("One tap on ⚡ buys this much. Your wallet still asks you to approve each buy. Slippage 15%.")}</p>
         </div>
       ) : null}
     </div>

@@ -5,6 +5,7 @@ import type { ChainId } from "@/lib/factory/types";
 import { formatSmart } from "@/lib/factory/units";
 import { isEvmChain } from "@/lib/factory/deploy";
 
+import { tr } from "@/lib/i18n";
 export function Holders({ chain, address, decimals }: { chain: ChainId; address: string; decimals: number }) {
   const [rows, setRows] = useState<{ address: string; amount: string }[] | null>(null);
 
@@ -35,9 +36,9 @@ export function Holders({ chain, address, decimals }: { chain: ChainId; address:
 
   return (
     <section className="mt-8">
-      <h2 className="text-lg font-extrabold">Holders</h2>
-      {rows === null ? <p className="mt-2 text-sm text-muted">Reading holders.</p> : null}
-      {rows && rows.length === 0 ? <p className="mt-2 text-sm text-muted">No holders yet.</p> : null}
+      <h2 className="text-lg font-extrabold">{tr("Holders")}</h2>
+      {rows === null ? <p className="mt-2 text-sm text-muted">{tr("Reading holders.")}</p> : null}
+      {rows && rows.length === 0 ? <p className="mt-2 text-sm text-muted">{tr("No holders yet.")}</p> : null}
       {rows && rows.length > 0 ? (
         <ol className="mt-3 divide-y divide-line border-y border-line">
           {rows.map((row, index) => (

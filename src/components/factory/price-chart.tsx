@@ -10,6 +10,7 @@ import { compactCap, compactUsd } from "./market-line";
 import { cn } from "@/lib/cn";
 import { readPrefs, writePrefs } from "@/lib/factory/prefs";
 
+import { tr } from "@/lib/i18n";
 type Point = { t: number; y: number };
 
 const RANGES = [
@@ -101,9 +102,9 @@ export function PriceChart({
     <section className="mt-6">
       <div className="flex items-end justify-between gap-3">
         <div>
-          <h2 className="text-lg font-extrabold">{asCap ? "Market cap" : "Price"}</h2>
+          <h2 className="text-lg font-extrabold">{asCap ? tr("Market cap") : tr("Price")}</h2>
           <p className="mt-1 text-sm text-muted">
-            {focus ? stamp(focus.t) : asCap ? "Drag the line to read the market cap." : "Drag the line to read a price."}
+            {focus ? stamp(focus.t) : asCap ? tr("Drag the line to read the market cap.") : tr("Drag the line to read a price.")}
           </p>
         </div>
         <p className="text-right">
@@ -117,10 +118,10 @@ export function PriceChart({
       </div>
       <div className="mt-3 flex gap-2">
         <button type="button" className={asCap ? "chip-on min-h-11 px-3 text-sm font-semibold" : "min-h-11 bg-surface px-3 text-sm font-semibold text-muted shadow-border"} onClick={() => { setPlot("cap"); writePrefs({ chart: "cap" }); setFocus(null); }}>
-          Market cap
+          {tr("Market cap")}
         </button>
         <button type="button" className={!asCap ? "chip-on min-h-11 px-3 text-sm font-semibold" : "min-h-11 bg-surface px-3 text-sm font-semibold text-muted shadow-border"} onClick={() => { setPlot("price"); writePrefs({ chart: "price" }); setFocus(null); }}>
-          Price
+          {tr("Price")}
         </button>
       </div>
       <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
@@ -137,12 +138,12 @@ export function PriceChart({
               range === item.id ? "chip-on" : "bg-surface text-muted shadow-border",
             )}
           >
-            {item.label}
+            {tr(item.label)}
           </button>
         ))}
       </div>
       {drawn.length < 2 ? (
-        <p className="mt-3 text-sm text-muted">The chart appears once the curve answers.</p>
+        <p className="mt-3 text-sm text-muted">{tr("The chart appears once the curve answers.")}</p>
       ) : (
         <ChartLine key={range} points={drawn} up={up} native={native} onFocus={setFocus} />
       )}
@@ -226,7 +227,7 @@ function ChartLine({
       ref={svgRef}
       viewBox={`0 0 ${W} ${H}`}
       role="img"
-      aria-label="Price chart. Drag to read a point."
+      aria-label={tr("Price chart. Drag to read a point.")}
       className="mt-3 h-56 w-full touch-none bg-surface shadow-border"
       onPointerDown={(event) => {
         event.currentTarget.setPointerCapture(event.pointerId);

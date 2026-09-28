@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { OnlyOnFerzan } from "./floor-live";
 
+import { tr } from "@/lib/i18n";
 /** FERZAN launch: Friday, October 9, 2026, 7:00 PM Eastern (23:00 UTC). */
 const LAUNCH_AT = Date.UTC(2026, 9, 9, 23, 0, 0);
 const SQUADS_VAULT = "2vWqwX72ijo24vgvPQW6yBQh2qXE4jrEd18YDdEbWKLG";
@@ -36,13 +37,13 @@ function useNow(): number {
 function Countdown() {
   const now = useNow();
   const left = Math.max(0, LAUNCH_AT - now);
-  if (left === 0) return <p className="mt-4 text-lg font-extrabold text-cyan">FERZAN is live. Find it on the Launches board.</p>;
+  if (left === 0) return <p className="mt-4 text-lg font-extrabold text-cyan">{tr("FERZAN is live. Find it on the Launches board.")}</p>;
   const d = Math.floor(left / 86_400_000);
   const h = Math.floor((left % 86_400_000) / 3_600_000);
   const m = Math.floor((left % 3_600_000) / 60_000);
   const s = Math.floor((left % 60_000) / 1000);
   return (
-    <div className="mt-5 grid max-w-md grid-cols-4 gap-2 text-center" aria-label="Time until FERZAN launches">
+    <div className="mt-5 grid max-w-md grid-cols-4 gap-2 text-center" aria-label={tr("Time until FERZAN launches")}>
       {[
         [d, "days"],
         [h, "hours"],
@@ -51,7 +52,7 @@ function Countdown() {
       ].map(([v, label]) => (
         <div key={label} className="ticket px-2 py-3">
           <p className="text-2xl font-extrabold tabular-nums">{String(v).padStart(2, "0")}</p>
-          <p className="text-xs text-muted">{label}</p>
+          <p className="text-xs text-muted">{tr(label)}</p>
         </div>
       ))}
     </div>
@@ -61,7 +62,7 @@ function Countdown() {
 function Address({ label, value }: { label: string; value: string }) {
   return (
     <li className="py-3">
-      <p className="text-sm text-muted">{label}</p>
+      <p className="text-sm text-muted">{tr(label)}</p>
       <a
         className="block break-all font-mono text-sm text-cyan"
         href={`https://solscan.io/account/${value}`}
@@ -78,30 +79,27 @@ export function FerzanPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-10">
       <section className="flex flex-col gap-6 sm:flex-row sm:items-center">
-        <img src="/brand/ferzan-token.jpg" alt="FERZAN token" className="h-32 w-32 shrink-0 rounded-full" />
+        <img src="/brand/ferzan-token.jpg" alt={tr("FERZAN token")} className="h-32 w-32 shrink-0 rounded-full" />
         <div>
-          <p className="text-sm font-medium text-cyan">Solana · Meteora bonding curve</p>
-          <h1 className="mt-1 text-4xl sm:text-5xl">FERZAN</h1>
-          <p className="mt-2 text-muted">Launches Friday, October 9 at 7:00 PM Eastern.</p>
+          <p className="text-sm font-medium text-cyan">{tr("Solana · Meteora bonding curve")}</p>
+          <h1 className="mt-1 text-4xl sm:text-5xl">{tr("FERZAN")}</h1>
+          <p className="mt-2 text-muted">{tr("Launches Friday, October 9 at 7:00 PM Eastern.")}</p>
           <Countdown />
         </div>
       </section>
 
       <section>
         <p className="max-w-2xl text-muted">
-          FERZAN powers the Ferzan ecosystem: the Ferzan Factory launchpad and the Ferzan Telegram bots for launching, trading and
-          tracking coins on Solana, Base, BNB, Ethereum and Robinhood Chain. Every day, part of Ferzan&apos;s platform fees buys FERZAN on
-          the open market and burns it.
+          {tr("FERZAN powers the Ferzan ecosystem: the Ferzan Factory launchpad and the Ferzan Telegram bots for launching, trading and tracking coins on Solana, Base, BNB, Ethereum and Robinhood Chain. Every day, part of Ferzan's platform fees buys FERZAN on the open market and burns it.")}
         </p>
         <p className="mt-3 text-sm text-muted">
-          The contract address is published here, on @Ferzan_Launches and on X the moment it goes live. Anything posted before that is
-          not FERZAN.
+          {tr("The contract address is published here, on @Ferzan_Launches and on X the moment it goes live. Anything posted before that is not FERZAN.")}
         </p>
       </section>
 
       <section>
-        <h2 className="text-xl font-extrabold">Supply: 1,000,000,000</h2>
-        <p className="mt-1 text-sm text-muted">Fixed. The mint authority is removed at launch, so no more can ever be made.</p>
+        <h2 className="text-xl font-extrabold">{tr("Supply: 1,000,000,000")}</h2>
+        <p className="mt-1 text-sm text-muted">{tr("Fixed. The mint authority is removed at launch, so no more can ever be made.")}</p>
         <ul className="mt-3 divide-y divide-line border-y border-line">
           {SUPPLY.map((row) => (
             <li key={row.name} className="grid gap-1 py-3 sm:grid-cols-[6rem_1fr] sm:gap-4">
@@ -110,53 +108,50 @@ export function FerzanPage() {
                 <p className="font-semibold">
                   {row.name} <span className="text-sm font-normal text-muted">· {row.amount}</span>
                 </p>
-                <p className="text-sm text-muted">{row.detail}</p>
+                <p className="text-sm text-muted">{tr(row.detail)}</p>
               </div>
             </li>
           ))}
         </ul>
         <p className="mt-3 text-sm text-muted">
-          The locked tokens only start unlocking after FERZAN graduates. They sit in a 2-of-3 Squads multisig, so no single key can move them.
+          {tr("The locked tokens only start unlocking after FERZAN graduates. They sit in a 2-of-3 Squads multisig, so no single key can move them.")}
         </p>
       </section>
 
       <section>
-        <h2 className="text-xl font-extrabold">Launch protection</h2>
+        <h2 className="text-xl font-extrabold">{tr("Launch protection")}</h2>
         <p className="mt-1 text-sm text-muted">
-          The trading fee starts at 99% and falls every 30 seconds to the normal 1% at 30 minutes, so sniping the open costs almost
-          everything. A volatility fee also rises whenever the price swings hard.
+          {tr("The trading fee starts at 99% and falls every 30 seconds to the normal 1% at 30 minutes, so sniping the open costs almost everything. A volatility fee also rises whenever the price swings hard.")}
         </p>
         <div className="mt-3 grid grid-cols-4 gap-2 sm:grid-cols-8">
           {FEE_STEPS.map(([min, fee]) => (
             <div key={min} className="ticket px-2 py-2 text-center">
               <p className="font-extrabold tabular-nums">{fee}</p>
-              <p className="text-xs text-muted">min {min}</p>
+              <p className="text-xs text-muted">{tr("min")}{" "}{min}</p>
             </div>
           ))}
         </div>
       </section>
 
       <section>
-        <h2 className="text-xl font-extrabold">Graduation</h2>
+        <h2 className="text-xl font-extrabold">{tr("Graduation")}</h2>
         <p className="mt-1 text-sm text-muted">
-          The curve opens at about 50 SOL market cap and graduates at about 800 SOL. About 56 SOL then moves into a Meteora pool with the
-          liquidity locked forever.
+          {tr("The curve opens at about 50 SOL market cap and graduates at about 800 SOL. About 56 SOL then moves into a Meteora pool with the liquidity locked forever.")}
         </p>
       </section>
 
       <section>
-        <h2 className="text-xl font-extrabold">Fees and the burn</h2>
+        <h2 className="text-xl font-extrabold">{tr("Fees and the burn")}</h2>
         <ul className="mt-2 space-y-2 text-sm text-muted">
-          <li>1% on every FERZAN trade after the first 30 minutes: half to the Ferzan multisig, half to Ferzan.</li>
+          <li>{tr("1% on every FERZAN trade after the first 30 minutes: half to the Ferzan multisig, half to Ferzan.")}</li>
           <li>
-            Every day a program on Ferzan&apos;s server claims Ferzan&apos;s share of the fees from every Solana launch, spends 30% of it
-            buying FERZAN, and burns what it bought. Each day&apos;s claim, buy and burn is posted with the transaction links.
+            {tr("Every day a program on Ferzan's server claims Ferzan's share of the fees from every Solana launch, spends 30% of it buying FERZAN, and burns what it bought. Each day's claim, buy and burn is posted with the transaction links.")}
           </li>
-          <li>No transfer tax. No staking promises. Nothing here is a promise of price or profit.</li>
+          <li>{tr("No transfer tax. No staking promises. Nothing here is a promise of price or profit.")}</li>
         </ul>
         <p className="mt-3 text-sm">
           <a className="font-semibold text-cyan" href="/transparency">
-            See every buyback and burn, with its transactions →
+            {tr("See every buyback and burn, with its transactions →")}
           </a>
         </p>
       </section>
@@ -164,10 +159,10 @@ export function FerzanPage() {
       <OnlyOnFerzan />
 
       <section>
-        <h2 className="text-xl font-extrabold">On-chain addresses</h2>
+        <h2 className="text-xl font-extrabold">{tr("On-chain addresses")}</h2>
         <ul className="mt-2 divide-y divide-line border-y border-line">
-          <Address label="Ferzan multisig (Squads vault)" value={SQUADS_VAULT} />
-          <Address label="FERZAN Meteora config" value={FLAGSHIP_CONFIG} />
+          <Address label={tr("Ferzan multisig (Squads vault)")} value={SQUADS_VAULT} />
+          <Address label={tr("FERZAN Meteora config")} value={FLAGSHIP_CONFIG} />
         </ul>
       </section>
     </div>

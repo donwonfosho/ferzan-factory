@@ -7,6 +7,7 @@ import { solBalance, solanaAddress, solanaExplorerTx, sweepSolanaSite } from "@/
 import { formatSmart } from "@/lib/factory/units";
 import { useAccountWallets } from "@/lib/factory/wallet-bridge";
 
+import { tr } from "@/lib/i18n";
 const EVM: EvmChainId[] = ["base", "bsc", "ethereum", "robinhood", "arc"];
 
 type Row = { chain: EvmChainId | "solana"; balance: bigint };
@@ -51,7 +52,7 @@ export function MoveFunds() {
     setBusy(row.chain);
     try {
       if (row.chain === "solana") {
-        if (!account?.solAddress) throw new Error("Your account has no Solana wallet yet.");
+        if (!account?.solAddress) throw new Error(tr("Your account has no Solana wallet yet."));
         const res = await sweepSolanaSite(account.solAddress);
         setNote({ text: `Moved ${formatSmart(res.sent, 9)} SOL to your account.`, href: solanaExplorerTx(res.signature) });
       } else {
@@ -71,12 +72,12 @@ export function MoveFunds() {
 
   return (
     <div className="ticket mt-4">
-      <p className="text-lg font-extrabold">Move funds to your account</p>
+      <p className="text-lg font-extrabold">{tr("Move funds to your account")}</p>
       <p className="mt-2 text-sm text-muted">
-        This browser still holds an old wallet ({oldEvm.slice(0, 6)}…{oldEvm.slice(-4)}). Move its coins to your account wallet so everything is in one place. Only the network fee stays behind.
+        {tr("This browser still holds an old wallet (")}{oldEvm.slice(0, 6)}…{oldEvm.slice(-4)}{tr("). Move its coins to your account wallet so everything is in one place. Only the network fee stays behind.")}
       </p>
-      {rows === null ? <p className="mt-3 text-sm text-muted">Checking balances…</p> : null}
-      {rows && rows.length === 0 ? <p className="mt-3 text-sm text-muted">Nothing left to move. The old wallet is empty.</p> : null}
+      {rows === null ? <p className="mt-3 text-sm text-muted">{tr("Checking balances…")}</p> : null}
+      {rows && rows.length === 0 ? <p className="mt-3 text-sm text-muted">{tr("Nothing left to move. The old wallet is empty.")}</p> : null}
       {rows && rows.length > 0 ? (
         <ul className="mt-3 space-y-2">
           {rows.map((row) => {
@@ -88,7 +89,7 @@ export function MoveFunds() {
                   {label}: {formatSmart(row.balance, row.chain === "solana" ? 9 : 18)} {native}
                 </span>
                 <button type="button" className="btn-line" disabled={Boolean(busy)} onClick={() => void move(row)}>
-                  {busy === row.chain ? "Moving…" : "Move"}
+                  {busy === row.chain ? tr("Moving…") : tr("Move")}
                 </button>
               </li>
             );
@@ -97,16 +98,16 @@ export function MoveFunds() {
       ) : null}
       {note ? (
         <p className="mt-3 text-sm">
-          {note.text}{" "}
+          {tr(note.text)}{" "}
           {note.href ? (
             <a className="text-cyan" href={note.href} target="_blank" rel="noopener noreferrer">
-              View
+              {tr("View")}
             </a>
           ) : null}
         </p>
       ) : null}
       <p className="mt-3 text-xs text-muted">
-        Coins you bought (tokens) are not moved here. Export the old key under View wallets and import it into MetaMask or Phantom to move those.
+        {tr("Coins you bought (tokens) are not moved here. Export the old key under View wallets and import it into MetaMask or Phantom to move those.")}
       </p>
     </div>
   );

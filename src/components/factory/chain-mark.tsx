@@ -1,5 +1,6 @@
 import { cn } from "@/lib/cn";
 
+import { tr } from "@/lib/i18n";
 export type MarkChain = "solana" | "base" | "bsc" | "ethereum" | "robinhood" | "arc" | "tron" | "ton";
 
 const LABEL: Record<MarkChain, string> = {
@@ -23,7 +24,7 @@ export function ChainMark({ id, className }: { id: MarkChain; className?: string
       {id === "robinhood" ? <Robinhood /> : null}
       {id === "arc" ? <Arc /> : null}
       {id === "tron" ? <Letter bg="#c4202b" text="T" /> : null}
-      {id === "ton" ? <Letter bg="#0098ea" text="TON" /> : null}
+      {id === "ton" ? <Letter bg="#0098ea" text={tr("TON")} /> : null}
     </svg>
   );
 }

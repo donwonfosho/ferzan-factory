@@ -13,6 +13,7 @@ import { HoldersPanel, PnlShare } from "./coin-extras";
 import { AlertsButton, WatchButton } from "./watch";
 import { CoinComments } from "./coin-comments";
 
+import { tr } from "@/lib/i18n";
 const TIMEFRAMES = [
   { tf: 60, label: "1m" },
   { tf: 300, label: "5m" },
@@ -71,7 +72,7 @@ export function SolCoinPage({ mint }: { mint: string }) {
       setCoin(next);
       setLoadError("");
     } catch (err) {
-      setLoadError(err instanceof Error ? err.message : "This coin did not load.");
+      setLoadError(err instanceof Error ? err.message : tr("This coin did not load."));
     }
   }, [mint, knownWallet, tf]);
 
@@ -116,42 +117,42 @@ export function SolCoinPage({ mint }: { mint: string }) {
     setError("");
     if (!coin) return;
     try {
-      if (!raw || raw <= 0n) throw new Error(side === "buy" ? "Type how much SOL to spend." : `Type how many ${coin.symbol} to sell.`);
-      setBusy("Connect your wallet.");
+      if (!raw || raw <= 0n) throw new Error(side === "buy" ? tr("Type how much SOL to spend.") : tr("Type how many {0} to sell.", coin.symbol));
+      setBusy(tr("Connect your wallet."));
       const w = await solanaWallet();
       setWallet(w.address);
       if (side === "sell" && coin.mine && w.address === knownWallet && raw > BigInt(coin.mine.tokenRaw)) {
-        throw new Error(`You hold ${formatSmart(BigInt(coin.mine.tokenRaw), TOKEN_DECIMALS)} ${coin.symbol}.`);
+        throw new Error(tr("You hold {0} {1}.", formatSmart(BigInt(coin.mine.tokenRaw), TOKEN_DECIMALS), coin.symbol));
       }
-      setBusy("Preparing the trade.");
+      setBusy(tr("Preparing the trade."));
       const built = await buildSolSwap({ data: { mint, wallet: w.address, side, amount: raw.toString(), slippageBps: slip, simulate: true } });
       if (built.simError) {
         throw new Error(
           /insufficient/i.test(built.simError)
-            ? "Not enough SOL for this trade plus the network fee and token account (keep about 0.01 SOL extra)."
-            : `Solana would reject this trade: ${built.simError}`,
+            ? tr("Not enough SOL for this trade plus the network fee and token account (keep about 0.01 SOL extra).")
+            : tr("Solana would reject this trade: {0}", built.simError),
         );
       }
-      setBusy("Approve it in your wallet.");
+      setBusy(tr("Approve it in your wallet."));
       const signature = await w.signAndSend(fromB64(built.txB64));
       setLastTx(signature);
       setAmount("");
-      setBusy("Sent. Updating in a few seconds.");
+      setBusy(tr("Sent. Updating in a few seconds."));
       window.setTimeout(() => void load(), 6000);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "The trade did not go through.";
-      setError(err instanceof WalletNeeded ? msg : /user (rejected|denied)|rejected the request|4001/i.test(msg) ? "You cancelled in the wallet." : msg.split("\n")[0]);
+      setError(err instanceof WalletNeeded ? tr(msg) : /user (rejected|denied)|rejected the request|4001/i.test(msg) ? tr("You cancelled in the wallet.") : msg.split("\n")[0]);
     } finally {
       window.setTimeout(() => setBusy(""), 1500);
     }
   }
 
-  if (loadError && !coin) return <p className="ticket mx-auto max-w-3xl text-sm text-sell">{loadError}</p>;
-  if (!coin) return <p className="ticket mx-auto max-w-3xl text-sm text-muted">Loading the curve…</p>;
+  if (loadError && !coin) return <p className="ticket mx-auto max-w-3xl text-sm text-sell">{tr(loadError)}</p>;
+  if (!coin) return <p className="ticket mx-auto max-w-3xl text-sm text-muted">{tr("Loading the curve…")}</p>;
   if (!coin.indexed) {
     return (
       <p className="ticket mx-auto max-w-3xl text-sm text-muted">
-        This coin is not on the Ferzan floor yet. New launches show up within about a minute.
+        {tr("This coin is not on the Ferzan floor yet. New launches show up within about a minute.")}
       </p>
     );
   }
@@ -167,22 +168,22 @@ export function SolCoinPage({ mint }: { mint: string }) {
             {coin.name} <span className="text-muted">${coin.symbol}</span>
           </h1>
           <p className="mt-1 text-sm text-muted">
-            Solana ·{" "}
+            {tr("Solana ·")}{" "}
             <a className="text-cyan" href={solanaExplorerMint(coin.mint)} target="_blank" rel="noopener noreferrer">
               {short(coin.mint)}
             </a>
             {coin.creator ? (
               <>
-                {" "}· by {short(coin.creator)}
-                {coin.creatorLaunches > 1 ? ` (${coin.creatorLaunches} launches, ${coin.creatorGraduated} graduated)` : " (first launch)"}
+                {" "}{tr("· by")}{" "}{short(coin.creator)}
+                {coin.creatorLaunches > 1 ? tr(" ({0} launches, {1} graduated)", coin.creatorLaunches, coin.creatorGraduated) : tr(" (first launch)")}
               </>
             ) : null}
           </p>
           {coin.description ? <p className="mt-2 text-sm">{coin.description}</p> : null}
           <p className="mt-2 flex flex-wrap gap-3 text-sm">
-            {coin.links.website ? <a className="text-cyan" href={coin.links.website} target="_blank" rel="noopener noreferrer">Website</a> : null}
+            {coin.links.website ? <a className="text-cyan" href={coin.links.website} target="_blank" rel="noopener noreferrer">{tr("Website")}</a> : null}
             {coin.links.x ? <a className="text-cyan" href={coin.links.x} target="_blank" rel="noopener noreferrer">X</a> : null}
-            {coin.links.telegram ? <a className="text-cyan" href={coin.links.telegram} target="_blank" rel="noopener noreferrer">Telegram</a> : null}
+            {coin.links.telegram ? <a className="text-cyan" href={coin.links.telegram} target="_blank" rel="noopener noreferrer">{tr("Telegram")}</a> : null}
           </p>
         </div>
       </div>
@@ -199,15 +200,15 @@ export function SolCoinPage({ mint }: { mint: string }) {
 
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
         <div className="ticket">
-          <p className="text-xs text-muted">Market cap</p>
+          <p className="text-xs text-muted">{tr("Market cap")}</p>
           <p className="text-base font-extrabold tabular-nums sm:text-lg">{usd(coin.mcapUsd)}</p>
         </div>
         <div className="ticket">
-          <p className="text-xs text-muted">Price</p>
-          <p className="text-base font-extrabold tabular-nums sm:text-lg">{coin.price ? coin.price.toPrecision(3) : "—"} SOL</p>
+          <p className="text-xs text-muted">{tr("Price")}</p>
+          <p className="text-base font-extrabold tabular-nums sm:text-lg">{coin.price ? coin.price.toPrecision(3) : "—"}{" "}{tr("SOL")}</p>
         </div>
         <div className="ticket">
-          <p className="text-xs text-muted">{coin.graduated ? "Graduated" : "To graduation"}</p>
+          <p className="text-xs text-muted">{coin.graduated ? tr("Graduated") : tr("To graduation")}</p>
           <p className="text-base font-extrabold tabular-nums sm:text-lg">{coin.progress.toFixed(1)}%</p>
         </div>
       </div>
@@ -216,15 +217,15 @@ export function SolCoinPage({ mint }: { mint: string }) {
       </div>
       <p className="text-xs text-muted">
         {coin.graduated
-          ? "This curve is full. Its liquidity moved to a locked Meteora pool."
-          : `${coin.raisedSol.toFixed(2)} of ${coin.gradSol.toFixed(0)} SOL raised · ${coin.trades} trades · ${coin.volumeSol.toFixed(2)} SOL volume`}
+          ? tr("This curve is full. Its liquidity moved to a locked Meteora pool.")
+          : tr("{0} of {1} SOL raised · {2} trades · {3} SOL volume", coin.raisedSol.toFixed(2), coin.gradSol.toFixed(0), coin.trades, coin.volumeSol.toFixed(2))}
       </p>
 
       <div className="ticket">
         <div className="mb-2 flex gap-2 overflow-x-auto">
           {TIMEFRAMES.map((t) => (
             <button key={t.tf} type="button" onClick={() => setTf(t.tf)} className={cn("min-h-9 px-3 text-sm", tf === t.tf ? "btn-cyan" : "btn-line")}>
-              {t.label}
+              {tr(t.label)}
             </button>
           ))}
         </div>
@@ -233,22 +234,22 @@ export function SolCoinPage({ mint }: { mint: string }) {
 
       {coin.graduated ? (
         <div className="ticket">
-          <p className="text-sm">Trading moved to the Meteora pool.</p>
+          <p className="text-sm">{tr("Trading moved to the Meteora pool.")}</p>
           <a className="btn-cyan mt-3 inline-flex" href={`https://jup.ag/tokens/${coin.mint}`} target="_blank" rel="noopener noreferrer">
-            Trade the pool
+            {tr("Trade the pool")}
           </a>
         </div>
       ) : (
         <form onSubmit={(e) => void trade(e)} className="ticket space-y-3">
           <div className="grid grid-cols-2 gap-2">
             <button type="button" className={cn("w-full", side === "buy" ? "btn-cyan" : "btn-line")} onClick={() => { setSide("buy"); setAmount(""); }}>
-              Buy
+              {tr("Buy")}
             </button>
             <button type="button" className={cn("w-full", side === "sell" ? "btn-cyan" : "btn-line")} onClick={() => { setSide("sell"); setAmount(""); }}>
-              Sell
+              {tr("Sell")}
             </button>
           </div>
-          <TextInput value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="decimal" placeholder={side === "buy" ? "SOL to spend" : `${coin.symbol} to sell`} />
+          <TextInput value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="decimal" placeholder={side === "buy" ? tr("SOL to spend") : tr("{0} to sell", coin.symbol)} />
           {side === "sell" && tokenBal > 0n ? (
             <div className="flex flex-wrap gap-2">
               {[25, 50, 100].map((p) => (
@@ -260,17 +261,17 @@ export function SolCoinPage({ mint }: { mint: string }) {
           ) : null}
           {quote !== null ? (
             <p className="text-sm text-muted">
-              ≈ {side === "buy" ? `${formatSmart(quote, TOKEN_DECIMALS)} ${coin.symbol}` : `${formatSmart(quote, SOL_DECIMALS)} SOL`}
-              {feeBps !== null ? ` · fee ${feeBps >= 1000 ? Math.round(feeBps / 100) : (feeBps / 100).toFixed(feeBps % 100 ? 2 : 0)}%` : ""}
+              ≈ {side === "buy" ? `${formatSmart(quote, TOKEN_DECIMALS)} ${coin.symbol}` : tr("{0} SOL", formatSmart(quote, SOL_DECIMALS))}
+              {feeBps !== null ? tr(" · fee {0}%", feeBps >= 1000 ? Math.round(feeBps / 100) : (feeBps / 100).toFixed(feeBps % 100 ? 2 : 0)) : ""}
             </p>
           ) : null}
           {quote !== null && feeBps !== null && feeBps >= 300 ? (
             <p className="text-sm text-sell">
-              The launch fee is still high. It keeps falling in the first minutes after launch and settles at 1%.
+              {tr("The launch fee is still high. It keeps falling in the first minutes after launch and settles at 1%.")}
             </p>
           ) : null}
           <div className="flex items-center gap-2 text-sm text-muted">
-            Slippage
+            {tr("Slippage")}
             {SLIPPAGES.map((s) => (
               <button key={s} type="button" onClick={() => setSlip(s)} className={cn("min-h-9 px-3", slip === s ? "btn-cyan" : "btn-line")}>
                 {s / 100}%
@@ -279,18 +280,18 @@ export function SolCoinPage({ mint }: { mint: string }) {
           </div>
           {coin.mine ? (
             <p className="text-xs text-muted">
-              You hold {formatSmart(tokenBal, TOKEN_DECIMALS)} {coin.symbol} · {formatSmart(BigInt(coin.mine.lamports), SOL_DECIMALS)} SOL
+              {tr("You hold")}{" "}{formatSmart(tokenBal, TOKEN_DECIMALS)} {coin.symbol} · {formatSmart(BigInt(coin.mine.lamports), SOL_DECIMALS)}{" "}{tr("SOL")}
             </p>
           ) : null}
-          {error ? <p className="text-sm text-sell">{error}</p> : null}
-          {busy ? <p className="text-sm text-cyan">{busy}</p> : null}
+          {error ? <p className="text-sm text-sell">{tr(error)}</p> : null}
+          {busy ? <p className="text-sm text-cyan">{tr(busy)}</p> : null}
           {lastTx ? (
             <a className="text-sm text-cyan" href={solanaExplorerTx(lastTx)} target="_blank" rel="noopener noreferrer">
-              View last transaction
+              {tr("View last transaction")}
             </a>
           ) : null}
           <Button type="submit" className="w-full" disabled={Boolean(busy)}>
-            {side === "buy" ? `Buy ${coin.symbol}` : `Sell ${coin.symbol}`}
+            {side === "buy" ? tr("Buy {0}", coin.symbol) : tr("Sell {0}", coin.symbol)}
           </Button>
         </form>
       )}

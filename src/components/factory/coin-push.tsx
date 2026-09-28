@@ -3,6 +3,7 @@ import { CHAINS } from "@/lib/factory/catalog";
 import type { ChainId } from "@/lib/factory/types";
 import { Button } from "./ui";
 
+import { tr } from "@/lib/i18n";
 export function CoinPush({ chain, address, symbol }: { chain: string; address: string; symbol: string }) {
   const [note, setNote] = useState("");
   const meta = CHAINS[chain as ChainId];
@@ -12,9 +13,9 @@ export function CoinPush({ chain, address, symbol }: { chain: string; address: s
   async function openChat(url: string, label: string) {
     try {
       await navigator.clipboard.writeText(blurb);
-      setNote(`${label} text copied. Paste it in the chat.`);
+      setNote(tr("{0} text copied. Paste it in the chat.", label));
     } catch {
-      setNote(`Open ${label} and paste the contract.`);
+      setNote(tr("Open {0} and paste the contract.", label));
     }
     window.open(url, "_blank", "noopener,noreferrer");
   }
@@ -23,10 +24,10 @@ export function CoinPush({ chain, address, symbol }: { chain: string; address: s
     <div className="mt-4">
       <div className="flex flex-wrap gap-2">
         <Button type="button" variant="ghost" onClick={() => void openChat("https://t.me/Ferzan_Raid", "Raid")}>
-          Raid
+          {tr("Raid")}
         </Button>
         <Button type="button" variant="ghost" onClick={() => void openChat("https://t.me/Ferzan_Trending", "Trending")}>
-          Trending
+          {tr("Trending")}
         </Button>
         <a
           className="btn-line"
@@ -34,7 +35,7 @@ export function CoinPush({ chain, address, symbol }: { chain: string; address: s
           target="_blank"
           rel="noreferrer"
         >
-          Share on X
+          {tr("Share on X")}
         </a>
         <Button
           type="button"
@@ -46,10 +47,10 @@ export function CoinPush({ chain, address, symbol }: { chain: string; address: s
             );
           }}
         >
-          Copy contract
+          {tr("Copy contract")}
         </Button>
       </div>
-      {note ? <p className="mt-2 text-sm text-muted">{note}</p> : null}
+      {note ? <p className="mt-2 text-sm text-muted">{tr(note)}</p> : null}
     </div>
   );
 }

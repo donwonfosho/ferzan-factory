@@ -5,6 +5,7 @@ import { listTelegramLeaders, type TelegramChain, type TelegramLeader } from "@/
 import { cn } from "@/lib/cn";
 import { compactUsd } from "@/components/factory/market-line";
 
+import { tr } from "@/lib/i18n";
 export const Route = createFileRoute("/leaderboard")({
   component: LeaderboardPage,
 });
@@ -51,14 +52,14 @@ function LeaderboardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-4xl">Top creators</h1>
-        <p className="mt-2 text-muted">Ranked by coins that graduated, then by trading volume on their curves. Telegram launches, every chain.</p>
+        <h1 className="text-4xl">{tr("Top creators")}</h1>
+        <p className="mt-2 text-muted">{tr("Ranked by coins that graduated, then by trading volume on their curves. Telegram launches, every chain.")}</p>
       </div>
       <div className="flex flex-wrap gap-1.5">
         {PERIODS.map((p) => (
           <button key={p.id} type="button" onClick={() => setPeriod(p.id)}
             className={cn("rounded-full px-3 py-1.5 text-sm", period === p.id ? "bg-cyan text-cyan-ink" : "bg-surface text-muted shadow-border")}>
-            {p.label}
+            {tr(p.label)}
           </button>
         ))}
       </div>
@@ -66,16 +67,16 @@ function LeaderboardPage() {
         {CHAIN_TABS.map((c) => (
           <button key={c.id || "all"} type="button" onClick={() => setChain(c.id)}
             className={cn("rounded-full px-3 py-1.5 text-sm", chain === c.id ? "bg-cyan text-cyan-ink" : "bg-surface text-muted shadow-border")}>
-            {c.label}
+            {tr(c.label)}
           </button>
         ))}
       </div>
       {rows === null ? (
-        <p className="text-muted">Loading…</p>
+        <p className="text-muted">{tr("Loading…")}</p>
       ) : rows.length === 0 ? (
         <p className="text-muted">
-          No creators here yet.{" "}
-          <a className="text-cyan" href="https://t.me/Ferzan_Launch_Bot" target="_blank" rel="noopener noreferrer">Launch the first one</a>.
+          {tr("No creators here yet.")}{" "}
+          <a className="text-cyan" href="https://t.me/Ferzan_Launch_Bot" target="_blank" rel="noopener noreferrer">{tr("Launch the first one")}</a>.
         </p>
       ) : (
         <ol className="divide-y divide-line border-y border-line">
@@ -89,11 +90,11 @@ function LeaderboardPage() {
                   {row.short || row.creator}
                 </a>
                 <span className="block text-sm text-muted">
-                  {row.launches} {row.launches === 1 ? "launch" : "launches"} · {row.graduated} graduated · {row.trades} trades
+                  {row.launches} {row.launches === 1 ? "launch" : "launches"} · {row.graduated}{" "}{tr("graduated ·")}{" "}{row.trades}{" "}{tr("trades")}
                 </span>
                 {row.best ? (
                   <span className="block truncate text-sm">
-                    Best:{" "}
+                    {tr("Best:")}{" "}
                     {row.best.url ? (
                       <a
                         className="text-cyan"
@@ -105,13 +106,13 @@ function LeaderboardPage() {
                     ) : (
                       `${row.best.name} ($${row.best.symbol})`
                     )}
-                    {row.best.graduated ? " 🎓" : ""} · {compactUsd(row.best.mcapUsd)} mcap
+                    {row.best.graduated ? " 🎓" : ""} · {compactUsd(row.best.mcapUsd)}{" "}{tr("mcap")}
                   </span>
                 ) : null}
               </span>
               <span className="shrink-0 text-right tabular-nums">
                 <span className="block font-extrabold">{row.graduated ? `🎓 ${row.graduated}` : compactUsd(row.volumeUsd)}</span>
-                <span className="block text-sm text-muted">{row.graduated ? `${compactUsd(row.volumeUsd)} vol` : "volume"}</span>
+                <span className="block text-sm text-muted">{row.graduated ? tr("{0} vol", compactUsd(row.volumeUsd)) : "volume"}</span>
               </span>
             </li>
           ))}

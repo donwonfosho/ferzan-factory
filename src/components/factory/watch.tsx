@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from "react";
 import { cn } from "@/lib/cn";
 
+import { tr } from "@/lib/i18n";
 /** Coins starred in this browser (kept on this device only). */
 export type Watched = { chain: string; token: string; symbol: string; path: string };
 const KEY = "ferzan-watch";
@@ -51,7 +52,7 @@ export function WatchButton({ chain, token, symbol, path }: Watched) {
       aria-pressed={on}
       onClick={() => save(on ? items.filter((w) => !same(w, chain, token)) : [{ chain, token, symbol, path }, ...items])}
     >
-      {on ? "★ Watching" : "☆ Watch"}
+      {on ? tr("★ Watching") : tr("☆ Watch")}
     </button>
   );
 }
@@ -61,7 +62,7 @@ export function AlertsButton({ chain, token }: { chain: string; token: string })
   if (!/^[a-z]{2,12}$/.test(chain) || !/^[0-9A-Za-z_-]{20,70}$/.test(token)) return null;
   return (
     <a className="btn-line" href={`https://t.me/Ferzan_Launch_Bot?start=watch_${chain}_${token}`} target="_blank" rel="noopener noreferrer">
-      🔔 Alerts
+      {tr("🔔 Alerts")}
     </a>
   );
 }
@@ -71,8 +72,8 @@ export function WatchlistStrip({ className }: { className?: string }) {
   const items = useWatchlist();
   if (!items.length) return null;
   return (
-    <div className={cn("flex items-center gap-2 overflow-x-auto pb-1", className)} aria-label="Your watchlist">
-      <span className="shrink-0 text-xs font-semibold text-muted">★ Watchlist</span>
+    <div className={cn("flex items-center gap-2 overflow-x-auto pb-1", className)} aria-label={tr("Your watchlist")}>
+      <span className="shrink-0 text-xs font-semibold text-muted">{tr("★ Watchlist")}</span>
       {items.map((w) => (
         <a key={`${w.chain}-${w.token}`} href={w.path} className="shrink-0 rounded-full bg-surface px-3 py-1 text-xs font-semibold shadow-border hover:shadow-border-hover">
           ${w.symbol}

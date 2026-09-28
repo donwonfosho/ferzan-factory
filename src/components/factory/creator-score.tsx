@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getCreatorScore, type CreatorScore } from "@/lib/factory/creator-score";
 
+import { tr } from "@/lib/i18n";
 const TONE: Record<CreatorScore["label"], string> = { Good: "text-cyan", Caution: "text-fg", Risky: "text-sell" };
 
 /** Creator trust box for a Ferzan-launched coin. Renders nothing for coins the Launch Bot does not know. */
@@ -24,12 +25,12 @@ export function CreatorScoreBox({ token }: { token: string }) {
     <div className="ticket space-y-2">
       <div className="flex items-baseline justify-between gap-3">
         <p className="text-sm font-medium text-muted">
-          Creator score
+          {tr("Creator score")}
           {cs.badge ? <span className="chip-on ml-2 rounded-full px-2 py-0.5 text-xs font-semibold">{cs.badge}</span> : null}
         </p>
         <p className={`text-2xl font-extrabold tabular-nums ${TONE[cs.label]}`}>
           {cs.score}
-          <span className="text-sm text-muted">/100 · {cs.label}</span>
+          <span className="text-sm text-muted">/100 · {tr(cs.label)}</span>
         </p>
       </div>
       {cs.lines.length ? (
@@ -41,12 +42,11 @@ export function CreatorScoreBox({ token }: { token: string }) {
       ) : null}
       {cs.creator ? (
         <a className="inline-block text-sm font-semibold text-cyan" href={`/creator/${cs.creator}`}>
-          All launches by this creator →
+          {tr("All launches by this creator →")}
         </a>
       ) : null}
       <p className="text-xs text-muted">
-        From Ferzan's own launch records: other coins by this creator, launch sprees and what the dev bought and sold on the curve. A
-        signal, not a guarantee.
+        {tr("From Ferzan's own launch records: other coins by this creator, launch sprees and what the dev bought and sold on the curve. A signal, not a guarantee.")}
       </p>
     </div>
   );

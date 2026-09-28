@@ -29,6 +29,7 @@ import type { EvmChainId } from "@/lib/factory/deploy";
 import { FerzanPerksCard, InstallApp } from "./perks";
 import { PortfolioPnl } from "./portfolio-pnl";
 
+import { tr } from "@/lib/i18n";
 const PROFILE_ID = "ferzan-profile-id";
 
 function accountProfileId(): string {
@@ -126,32 +127,32 @@ export function AccountPage() {
   function useBrowserWallet() {
     const opened = readSiteWallet();
     if (!opened) {
-      setCopied("No wallet on this profile yet. Create one here, or paste a key.");
+      setCopied(tr("No wallet on this profile yet. Create one here, or paste a key."));
       return;
     }
     setSiteKey(opened.privateKey);
     setSiteAddress(opened.address);
     setWallet(opened.address);
-    setCopied("This profile's wallet is the signer again.");
+    setCopied(tr("This profile's wallet is the signer again."));
   }
 
   async function useExtension() {
     const eth = (window as unknown as { ethereum?: EthereumProvider }).ethereum;
     if (!eth) {
-      setCopied("No extension in this browser. The key on this profile stays the signer.");
+      setCopied(tr("No extension in this browser. The key on this profile stays the signer."));
       return;
     }
     try {
       const accounts = (await eth.request({ method: "eth_requestAccounts" })) as string[];
       const address = accounts?.[0];
       if (!address) {
-        setCopied("The extension did not return an account.");
+        setCopied(tr("The extension did not return an account."));
         return;
       }
       setWallet(address);
-      setCopied("Extension is the signer. The key on this profile is still saved.");
+      setCopied(tr("Extension is the signer. The key on this profile is still saved."));
     } catch {
-      setCopied("The extension was closed. The profile wallet is unchanged.");
+      setCopied(tr("The extension was closed. The profile wallet is unchanged."));
     }
   }
 
@@ -159,26 +160,26 @@ export function AccountPage() {
     <div className="mx-auto max-w-lg">
       {panel !== "menu" ? (
         <button type="button" className="btn-line mb-4" onClick={() => open("menu")}>
-          Back
+          {tr("Back")}
         </button>
       ) : (
         <>
-          <h1 className="text-4xl">Manage account</h1>
-          <p className="mt-2 text-sm text-muted">Profile, wallets, rewards, and what the chart shows.</p>
+          <h1 className="text-4xl">{tr("Manage account")}</h1>
+          <p className="mt-2 text-sm text-muted">{tr("Profile, wallets, rewards, and what the chart shows.")}</p>
           <AccountCard />
           <MoveFunds />
           <FerzanPerksCard sol={mineSol} />
-          <MenuGroup label="Account">
-            <MenuRow title="Edit profile" onClick={() => open("profile")} />
-            <MenuRow title="Portfolio" detail="Balances, holdings, and launches" onClick={() => open("portfolio")} />
-            <MenuRow title="Rewards" detail="Creator fees and your referrer link" onClick={() => open("rewards")} />
+          <MenuGroup label={tr("Account")}>
+            <MenuRow title={tr("Edit profile")} onClick={() => open("profile")} />
+            <MenuRow title={tr("Portfolio")} detail={tr("Balances, holdings, and launches")} onClick={() => open("portfolio")} />
+            <MenuRow title={tr("Rewards")} detail={tr("Creator fees and your referrer link")} onClick={() => open("rewards")} />
           </MenuGroup>
-          <MenuGroup label="Wallet">
-            <MenuRow title="View wallets" onClick={() => open("wallets")} />
-            <MenuRow title="Send" detail="Move ETH, BNB, or Arc USDC out" onClick={() => open("send")} />
+          <MenuGroup label={tr("Wallet")}>
+            <MenuRow title={tr("View wallets")} onClick={() => open("wallets")} />
+            <MenuRow title={tr("Send")} detail={tr("Move ETH, BNB, or Arc USDC out")} onClick={() => open("send")} />
           </MenuGroup>
-          <MenuGroup label="Preferences">
-            <MenuRow title="Settings" detail="Chart, launch alerts, and sound" onClick={() => open("settings")} />
+          <MenuGroup label={tr("Preferences")}>
+            <MenuRow title={tr("Settings")} detail={tr("Chart, launch alerts, and sound")} onClick={() => open("settings")} />
           </MenuGroup>
           <InstallApp />
         </>
@@ -186,12 +187,12 @@ export function AccountPage() {
 
       {panel === "profile" ? (
       <>
-      <h1 className="text-4xl">Edit profile</h1>
+      <h1 className="text-4xl">{tr("Edit profile")}</h1>
 
       <div className="ticket mt-6">
         <div className="flex items-center gap-4">
           <label className="grid h-20 w-20 shrink-0 cursor-pointer place-items-center overflow-hidden bg-bg shadow-border">
-            {profile?.image ? <img src={profile.image} alt="" className="h-full w-full object-cover" /> : <span className="text-xs font-semibold text-muted">Photo</span>}
+            {profile?.image ? <img src={profile.image} alt="" className="h-full w-full object-cover" /> : <span className="text-xs font-semibold text-muted">{tr("Photo")}</span>}
             <input
               type="file"
               accept="image/png,image/jpeg,image/webp"
@@ -209,13 +210,13 @@ export function AccountPage() {
           </label>
           <div className="min-w-0 flex-1">
             <label className="block text-sm text-muted">
-              Name
+              {tr("Name")}
               <input value={name} onChange={(e) => setName(e.target.value.slice(0, 24))} className="mt-1 min-h-11 w-full bg-bg px-3 text-fg shadow-border outline-none" />
             </label>
           </div>
         </div>
         <label className="mt-4 block text-sm text-muted">
-          Bio
+          {tr("Bio")}
           <input value={bio} onChange={(e) => setBio(e.target.value.slice(0, 80))} className="mt-1 min-h-11 w-full bg-bg px-3 text-fg shadow-border outline-none" />
         </label>
         <Button
@@ -247,7 +248,7 @@ export function AccountPage() {
             })();
           }}
         >
-          Save profile
+          {tr("Save profile")}
         </Button>
         {profile?.bio ? <p className="mt-3 text-sm text-muted">{profile.bio}</p> : null}
       </div>
@@ -256,10 +257,10 @@ export function AccountPage() {
 
       {panel === "wallets" ? (
       <div className="ticket">
-        <h1 className="text-3xl">{PRIVY_APP_ID ? "Old browser wallet" : "View wallets"}</h1>
+        <h1 className="text-3xl">{PRIVY_APP_ID ? tr("Old browser wallet") : tr("View wallets")}</h1>
         {PRIVY_APP_ID ? (
           <p className="mt-2 text-sm text-muted">
-            Your wallets now come with your Ferzan account (sign in on the Manage account page). This section is only for an older wallet kept in this browser: export its key, or restore one to move its funds.
+            {tr("Your wallets now come with your Ferzan account (sign in on the Manage account page). This section is only for an older wallet kept in this browser: export its key, or restore one to move its funds.")}
           </p>
         ) : null}
         {!siteAddress && !siteKey ? (
@@ -281,7 +282,7 @@ export function AccountPage() {
                 setCopied("Wallets are on this profile.");
               }}
             >
-              Create wallets
+              {tr("Create wallets")}
             </Button>
           ) : (
             <div className="mt-4">
@@ -291,9 +292,9 @@ export function AccountPage() {
         ) : (
           <KeyLock address={siteAddress}>
           <div className="mt-4 space-y-3">
-            <WalletCard title="Solana wallet" address={sol} secret={sol ? solanaSecret() : null} onNote={setCopied} />
+            <WalletCard title={tr("Solana wallet")} address={sol} secret={sol ? solanaSecret() : null} onNote={setCopied} />
             <WalletCard
-              title="EVM wallet"
+              title={tr("EVM wallet")}
               address={siteAddress}
               secret={siteKey || null}
               onNote={setCopied}
@@ -302,7 +303,7 @@ export function AccountPage() {
           </KeyLock>
         )}
         {!siteKey && siteAddress ? (
-          <p className="mt-3 text-sm text-sell">This browser does not have the key for {shortAddress(siteAddress)}. Import the exported key below.</p>
+          <p className="mt-3 text-sm text-sell">{tr("This browser does not have the key for")}{" "}{shortAddress(siteAddress)}{tr(". Import the exported key below.")}</p>
         ) : null}
         <ReplaceWallet
           onImported={(imported) => {
@@ -322,16 +323,16 @@ export function AccountPage() {
           }}
           onFail={() => setCopied("That is not a key. Paste the exported private key, starting with 0x.")}
         />
-        <p className="mt-3 text-sm text-muted">Send chain coins to the matching address. Base ETH is not Ethereum ETH.</p>
+        <p className="mt-3 text-sm text-muted">{tr("Send chain coins to the matching address. Base ETH is not Ethereum ETH.")}</p>
         {siteAddress ? <FundButton address={siteAddress} chain="base" /> : null}
         <div className="mt-3 flex flex-wrap gap-2">
           {!usingSite && siteAddress ? (
             <Button type="button" variant="ghost" onClick={useBrowserWallet}>
-              Use profile wallet
+              {tr("Use profile wallet")}
             </Button>
           ) : null}
           <Button type="button" variant="ghost" onClick={() => void useExtension()}>
-            Use an extension
+            {tr("Use an extension")}
           </Button>
         </div>
         {copied ? <p className="mt-2 text-sm text-muted">{copied}</p> : null}
@@ -342,42 +343,42 @@ export function AccountPage() {
 
       {panel === "portfolio" && (mineEvm || mineSol) ? (
         <>
-          <h1 className="text-3xl">Portfolio</h1>
+          <h1 className="text-3xl">{tr("Portfolio")}</h1>
           <AccountPortfolio evm={mineEvm} sol={mineSol} />
           <PortfolioPnl wallets={[mineEvm ?? "", mineSol ?? ""]} />
           <div className="mt-4 flex flex-wrap gap-2">
             {mineEvm ? (
               <Link to="/p/$address" params={{ address: mineEvm }} className="btn-line">
-                Public profile
+                {tr("Public profile")}
               </Link>
             ) : null}
             {mineSol ? (
               <Link to="/p/$address" params={{ address: mineSol }} className="btn-line">
-                Solana profile
+                {tr("Solana profile")}
               </Link>
             ) : null}
           </div>
           {oldWallet ? (
             <section className="mt-8 border-t border-line pt-6">
-              <h2 className="text-xl font-extrabold">Old browser wallet</h2>
-              <p className="mt-1 text-sm text-muted">Coins on the site's first contracts, held by the wallet this browser made before accounts. Move its funds on the Manage account page.</p>
+              <h2 className="text-xl font-extrabold">{tr("Old browser wallet")}</h2>
+              <p className="mt-1 text-sm text-muted">{tr("Coins on the site's first contracts, held by the wallet this browser made before accounts. Move its funds on the Manage account page.")}</p>
               <Holding evm={siteAddress} sol={sol} />
               <Launched creator={siteAddress} sol={sol} />
             </section>
           ) : null}
         </>
       ) : null}
-      {panel === "portfolio" && !mineEvm && !mineSol ? <p className="text-sm text-muted">Sign in on the Manage account page first.</p> : null}
+      {panel === "portfolio" && !mineEvm && !mineSol ? <p className="text-sm text-muted">{tr("Sign in on the Manage account page first.")}</p> : null}
 
       {panel === "rewards" && (mineEvm || mineSol) ? (
         <>
-          <h1 className="text-3xl">Rewards</h1>
+          <h1 className="text-3xl">{tr("Rewards")}</h1>
           <AccountRewards evm={mineEvm} sol={mineSol} />
           {oldWallet ? <CreatorFees evm={siteAddress} sol={sol} /> : null}
           {copied ? <p className="mt-2 text-sm text-muted">{copied}</p> : null}
         </>
       ) : null}
-      {panel === "rewards" && !mineEvm && !mineSol ? <p className="text-sm text-muted">Sign in on the Manage account page first.</p> : null}
+      {panel === "rewards" && !mineEvm && !mineSol ? <p className="text-sm text-muted">{tr("Sign in on the Manage account page first.")}</p> : null}
 
       {panel === "settings" ? <SettingsPanel /> : null}
     </div>
@@ -395,7 +396,7 @@ function panelFromHash(): Panel {
 function MenuGroup({ label, children }: { label: string; children: ReactNode }) {
   return (
     <section className="mt-6">
-      <p className="text-sm font-medium text-muted">{label}</p>
+      <p className="text-sm font-medium text-muted">{tr(label)}</p>
       <div className="mt-2 divide-y divide-line overflow-hidden rounded-2xl bg-surface shadow-border">{children}</div>
     </section>
   );
@@ -405,7 +406,7 @@ function MenuRow({ title, detail, onClick }: { title: string; detail?: string; o
   return (
     <button type="button" onClick={onClick} className="flex min-h-14 w-full items-center justify-between gap-3 px-4 py-3 text-left">
       <span>
-        <span className="block font-semibold">{title}</span>
+        <span className="block font-semibold">{tr(title)}</span>
         {detail ? <span className="block text-sm text-muted">{detail}</span> : null}
       </span>
       <span className="text-muted">›</span>
@@ -420,36 +421,36 @@ function SettingsPanel() {
   }
   return (
     <div>
-      <h1 className="text-3xl">Settings</h1>
+      <h1 className="text-3xl">{tr("Settings")}</h1>
       <section className="ticket mt-4">
-        <p className="font-semibold">Chart</p>
-        <p className="mt-1 text-sm text-muted">What the token chart plots. This sticks on every coin.</p>
+        <p className="font-semibold">{tr("Chart")}</p>
+        <p className="mt-1 text-sm text-muted">{tr("What the token chart plots. This sticks on every coin.")}</p>
         <div className="mt-3 flex gap-2">
           <button type="button" className={prefs.chart === "cap" ? "chip-on min-h-11 px-3 text-sm font-semibold" : "min-h-11 bg-bg px-3 text-sm font-semibold text-muted shadow-border"} onClick={() => save({ chart: "cap" })}>
-            Market cap
+            {tr("Market cap")}
           </button>
           <button type="button" className={prefs.chart === "price" ? "chip-on min-h-11 px-3 text-sm font-semibold" : "min-h-11 bg-bg px-3 text-sm font-semibold text-muted shadow-border"} onClick={() => save({ chart: "price" })}>
-            Price
+            {tr("Price")}
           </button>
         </div>
       </section>
       <section className="ticket mt-4">
-        <p className="font-semibold">Launch alerts</p>
-        <p className="mt-1 text-sm text-muted">A card on this site when a new coin hits the board. This is not a phone notification.</p>
+        <p className="font-semibold">{tr("Launch alerts")}</p>
+        <p className="mt-1 text-sm text-muted">{tr("A card on this site when a new coin hits the board. This is not a phone notification.")}</p>
         <div className="mt-3 flex gap-2">
           <button type="button" className={prefs.alerts === "off" ? "chip-on min-h-11 px-3 text-sm font-semibold" : "min-h-11 bg-bg px-3 text-sm font-semibold text-muted shadow-border"} onClick={() => save({ alerts: "off" })}>
-            Off
+            {tr("Off")}
           </button>
           <button type="button" className={prefs.alerts === "all" ? "chip-on min-h-11 px-3 text-sm font-semibold" : "min-h-11 bg-bg px-3 text-sm font-semibold text-muted shadow-border"} onClick={() => save({ alerts: "all" })}>
-            All chains
+            {tr("All chains")}
           </button>
         </div>
       </section>
       <section className="ticket mt-4">
-        <p className="font-semibold">Launch sound</p>
-        <p className="mt-1 text-sm text-muted">A short tone with the card. The browser can block it until you have tapped the page.</p>
+        <p className="font-semibold">{tr("Launch sound")}</p>
+        <p className="mt-1 text-sm text-muted">{tr("A short tone with the card. The browser can block it until you have tapped the page.")}</p>
         <button type="button" className="btn-line mt-3" onClick={() => save({ sound: !prefs.sound })}>
-          {prefs.sound ? "Sound on" : "Sound off"}
+          {prefs.sound ? tr("Sound on") : tr("Sound off")}
         </button>
       </section>
     </div>
@@ -463,8 +464,8 @@ function SendPanel({ siteAddress }: { siteAddress: string }) {
   const account = useAccountWallets();
   if (account?.authenticated && account.evmAddress) return <SendForm from={account.evmAddress} viaAccount />;
   // The old browser wallet no longer sends; its coins move with "Move funds" on Manage account.
-  if (siteAddress) return <p className="text-sm text-muted">Sign in first. To empty the old browser wallet, use Move funds on the Manage account page.</p>;
-  return <p className="text-sm text-muted">{PRIVY_APP_ID ? "Sign in on the Manage account page first." : "Create a wallet first."}</p>;
+  if (siteAddress) return <p className="text-sm text-muted">{tr("Sign in first. To empty the old browser wallet, use Move funds on the Manage account page.")}</p>;
+  return <p className="text-sm text-muted">{PRIVY_APP_ID ? tr("Sign in on the Manage account page first.") : tr("Create a wallet first.")}</p>;
 }
 
 function SendForm({ from, viaAccount }: { from: string; viaAccount: boolean }) {
@@ -479,11 +480,11 @@ function SendForm({ from, viaAccount }: { from: string; viaAccount: boolean }) {
     e.preventDefault();
     const value = parseDecimal(amount, meta.nativeDecimals);
     if (!value || value <= 0n) {
-      setNote("Type how much to send.");
+      setNote(tr("Type how much to send."));
       return;
     }
     if (!/^0x[a-fA-F0-9]{40}$/.test(to)) {
-      setNote("That address looks wrong.");
+      setNote(tr("That address looks wrong."));
       return;
     }
     setBusy(true);
@@ -491,15 +492,15 @@ function SendForm({ from, viaAccount }: { from: string; viaAccount: boolean }) {
     try {
       if (viaAccount) {
         const { address, provider: eth } = await evmWallet(chain);
-        if (address.toLowerCase() !== from.toLowerCase()) throw new Error("The wallet changed. Reopen this page.");
+        if (address.toLowerCase() !== from.toLowerCase()) throw new Error(tr("The wallet changed. Reopen this page."));
         const hash = await eth.request({ method: "eth_sendTransaction", params: [{ from: address, to, value: "0x" + value.toString(16) }] });
-        setNote(typeof hash === "string" ? `Sent. ${hash}` : "The wallet did not send it.");
+        setNote(typeof hash === "string" ? tr("Sent. {0}", hash) : tr("The wallet did not send it."));
       } else {
         const receipt = await sendWithSiteWallet({ chain, from, to, data: "0x", value });
-        setNote(receipt.status === "0x0" ? "The send failed." : `Sent. ${receipt.hash}`);
+        setNote(receipt.status === "0x0" ? tr("The send failed.") : tr("Sent. {0}", receipt.hash));
       }
     } catch (err) {
-      setNote(err instanceof Error ? err.message : "The send failed.");
+      setNote(err instanceof Error ? err.message : tr("The send failed."));
     } finally {
       setBusy(false);
     }
@@ -507,29 +508,29 @@ function SendForm({ from, viaAccount }: { from: string; viaAccount: boolean }) {
 
   return (
     <form onSubmit={(e) => void submit(e)} className="ticket space-y-3">
-      <h1 className="text-3xl">Send</h1>
+      <h1 className="text-3xl">{tr("Send")}</h1>
       <p className="text-sm text-muted">
-        Sends the chain coin from {viaAccount ? "your account wallet" : "the old browser wallet"} ({from.slice(0, 6)}…{from.slice(-4)}). Solana sends are not on this form.
+        {tr("Sends the chain coin from")}{" "}{viaAccount ? tr("your account wallet") : tr("the old browser wallet")} ({from.slice(0, 6)}…{from.slice(-4)}{tr("). Solana sends are not on this form.")}
       </p>
       <div className="flex flex-wrap gap-2">
         {SEND_CHAINS.map((id) => (
           <button key={id} type="button" className={chain === id ? "chip-on min-h-11 px-3 text-sm font-semibold" : "min-h-11 bg-bg px-3 text-sm font-semibold text-muted shadow-border"} onClick={() => setChain(id)}>
-            {CHAINS[id].label}
+            {tr(CHAINS[id].label)}
           </button>
         ))}
       </div>
       <label className="block text-sm text-muted">
-        To
+        {tr("To")}
         <input value={to} onChange={(e) => setTo(e.target.value.trim())} placeholder="0x…" className="mt-1 min-h-11 w-full bg-bg px-3 text-fg shadow-border outline-none" />
       </label>
       <label className="block text-sm text-muted">
-        Amount ({meta.native})
+        {tr("Amount (")}{meta.native})
         <input value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="decimal" className="mt-1 min-h-11 w-full bg-bg px-3 text-fg shadow-border outline-none" />
       </label>
       <Button type="submit" disabled={busy}>
-        {busy ? "Sending" : `Send ${meta.native}`}
+        {busy ? tr("Sending") : tr("Send {0}", meta.native)}
       </Button>
-      {note ? <p className="text-sm break-all text-muted">{note}</p> : null}
+      {note ? <p className="text-sm break-all text-muted">{tr(note)}</p> : null}
     </form>
   );
 }
@@ -553,9 +554,9 @@ function WalletCard({
   const [open, setOpen] = useState(false);
   return (
     <div className="rounded-xl bg-bg p-3 shadow-border">
-      <p className="font-semibold">{title}</p>
+      <p className="font-semibold">{tr(title)}</p>
       <div className="mt-3 flex min-h-11 items-center justify-between gap-3 rounded-lg bg-surface px-3 text-sm">
-        <span className="text-muted">Address</span>
+        <span className="text-muted">{tr("Address")}</span>
         <span className="flex items-center gap-2 font-medium">
           {address ? shortAddress(address) : "—"}
           {address ? (
@@ -569,13 +570,13 @@ function WalletCard({
                 );
               }}
             >
-              Copy
+              {tr("Copy")}
             </button>
           ) : null}
         </span>
       </div>
       <button type="button" className="btn-line mt-2 w-full" disabled={!secret} onClick={() => setOpen((value) => !value)}>
-        {open ? "Hide private key" : "Export private key"}
+        {open ? tr("Hide private key") : tr("Export private key")}
       </button>
       {open && secret ? (
         <textarea readOnly value={secret} rows={3} spellCheck={false} className="mt-2 w-full bg-surface px-3 py-3 text-xs break-all shadow-border outline-none" />
@@ -598,15 +599,15 @@ function ReplaceWallet({
   return (
     <div className="mt-4">
       <button type="button" className="btn-line mt-4 w-full" onClick={() => setOpen((current) => !current)}>
-        Replace EVM wallet
+        {tr("Replace EVM wallet")}
       </button>
       {open ? (
         <div className="mt-2">
-          <p className="text-sm text-muted">Paste the exported private key. The name, picture, and coins launched by that wallet come back.</p>
+          <p className="text-sm text-muted">{tr("Paste the exported private key. The name, picture, and coins launched by that wallet come back.")}</p>
           <input
             value={value}
             onChange={(e) => setValue(e.target.value.trim())}
-            placeholder="Exported key"
+            placeholder={tr("Exported key")}
             type="password"
             autoComplete="off"
             spellCheck={false}
@@ -641,7 +642,7 @@ function ReplaceWallet({
               onImported(imported);
             }}
           >
-            Import
+            {tr("Import")}
           </Button>
         </div>
       ) : null}
@@ -702,15 +703,15 @@ function Holding({ evm, sol }: { evm: string; sol: string | null }) {
 
   return (
     <div className="mt-8">
-      <h2 className="text-xl font-extrabold">Holding</h2>
-      <p className="mt-1 text-sm text-muted">Coins on this site that this wallet holds.</p>
-      {rows.length === 0 ? <p className="mt-3 text-sm text-muted">None yet.</p> : null}
+      <h2 className="text-xl font-extrabold">{tr("Holding")}</h2>
+      <p className="mt-1 text-sm text-muted">{tr("Coins on this site that this wallet holds.")}</p>
+      {rows.length === 0 ? <p className="mt-3 text-sm text-muted">{tr("None yet.")}</p> : null}
       <div className="mt-3 divide-y divide-line border-y border-line">
         {rows.map((row) => (
           <Link key={`${row.chain}:${row.address}`} to="/c/$chain/$address" params={{ chain: row.chain, address: row.address }} className="flex items-center justify-between gap-3 py-3">
             <span>
               <span className="block font-semibold">{row.symbol}</span>
-              <span className="block text-sm text-muted">{row.name} · {CHAINS[row.chain as ChainId]?.label ?? row.chain}</span>
+              <span className="block text-sm text-muted">{row.name} · {tr(CHAINS[row.chain as ChainId]?.label) ?? row.chain}</span>
             </span>
             <span className="text-sm tabular-nums">{row.amount}</span>
           </Link>
@@ -739,10 +740,10 @@ function Launched({ creator, sol }: { creator: string; sol: string | null }) {
   const extra = local.filter((row) => !seen.has(row.contract.toLowerCase()));
   return (
     <section className="mt-6">
-      <h2 className="text-xl font-extrabold">Launched</h2>
-      <p className="mt-1 text-sm text-muted">Stored with this wallet, so they come back when the key is pasted. They are also on the floor.</p>
-      {rows === null && extra.length === 0 ? <p className="mt-2 text-sm text-muted">Reading your coins.</p> : null}
-      {rows && rows.length === 0 && extra.length === 0 ? <p className="mt-2 text-sm text-muted">None from this profile yet.</p> : null}
+      <h2 className="text-xl font-extrabold">{tr("Launched")}</h2>
+      <p className="mt-1 text-sm text-muted">{tr("Stored with this wallet, so they come back when the key is pasted. They are also on the floor.")}</p>
+      {rows === null && extra.length === 0 ? <p className="mt-2 text-sm text-muted">{tr("Reading your coins.")}</p> : null}
+      {rows && rows.length === 0 && extra.length === 0 ? <p className="mt-2 text-sm text-muted">{tr("None from this profile yet.")}</p> : null}
       <ul className="mt-3 divide-y divide-line border-y border-line">
         {(rows ?? []).map((coin) => (
           <Coin key={coin.contract} chain={coin.chain} address={coin.contract} symbol={coin.symbol} name={coin.name} image={coin.image} />
@@ -772,7 +773,7 @@ function Coin({ chain, address, symbol, name, image }: { chain: string; address:
 
 function squarePhoto(file: File): Promise<string> {
   if (!file.type.startsWith("image/") && !/\.(png|jpe?g|webp)$/i.test(file.name)) {
-    return Promise.reject(new Error("Use a PNG or JPG."));
+    return Promise.reject(new Error(tr("Use a PNG or JPG.")));
   }
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
@@ -785,7 +786,7 @@ function squarePhoto(file: File): Promise<string> {
       const ctx = canvas.getContext("2d");
       if (!ctx) {
         URL.revokeObjectURL(url);
-        reject(new Error("Could not read that picture."));
+        reject(new Error(tr("Could not read that picture.")));
         return;
       }
       const scale = Math.max(size / img.width, size / img.height);
@@ -794,12 +795,12 @@ function squarePhoto(file: File): Promise<string> {
       ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
       URL.revokeObjectURL(url);
       const data = canvas.toDataURL("image/jpeg", 0.82);
-      if (data.length > 180_000) reject(new Error("That picture is too heavy."));
+      if (data.length > 180_000) reject(new Error(tr("That picture is too heavy.")));
       else resolve(data);
     };
     img.onerror = () => {
       URL.revokeObjectURL(url);
-      reject(new Error("Could not read that picture."));
+      reject(new Error(tr("Could not read that picture.")));
     };
     img.src = url;
   });

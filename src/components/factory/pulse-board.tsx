@@ -9,6 +9,7 @@ import { QuickBuyBar, QuickBuyButton } from "./quick-buy";
 import { Mark } from "./ui";
 import { WatchlistStrip } from "./watch";
 
+import { tr } from "@/lib/i18n";
 const COLS: { sort: TelegramSort; title: string; hint: string }[] = [
   { sort: "new", title: "New", hint: "Just launched" },
   { sort: "koth", title: "About to graduate", hint: "Closest to filling the curve" },
@@ -39,12 +40,12 @@ function Row({ coin, flash, now }: { coin: TelegramCoin; flash: boolean; now: nu
         <span className="flex items-center gap-1.5">
           <span className="truncate font-semibold">${coin.symbol}</span>
           {MARKS.has(coin.chain) ? <ChainMark id={coin.chain as MarkChain} className="h-3.5 w-3.5 shrink-0" /> : null}
-          {coin.safe ? <span className="shrink-0 text-xs" title="Safe launch">🛡️</span> : null}
+          {coin.safe ? <span className="shrink-0 text-xs" title={tr("Safe launch")}>🛡️</span> : null}
           <span className="shrink-0 text-xs text-muted">{coin.launchedTs ? age(coin.launchedTs, now) : ""}</span>
         </span>
         <span className="mt-0.5 flex items-center gap-2 text-xs text-muted">
           <span className="tabular-nums text-fg">{compactUsd(coin.mcapUsd)}</span>
-          <span className="tabular-nums">{coin.trades} trades</span>
+          <span className="tabular-nums">{coin.trades}{" "}{tr("trades")}</span>
         </span>
         <span className="mt-1 block h-1 overflow-hidden rounded-full bg-line">
           <span className="block h-full bg-cyan transition-[width] duration-700" style={{ width: `${Math.max(2, prog)}%` }} />
@@ -105,8 +106,8 @@ function Column({ sort, title, hint, chain, hidden, now }: { sort: TelegramSort;
   return (
     <section className={cn("ticket min-w-0 p-3", hidden && "hidden lg:block")}>
       <div className="mb-2 flex items-baseline justify-between gap-2 px-2">
-        <h2 className="text-lg font-extrabold">{title}</h2>
-        <span className="text-xs text-muted">{hint}</span>
+        <h2 className="text-lg font-extrabold">{tr(title)}</h2>
+        <span className="text-xs text-muted">{tr(hint)}</span>
       </div>
       {coins === null ? (
         <div className="space-y-2 p-2">
@@ -115,7 +116,7 @@ function Column({ sort, title, hint, chain, hidden, now }: { sort: TelegramSort;
           ))}
         </div>
       ) : coins.length === 0 ? (
-        <p className="p-4 text-sm text-muted">Nothing here yet.</p>
+        <p className="p-4 text-sm text-muted">{tr("Nothing here yet.")}</p>
       ) : (
         <div className="max-h-[70vh] space-y-0.5 overflow-y-auto">
           {coins.map((c) => (
@@ -142,9 +143,9 @@ export function PulseBoard() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="flex items-center gap-3 text-4xl">
-            Pulse {live ? <span className="live-dot" aria-label="Live" /> : null}
+            {tr("Pulse")}{" "}{live ? <span className="live-dot" aria-label={tr("Live")} /> : null}
           </h1>
-          <p className="mt-1 text-sm text-muted">Every Ferzan launch on every chain, as it happens.</p>
+          <p className="mt-1 text-sm text-muted">{tr("Every Ferzan launch on every chain, as it happens.")}</p>
         </div>
         <div className="flex max-w-full gap-1 overflow-x-auto">
           {BOARD_PICKS.filter((p) => p.id === "all" || API_CHAINS.has(p.id)).map((p) => {
@@ -156,7 +157,7 @@ export function PulseBoard() {
                 onClick={() => setChain(id)}
                 className={cn("min-h-9 shrink-0 rounded-lg px-3 text-xs font-semibold", chain === id ? "chip-on" : "bg-bg text-muted shadow-border")}
               >
-                {p.label}
+                {tr(p.label)}
               </button>
             );
           })}
@@ -167,7 +168,7 @@ export function PulseBoard() {
       <div className="grid grid-cols-3 gap-1 lg:hidden" role="tablist">
         {COLS.map((c, i) => (
           <button key={c.sort} type="button" role="tab" aria-selected={tab === i} onClick={() => setTab(i)} className={cn("min-h-10 rounded-lg text-sm font-semibold", tab === i ? "chip-on" : "bg-bg text-muted shadow-border")}>
-            {c.title === "About to graduate" ? "Almost" : c.title}
+            {c.title === "About to graduate" ? tr("Almost") : tr(c.title)}
           </button>
         ))}
       </div>

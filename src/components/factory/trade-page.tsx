@@ -14,6 +14,7 @@ import { Holders } from "./holders";
 import { CreatorHealth } from "./creator-health";
 import { Mark } from "./ui";
 
+import { tr } from "@/lib/i18n";
 export function TradePage({ chain, address }: { chain: string; address: string }) {
   const [coin, setCoin] = useState<BoardCoin | null | undefined>(undefined);
   const [onChain, setOnChain] = useState<{ symbol: string; name: string } | null | undefined>(undefined);
@@ -67,9 +68,9 @@ export function TradePage({ chain, address }: { chain: string; address: string }
   if (!listed) {
     return (
       <div>
-        <h1 className="text-3xl font-extrabold">Not a listed coin</h1>
+        <h1 className="text-3xl font-extrabold">{tr("Not a listed coin")}</h1>
         <Link to="/" className="mt-4 inline-flex min-h-11 items-center text-cyan">
-          Back to the floor
+          {tr("Back to the floor")}
         </Link>
       </div>
     );
@@ -80,16 +81,16 @@ export function TradePage({ chain, address }: { chain: string; address: string }
     <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
       <div>
         <p className="text-sm font-medium text-cyan">
-          {coin?.mode === "plain" ? "Regular pool" : "Curve"} · {meta.label}
+          {coin?.mode === "plain" ? tr("Regular pool") : tr("Curve")} · {tr(meta.label)}
         </p>
         <div className="mt-3 flex items-center gap-4">
           <Mark symbol={coin?.symbol || "FZ"} image={coin?.image} className="h-28 w-28 text-2xl" />
           <div>
-            <h1 className="text-4xl">{coin?.symbol || onChain?.symbol || "Coin"}</h1>
-            <p className="mt-1 text-muted">{coin ? coin.name : onChain ? onChain.name : "Loading the board."}</p>
+            <h1 className="text-4xl">{coin?.symbol || onChain?.symbol || tr("Coin")}</h1>
+            <p className="mt-1 text-muted">{coin ? coin.name : onChain ? onChain.name : tr("Loading the board.")}</p>
             {coin?.creator ? (
               <Link to="/p/$address" params={{ address: coin.creator }} className="mt-1 inline-flex text-sm font-semibold text-cyan">
-                Creator
+                {tr("Creator")}
               </Link>
             ) : null}
           </div>
@@ -97,12 +98,12 @@ export function TradePage({ chain, address }: { chain: string; address: string }
         <ContractLine chain={listed} address={coin?.contract || address} />
         <CoinPush chain={listed} address={coin?.contract || address} symbol={coin?.symbol || onChain?.symbol || "Coin"} />
         <p className="mt-4 max-w-xl text-sm text-muted">
-          Buy and sell here. The signature stays in the wallet this site opened for you. No extension popup.
+          {tr("Buy and sell here. The signature stays in the wallet this site opened for you. No extension popup.")}
         </p>
         {coin === null && onChain ? (
-          <p className="mt-4 text-sm text-muted">This contract is not on the board. The curve can still be traded.</p>
+          <p className="mt-4 text-sm text-muted">{tr("This contract is not on the board. The curve can still be traded.")}</p>
         ) : null}
-        {coin === null && onChain === null ? <p className="mt-4 text-sm text-sell">This contract is not a curve this site can trade.</p> : null}
+        {coin === null && onChain === null ? <p className="mt-4 text-sm text-sell">{tr("This contract is not a curve this site can trade.")}</p> : null}
         {listed && (coin || onChain) ? (
           <CoinTape contract={coin?.contract || address} chain={coin?.chain || listed} createdAt={coin?.createdAt} supply={coin?.supply} />
         ) : null}
@@ -117,9 +118,9 @@ export function TradePage({ chain, address }: { chain: string; address: string }
         ) : listed === "solana" ? (
           <SolanaPanel mint={address} symbol={coin?.symbol || "Coin"} />
         ) : coin && coin.mode === "plain" ? (
-          <div className="ticket text-sm text-muted">Regular pool. The supply was minted to the creator. There is no curve to trade.</div>
+          <div className="ticket text-sm text-muted">{tr("Regular pool. The supply was minted to the creator. There is no curve to trade.")}</div>
         ) : coin === null && onChain === null ? null : (
-          <p className="text-sm text-muted">Reading the coin.</p>
+          <p className="text-sm text-muted">{tr("Reading the coin.")}</p>
         )}
         {coin ? <CoinThread contract={coin.contract} chain={coin.chain} /> : null}
       </aside>

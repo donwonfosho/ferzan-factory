@@ -13,6 +13,7 @@ import { defineChain } from "viem";
 import { useFactory } from "@/lib/factory/store";
 import { PRIVY_APP_ID, base58, setAccountWallets, type Eip1193 } from "@/lib/factory/wallet-bridge";
 
+import { tr } from "@/lib/i18n";
 const robinhood = defineChain({
   id: 4663,
   name: "Robinhood Chain",
@@ -45,16 +46,16 @@ function Bridge() {
       evmAddress: authenticated && evm ? evm.address : null,
       solAddress: authenticated && sol ? sol.address : null,
       evmProvider: async () => {
-        if (!evm) throw new Error("This account has no EVM wallet yet.");
+        if (!evm) throw new Error(tr("This account has no EVM wallet yet."));
         return (await evm.getEthereumProvider()) as Eip1193;
       },
       solSignAndSend: async (tx: Uint8Array) => {
-        if (!sol) throw new Error("This account has no Solana wallet yet.");
+        if (!sol) throw new Error(tr("This account has no Solana wallet yet."));
         const { signature } = await signAndSendTransaction({ transaction: tx, wallet: sol, chain: "solana:mainnet" });
         return base58(signature);
       },
       solSign: async (tx: Uint8Array) => {
-        if (!sol) throw new Error("This account has no Solana wallet yet.");
+        if (!sol) throw new Error(tr("This account has no Solana wallet yet."));
         const { signedTransaction } = await signTransaction({ transaction: tx, wallet: sol });
         return signedTransaction;
       },

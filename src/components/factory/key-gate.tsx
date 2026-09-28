@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { keySaved, markKeySaved, readSiteWallet, siteMatches } from "@/lib/factory/site-wallet";
 
+import { tr } from "@/lib/i18n";
 export function KeyGate({ address, onSaved }: { address: string; onSaved: () => void }) {
   const site = readSiteWallet();
   const [checked, setChecked] = useState(false);
@@ -10,9 +11,9 @@ export function KeyGate({ address, onSaved }: { address: string; onSaved: () => 
 
   return (
     <div className="bg-bg px-3 py-3 shadow-border">
-      <p className="text-sm font-semibold">Copy the key. It is the login.</p>
+      <p className="text-sm font-semibold">{tr("Copy the key. It is the login.")}</p>
       <p className="mt-1 text-sm text-muted">
-        Paste it on another phone and this wallet comes back, with the name, picture, and every coin it launched. The site cannot recover a key you did not save. Anyone with the key can spend the wallet.
+        {tr("Paste it on another phone and this wallet comes back, with the name, picture, and every coin it launched. The site cannot recover a key you did not save. Anyone with the key can spend the wallet.")}
       </p>
       <textarea readOnly value={site.privateKey} rows={3} spellCheck={false} className="mt-2 w-full bg-surface px-3 py-3 text-xs break-all shadow-border outline-none" />
       <button
@@ -31,12 +32,12 @@ export function KeyGate({ address, onSaved }: { address: string; onSaved: () => 
           );
         }}
       >
-        Copy recovery key
+        {tr("Copy recovery key")}
       </button>
-      {note ? <p className="mt-1 text-sm text-muted">{note}</p> : null}
+      {note ? <p className="mt-1 text-sm text-muted">{tr(note)}</p> : null}
       <label className="mt-3 flex items-start gap-2 text-sm">
         <input type="checkbox" checked={checked} onChange={(e) => setChecked(e.target.checked)} className="mt-1" />
-        I saved this key outside the browser.
+        {tr("I saved this key outside the browser.")}
       </label>
       <button
         type="button"
@@ -47,7 +48,7 @@ export function KeyGate({ address, onSaved }: { address: string; onSaved: () => 
           onSaved();
         }}
       >
-        Continue
+        {tr("Continue")}
       </button>
     </div>
   );

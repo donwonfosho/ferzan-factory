@@ -11,6 +11,7 @@ import { ChainMark, type MarkChain } from "./chain-mark";
 import { CapChange, Spark } from "./market-line";
 import { FerzanHero, KingOfTheHill, OnlyOnFerzan } from "./floor-live";
 
+import { tr } from "@/lib/i18n";
 const OPEN_CHAINS = ["solana", "base", "bsc", "ethereum", "robinhood", "arc", "tron", "ton"] as const;
 
 export function Floor() {
@@ -21,21 +22,21 @@ export function Floor() {
       <section>
         <img
           src="/brand/lockup.jpg"
-          alt="Ferzan Factory. See it. Ape it. Send it."
+          alt={tr("Ferzan Factory. See it. Ape it. Send it.")}
           className="h-auto w-full max-w-sm"
         />
         <h1 className="mt-8 max-w-xl text-4xl leading-tight sm:text-5xl">
-          Launch a coin. Trade it here.
+          {tr("Launch a coin. Trade it here.")}
         </h1>
         <p className="mt-4 max-w-xl text-lg text-muted">
-          Solana, Base, BNB, Ethereum, Robinhood, Arc, Tron and TON. Sign in, launch, and trade with your own account wallet.
+          {tr("Solana, Base, BNB, Ethereum, Robinhood, Arc, Tron and TON. Sign in, launch, and trade with your own account wallet.")}
         </p>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <Link to="/launch" search={{ kind: "curve" }} className="btn-cyan w-full sm:w-auto">
-            Launch a coin
+            {tr("Launch a coin")}
           </Link>
           <a href="#launches" className="btn-line w-full sm:w-auto">
-            See launches
+            {tr("See launches")}
           </a>
         </div>
       </section>
@@ -54,13 +55,13 @@ export function Floor() {
 
       <section className="grid gap-3 sm:grid-cols-2">
         <Link to="/ferzan" className="ticket block">
-          <p className="text-sm font-medium text-cyan">Desk token</p>
-          <p className="mt-2 text-2xl font-extrabold">FERZAN</p>
-          <p className="mt-1 text-sm text-muted">Fee claim for the tools. Not another coin on the floor.</p>
+          <p className="text-sm font-medium text-cyan">{tr("Desk token")}</p>
+          <p className="mt-2 text-2xl font-extrabold">{tr("FERZAN")}</p>
+          <p className="mt-1 text-sm text-muted">{tr("Fee claim for the tools. Not another coin on the floor.")}</p>
         </Link>
         <Link to="/bots" className="ticket block">
-          <p className="text-sm font-medium text-cyan">Telegram</p>
-          <p className="mt-2 text-2xl font-extrabold">Bots</p>
+          <p className="text-sm font-medium text-cyan">{tr("Telegram")}</p>
+          <p className="mt-2 text-2xl font-extrabold">{tr("Bots")}</p>
           <p className="mt-1 text-sm text-muted">{PLACES.map((place) => place.name.replace("Ferzan ", "")).slice(0, 3).join(" · ")}</p>
         </Link>
       </section>
@@ -108,17 +109,17 @@ function EarlierCoins() {
     <section>
       <button type="button" className="flex w-full items-center justify-between gap-3 text-left" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
         <span>
-          <span className="block text-xl font-extrabold">Earlier coins</span>
-          <span className="block text-sm text-muted">Launched on this site's first contracts. They still open and trade.</span>
+          <span className="block text-xl font-extrabold">{tr("Earlier coins")}</span>
+          <span className="block text-sm text-muted">{tr("Launched on this site's first contracts. They still open and trade.")}</span>
         </span>
-        <span className="btn-line shrink-0">{open ? "Hide" : "Show"}</span>
+        <span className="btn-line shrink-0">{open ? tr("Hide") : tr("Show")}</span>
       </button>
       {open ? (
         <div className="mt-4 space-y-6">
           <HotList chain="all" />
           <div className="divide-y divide-line border-y border-line">
-            {board === null ? <p className="py-6 text-sm text-muted">Loading…</p> : null}
-            {board && board.length === 0 ? <p className="py-6 text-sm text-muted">None.</p> : null}
+            {board === null ? <p className="py-6 text-sm text-muted">{tr("Loading…")}</p> : null}
+            {board && board.length === 0 ? <p className="py-6 text-sm text-muted">{tr("None.")}</p> : null}
             {(board ?? []).map((coin) => (
               <BoardRow key={coin.id} coin={coin} mark={marks[coin.contract]} />
             ))}
@@ -152,7 +153,7 @@ function OpenContract() {
     if (chain === "tron" || chain === "ton") {
       const ok = chain === "tron" ? /^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(address) : /^[A-Za-z0-9_-]{48}$/.test(address);
       if (!ok) {
-        setError(chain === "tron" ? "Paste the Tron token address. It starts with T and is 34 characters." : "Paste the TON jetton address (48 characters, starts with EQ or UQ).");
+        setError(chain === "tron" ? tr("Paste the Tron token address. It starts with T and is 34 characters.") : tr("Paste the TON jetton address (48 characters, starts with EQ or UQ)."));
         return;
       }
       setError("");
@@ -161,11 +162,11 @@ function OpenContract() {
     }
     const evm = chain !== "solana";
     if (evm && !/^0x[a-fA-F0-9]{40}$/.test(address)) {
-      setError("Paste the contract address. It starts with 0x and is 42 characters.");
+      setError(tr("Paste the contract address. It starts with 0x and is 42 characters."));
       return;
     }
     if (!evm && !/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address)) {
-      setError("Paste the Solana mint address.");
+      setError(tr("Paste the Solana mint address."));
       return;
     }
     setError("");
@@ -174,8 +175,8 @@ function OpenContract() {
 
   return (
     <form id="open" onSubmit={open} className="ticket">
-      <p className="text-sm font-medium text-cyan">Open a contract</p>
-      <p className="mt-2 text-sm text-muted">Pick the chain, then paste the contract. Curves on Solana, Base, BNB, Ethereum, Robinhood and Arc trade right here; Tron and TON coins open their Ferzan page with a link to trade in the Trade Bot.</p>
+      <p className="text-sm font-medium text-cyan">{tr("Open a contract")}</p>
+      <p className="mt-2 text-sm text-muted">{tr("Pick the chain, then paste the contract. Curves on Solana, Base, BNB, Ethereum, Robinhood and Arc trade right here; Tron and TON coins open their Ferzan page with a link to trade in the Trade Bot.")}</p>
       <div className="mt-3 grid grid-cols-4 gap-2 sm:grid-cols-8">
         {OPEN_CHAINS.map((id) => (
           <button
@@ -195,16 +196,16 @@ function OpenContract() {
         <input
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          placeholder={chain === "solana" ? "Mint address" : chain === "tron" ? "T…" : chain === "ton" ? "EQ… or UQ…" : "0x…"}
+          placeholder={chain === "solana" ? tr("Mint address") : chain === "tron" ? "T…" : chain === "ton" ? tr("EQ… or UQ…") : "0x…"}
           spellCheck={false}
           className="min-h-11 w-full bg-bg px-3 shadow-border outline-none"
-          aria-label="Contract address"
+          aria-label={tr("Contract address")}
         />
         <button type="submit" className="btn-cyan shrink-0">
-          Open
+          {tr("Open")}
         </button>
       </div>
-      {error ? <p className="mt-2 text-sm text-sell">{error}</p> : null}
+      {error ? <p className="mt-2 text-sm text-sell">{tr(error)}</p> : null}
     </form>
   );
 }

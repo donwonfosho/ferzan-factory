@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { formatSmart } from "@/lib/factory/units";
 import { cn } from "@/lib/cn";
 
+import { tr } from "@/lib/i18n";
 export function GraduationMeter({
   filled,
   goal,
@@ -32,15 +33,15 @@ export function GraduationMeter({
   return (
     <div className={cn("grad-meter", motion === "up" && "up", motion === "down" && "down", graduated && "done")}>
       <div className="flex items-baseline justify-between gap-3 text-sm font-medium">
-        <span className="text-cyan">{graduated ? "Graduated" : "To graduation"}</span>
+        <span className="text-cyan">{graduated ? tr("Graduated") : tr("To graduation")}</span>
         <span className="tabular-nums text-fg">{shown}%</span>
       </div>
-      <div className="grad-track mt-2" role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={shown} aria-label="Graduation">
+      <div className="grad-track mt-2" role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={shown} aria-label={tr("Graduation")}>
         <div className="grad-fill" style={{ width: `${shown}%` }} />
       </div>
       <p className="mt-1.5 text-sm text-muted tabular-nums">
         {graduated
-          ? "Filled. Buys on the curve are closed."
+          ? tr("Filled. Buys on the curve are closed.")
           : `${formatSmart(filled, decimals)} / ${formatSmart(goal, decimals)} ${native}`}
       </p>
     </div>

@@ -18,6 +18,8 @@ import { MobileNav } from "./mobile-nav";
 import { QuickBuyToast } from "./quick-buy";
 import { SearchButton, SearchOverlay } from "./search";
 
+import { tr } from "@/lib/i18n";
+import { LangPicker } from "./lang";
 const LINKS = [
   { to: "/", label: "Floor" },
   { to: "/pulse", label: "Pulse" },
@@ -67,7 +69,7 @@ export function Shell({ children }: { children: ReactNode }) {
         <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-3 px-4 py-3">
           <Link to="/" className="mr-auto flex items-center gap-2">
             <img src="/brand/seal.jpg" alt="" className="h-10 w-10 rounded-full object-cover" />
-            <span className="text-base font-semibold text-fg">Ferzan</span>
+            <span className="text-base font-semibold text-fg">{tr("Ferzan")}</span>
           </Link>
           <nav className="order-last flex w-full gap-1 overflow-x-auto sm:order-none sm:w-auto">
             {LINKS.filter((link) => wallet || link.to !== "/login").map((link) => {
@@ -81,14 +83,15 @@ export function Shell({ children }: { children: ReactNode }) {
                     on ? "bg-cyan/15 text-cyan" : "text-muted hover:bg-surface hover:text-fg",
                   )}
                 >
-                  {link.label}
+                  {tr(link.label)}
                 </Link>
               );
             })}
           </nav>
+          <LangPicker />
           <SearchButton />
           <Link to="/launch" search={{ kind: "curve" }} className="btn-cyan hidden sm:inline-flex">
-            Launch
+            {tr("Launch")}
           </Link>
           {wallet ? (
             <Link to="/login" className="btn-line">
@@ -97,7 +100,7 @@ export function Shell({ children }: { children: ReactNode }) {
             </Link>
           ) : (
             <Link to="/login" className="btn-line">
-              Profile
+              {tr("Profile")}
             </Link>
           )}
           <button
@@ -106,42 +109,42 @@ export function Shell({ children }: { children: ReactNode }) {
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
           >
-            Desk
+            {tr("Desk")}
           </button>
         </div>
         {open ? (
           <div className="border-t border-line bg-surface">
             <div className="mx-auto grid max-w-5xl gap-4 px-4 py-4">
               <div>
-                <p className="text-sm font-medium text-muted">Menu</p>
+                <p className="text-sm font-medium text-muted">{tr("Menu")}</p>
                 <div className="mt-2 grid gap-2 sm:grid-cols-2">
                   <Link to="/login" hash="portfolio" className="rounded-xl bg-bg px-3 py-3 shadow-border" onClick={() => setOpen(false)}>
-                    <span className="block font-semibold">Portfolio</span>
-                    <span className="text-sm text-muted">Balances, holdings, and launches</span>
+                    <span className="block font-semibold">{tr("Portfolio")}</span>
+                    <span className="text-sm text-muted">{tr("Balances, holdings, and launches")}</span>
                   </Link>
                   <Link to="/login" hash="rewards" className="rounded-xl bg-bg px-3 py-3 shadow-border" onClick={() => setOpen(false)}>
-                    <span className="block font-semibold">Rewards</span>
-                    <span className="text-sm text-muted">Creator fees and your referrer link</span>
+                    <span className="block font-semibold">{tr("Rewards")}</span>
+                    <span className="text-sm text-muted">{tr("Creator fees and your referrer link")}</span>
                   </Link>
                   <Link to="/docs" className="rounded-xl bg-bg px-3 py-3 shadow-border" onClick={() => setOpen(false)}>
-                    <span className="block font-semibold">Docs</span>
-                    <span className="text-sm text-muted">How a launch, a trade, and graduation work</span>
+                    <span className="block font-semibold">{tr("Docs")}</span>
+                    <span className="text-sm text-muted">{tr("How a launch, a trade, and graduation work")}</span>
                   </Link>
                   <a href={COMMUNITY_URL} className="rounded-xl bg-bg px-3 py-3 shadow-border">
-                    <span className="block font-semibold">Telegram</span>
-                    <span className="text-sm text-muted">Ferzan chat</span>
+                    <span className="block font-semibold">{tr("Telegram")}</span>
+                    <span className="text-sm text-muted">{tr("Ferzan chat")}</span>
                   </a>
                   <a href={X_URL} className="rounded-xl bg-bg px-3 py-3 shadow-border">
                     <span className="block font-semibold">X</span>
-                    <span className="text-sm text-muted">@ferzaneco</span>
+                    <span className="text-sm text-muted">{tr("@ferzaneco")}</span>
                   </a>
                 </div>
-                <p className="mt-4 text-sm font-medium text-muted">Your cuts</p>
+                <p className="mt-4 text-sm font-medium text-muted">{tr("Your cuts")}</p>
                 <p className="mt-2 text-sm">
-                  Creator {sumLine(creatorCut)} · Referrer {sumLine(referrerCut)}
+                  {tr("Creator")}{" "}{sumLine(creatorCut)}{" "}{tr("· Referrer")}{" "}{sumLine(referrerCut)}
                 </p>
                 <Button variant="ghost" className="mt-3" onClick={() => { reset(); setOpen(false); }}>
-                  Reset floor
+                  {tr("Reset floor")}
                 </Button>
               </div>
               {wallet.startsWith("0x") ? <WalletBalances evm={wallet} sol={account?.authenticated ? account.solAddress : sol} /> : null}
@@ -158,40 +161,39 @@ export function Shell({ children }: { children: ReactNode }) {
           <InstallApp compact />
         </div>
         <p>
-          Site curves: 1% on every trade. 60% treasury, 30% creator, 10% to a referrer when a buyer names a wallet. After graduation the creator keeps 30% of the pool.
-          Telegram curves: 1% on every trade. 50% creator, 50% platform, or 50% creator, 40% platform, 10% referrer when a buyer came from a referral link.
+          {tr("Site curves: 1% on every trade. 60% treasury, 30% creator, 10% to a referrer when a buyer names a wallet. After graduation the creator keeps 30% of the pool. Telegram curves: 1% on every trade. 50% creator, 50% platform, or 50% creator, 40% platform, 10% referrer when a buyer came from a referral link.")}
         </p>
         <p className="mt-2">
           <a className="text-cyan" href={COMMUNITY_URL}>
-            Ferzan Chat
+            {tr("Ferzan Chat")}
           </a>
           {" · "}
           <a className="text-cyan" href="https://t.me/Ferzan_Trade_Ecosystem">
-            Hub
+            {tr("Hub")}
           </a>
           {" · "}
           <a className="text-cyan" href="https://t.me/Ferzan_Launches">
-            Launches
+            {tr("Launches")}
           </a>
           {" · "}
           <Link to="/leaderboard" className="text-cyan">
-            Leaderboard
+            {tr("Leaderboard")}
           </Link>
           {" · "}
           <Link to="/docs" className="text-cyan">
-            Docs
+            {tr("Docs")}
           </Link>
           {" · "}
           <Link to="/about" className="text-cyan">
-            About
+            {tr("About")}
           </Link>
           {" · "}
           <Link to="/transparency" className="text-cyan">
-            Transparency
+            {tr("Transparency")}
           </Link>
           {" · "}
           <Link to="/terms" className="text-cyan">
-            Terms
+            {tr("Terms")}
           </Link>
           {" · "}
           <a className="text-cyan" href={X_URL}>
@@ -199,9 +201,9 @@ export function Shell({ children }: { children: ReactNode }) {
           </a>
         </p>
         <p className="mt-2">
-          Contact:{" "}
+          {tr("Contact:")}{" "}
           <a className="text-cyan" href="mailto:Ferzantrade@gmail.com">
-            Ferzantrade@gmail.com
+            {tr("Ferzantrade@gmail.com")}
           </a>
         </p>
       </footer>

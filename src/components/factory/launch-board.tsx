@@ -8,6 +8,7 @@ import { compactUsd } from "./market-line";
 import { useLive, useLiveConnected } from "@/lib/factory/live";
 import { QuickBuyBar, QuickBuyButton } from "./quick-buy";
 
+import { tr } from "@/lib/i18n";
 const TABS: { id: TelegramSort; label: string }[] = [
   { id: "new", label: "New" },
   { id: "koth", label: "👑 King" },
@@ -127,22 +128,22 @@ export function LaunchBoard({ chain, onChain }: { chain: "all" | MarkChain; onCh
     <section id="launches">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-2xl">Launches</h2>
-          <p className="mt-1 text-sm text-muted">Every Ferzan coin, launched here or with the Telegram bot. Tap one to see its chart and trade it.</p>
+          <h2 className="text-2xl">{tr("Launches")}</h2>
+          <p className="mt-1 text-sm text-muted">{tr("Every Ferzan coin, launched here or with the Telegram bot. Tap one to see its chart and trade it.")}</p>
         </div>
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Ticker, name, or contract"
+          placeholder={tr("Ticker, name, or contract")}
           className="min-h-11 w-full bg-surface px-3 text-sm shadow-border outline-none placeholder:text-muted sm:max-w-xs"
-          aria-label="Search launches"
+          aria-label={tr("Search launches")}
         />
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <div className="relative">
           <button type="button" className="btn-line gap-2" onClick={() => setChainsOpen((open) => !open)} aria-expanded={chainsOpen}>
             {chain === "all" ? null : <ChainMark id={chain} className="h-5 w-5" />}
-            {BOARD_PICKS.find((pick) => pick.id === chain)?.label ?? "All chains"}
+            {tr(BOARD_PICKS.find((pick) => pick.id === chain)?.label) ?? tr("All chains")}
           </button>
           {chainsOpen ? (
             <div className="absolute z-20 mt-2 w-56 rounded-xl bg-surface p-2 shadow-border">
@@ -159,15 +160,15 @@ export function LaunchBoard({ chain, onChain }: { chain: "all" | MarkChain; onCh
                     setChainsOpen(false);
                   }}
                 >
-                  {pick.id === "all" ? <span className="grid h-5 w-5 place-items-center text-xs">All</span> : <ChainMark id={pick.id} className="h-5 w-5" />}
-                  {pick.label}
+                  {pick.id === "all" ? <span className="grid h-5 w-5 place-items-center text-xs">{tr("All")}</span> : <ChainMark id={pick.id} className="h-5 w-5" />}
+                  {tr(pick.label)}
                 </button>
               ))}
             </div>
           ) : null}
         </div>
       </div>
-      <div className="mt-3 flex gap-1.5 overflow-x-auto pb-1" role="tablist" aria-label="Sort launches">
+      <div className="mt-3 flex gap-1.5 overflow-x-auto pb-1" role="tablist" aria-label={tr("Sort launches")}>
         {TABS.map((tab) => (
           <button
             key={tab.id}
@@ -177,12 +178,12 @@ export function LaunchBoard({ chain, onChain }: { chain: "all" | MarkChain; onCh
             onClick={() => setSort(tab.id)}
             className={cn("shrink-0 rounded-full px-3 py-1.5 text-sm", sort === tab.id ? "bg-cyan text-cyan-ink" : "bg-surface text-muted shadow-border")}
           >
-            {tab.label}
+            {tr(tab.label)}
           </button>
         ))}
       </div>
       {coins === null ? (
-        <p className="mt-4 text-sm text-muted">Loading…</p>
+        <p className="mt-4 text-sm text-muted">{tr("Loading…")}</p>
       ) : shown.length === 0 ? (
         <p className="mt-4 text-sm text-muted">{empty}</p>
       ) : (
@@ -197,7 +198,7 @@ export function LaunchBoard({ chain, onChain }: { chain: "all" | MarkChain; onCh
       )}
       {coins && coins.length > 12 && !more ? (
         <button type="button" className="btn-line mt-3 w-full sm:w-auto" onClick={() => setMore(true)}>
-          Show more
+          {tr("Show more")}
         </button>
       ) : null}
     </section>
@@ -216,28 +217,28 @@ export function LaunchCard({ coin, flash = false }: { coin: TelegramCoin; flash?
           <span className="flex items-center gap-1.5">
             <span className="truncate font-extrabold">{coin.symbol}</span>
             {MARKS.has(coin.chain) ? <ChainMark id={coin.chain as MarkChain} className="h-4 w-4 shrink-0" /> : null}
-            {coin.graduated ? <span className="text-xs text-cyan">Graduated</span> : null}
-            {coin.source === "site" ? <span className="text-xs text-muted">Site</span> : null}
-            {coin.safe ? <span className="text-xs font-semibold text-cyan" title="Safe launch: small or no dev buy, no dev selling, no launch spree">🛡️ Safe</span> : null}
+            {coin.graduated ? <span className="text-xs text-cyan">{tr("Graduated")}</span> : null}
+            {coin.source === "site" ? <span className="text-xs text-muted">{tr("Site")}</span> : null}
+            {coin.safe ? <span className="text-xs font-semibold text-cyan" title={tr("Safe launch: small or no dev buy, no dev selling, no launch spree")}>{tr("🛡️ Safe")}</span> : null}
           </span>
           <span className="block truncate text-sm text-muted">{coin.name}</span>
         </span>
         <span className="shrink-0 text-right text-sm tabular-nums">
           <span className="block font-semibold">{compactUsd(coin.mcapUsd)}</span>
-          <span className="block text-muted">mcap</span>
+          <span className="block text-muted">{tr("mcap")}</span>
         </span>
       </div>
       <div className="mt-3 flex items-center gap-3">
         <div className="min-w-0 flex-1">
       {progress !== null ? (
-        <div className="h-1.5 overflow-hidden rounded-full bg-line" aria-label={`${progress.toFixed(0)}% to graduation`}>
+        <div className="h-1.5 overflow-hidden rounded-full bg-line" aria-label={tr("{0}% to graduation", progress.toFixed(0))}>
           <div className="h-full bg-cyan transition-[width] duration-700" style={{ width: `${Math.max(2, progress)}%` }} />
         </div>
       ) : null}
       <p className="mt-2 truncate text-xs text-muted tabular-nums">
-        {progress !== null && !coin.graduated ? `${progress.toFixed(0)}% to graduation · ` : ""}
-        {coin.trades} trades
-        {creator ? ` · by ${creator}` : ""}
+        {progress !== null && !coin.graduated ? tr("{0}% to graduation · ", progress.toFixed(0)) : ""}
+        {coin.trades}{" "}{tr("trades")}
+        {creator ? tr(" · by {0}", creator) : ""}
       </p>
         </div>
         <QuickBuyButton coin={coin} />

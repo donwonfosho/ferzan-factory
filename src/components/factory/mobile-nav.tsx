@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { openSearch } from "./search";
 
+import { tr } from "@/lib/i18n";
 const I = {
   floor: <path d="M3 11.5 12 4l9 7.5M5.5 9.5V20h13V9.5" />,
   pulse: <path d="M3 12h4l2.5-6 5 12L17 12h4" />,
@@ -37,27 +38,27 @@ export function MobileNav() {
   return (
     <nav
       className="fixed inset-x-0 bottom-0 z-40 flex border-t border-line bg-bg/95 pb-[env(safe-area-inset-bottom,0px)] backdrop-blur-md sm:hidden"
-      aria-label="Main"
+      aria-label={tr("Main")}
     >
       <Link to="/" className={cls(path === "/")}>
         <Icon d={I.floor} />
-        Floor
+        {tr("Floor")}
       </Link>
       <Link to="/pulse" className={cls(path.startsWith("/pulse"))}>
         <Icon d={I.pulse} />
-        Pulse
+        {tr("Pulse")}
       </Link>
       <button type="button" onClick={() => openSearch()} className={cls(false)}>
         <Icon d={I.search} />
-        Search
+        {tr("Search")}
       </button>
       <Link to="/launch" search={{ kind: "curve" }} className={cls(path.startsWith("/launch"))}>
         <Icon d={I.launch} />
-        Launch
+        {tr("Launch")}
       </Link>
       <Link to="/login" className={cls(path.startsWith("/login"))}>
         <Icon d={I.me} />
-        Profile
+        {tr("Profile")}
       </Link>
     </nav>
   );

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { acceptTerms } from "@/lib/factory/terms";
 import { X_URL } from "@/lib/factory/catalog";
 
+import { tr } from "@/lib/i18n";
 const SECTIONS: { title: string; body: string }[] = [
   {
     title: "Not advice",
@@ -54,16 +55,16 @@ export function TermsBody() {
     <div className="space-y-6">
       {SECTIONS.map((section) => (
         <section key={section.title}>
-          <h2 className="text-lg font-semibold">{section.title}</h2>
-          <p className="mt-2 text-sm leading-relaxed text-muted">{section.body}</p>
+          <h2 className="text-lg font-semibold">{tr(section.title)}</h2>
+          <p className="mt-2 text-sm leading-relaxed text-muted">{tr(section.body)}</p>
         </section>
       ))}
       <p className="text-sm text-muted">
-        Takedowns go to{" "}
+        {tr("Takedowns go to")}{" "}
         <a className="text-cyan" href={X_URL}>
-          @ferzaneco
+          {tr("@ferzaneco")}
         </a>
-        . These terms are the rules for using the site. They are not a substitute for your own lawyer.
+        {tr(". These terms are the rules for using the site. They are not a substitute for your own lawyer.")}
       </p>
     </div>
   );
@@ -73,8 +74,8 @@ export function TermsGate({ onAccept }: { onAccept: () => void }) {
   const [checked, setChecked] = useState(false);
   return (
     <div className="mx-auto max-w-xl">
-      <h1 className="text-4xl">Before you start</h1>
-      <p className="mt-3 text-muted">Read this before you create a wallet. You only do it once.</p>
+      <h1 className="text-4xl">{tr("Before you start")}</h1>
+      <p className="mt-3 text-muted">{tr("Read this before you create a wallet. You only do it once.")}</p>
       <div className="ticket mt-6 max-h-[28rem] overflow-y-auto">
         <TermsBody />
       </div>
@@ -85,7 +86,7 @@ export function TermsGate({ onAccept }: { onAccept: () => void }) {
           checked={checked}
           onChange={(e) => setChecked(e.target.checked)}
         />
-        <span>I am 18 or older, I am allowed to use this where I live, and I understand I can lose everything I spend.</span>
+        <span>{tr("I am 18 or older, I am allowed to use this where I live, and I understand I can lose everything I spend.")}</span>
       </label>
       <button
         type="button"
@@ -96,7 +97,7 @@ export function TermsGate({ onAccept }: { onAccept: () => void }) {
           onAccept();
         }}
       >
-        Accept and continue
+        {tr("Accept and continue")}
       </button>
     </div>
   );

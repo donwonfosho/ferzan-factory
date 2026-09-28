@@ -15,6 +15,7 @@ import { termsAccepted } from "@/lib/factory/terms";
 import { TermsGate } from "./terms";
 import { KeyLock } from "./key-gate";
 
+import { tr } from "@/lib/i18n";
 export function ChainPanel({ chain, address, symbol }: { chain: EvmChainId; address: string; symbol: string }) {
   const wallet = useFactory((s) => s.wallet);
   const [state, setState] = useState<ChainCurve | null>(null);
@@ -163,18 +164,18 @@ export function ChainPanel({ chain, address, symbol }: { chain: EvmChainId; addr
       return;
     }
     if (!wallet) {
-      setError("Create a wallet on Account before you trade. Opening the site does not create one.");
+      setError(tr("Create a wallet on Account before you trade. Opening the site does not create one."));
       return;
     }
     if (siteMatches(wallet) && !keySaved(wallet)) {
-      setError("Copy the key on your profile first. That key is how this wallet comes back.");
+      setError(tr("Copy the key on your profile first. That key is how this wallet comes back."));
       return;
     }
     if (referrer && !/^0x[a-fA-F0-9]{40}$/.test(referrer)) {
-      setError("Referrer has to be a wallet address, or leave it blank.");
+      setError(tr("Referrer has to be a wallet address, or leave it blank."));
       return;
     }
-    setBusy(side === "buy" ? "Approve the buy." : "Approve the sell.");
+    setBusy(side === "buy" ? tr("Approve the buy.") : tr("Approve the sell."));
     const sent =
       side === "buy"
         ? await (async () => {
@@ -296,26 +297,26 @@ export function ChainPanel({ chain, address, symbol }: { chain: EvmChainId; addr
 
   function fillSell(pct: number) {
     if (!wallet) {
-      setError("Open the wallet on this site first. The percent buttons use the tokens that wallet holds.");
+      setError(tr("Open the wallet on this site first. The percent buttons use the tokens that wallet holds."));
       return;
     }
     if (held == null) {
-      setError("Still reading how many tokens this wallet holds.");
+      setError(tr("Still reading how many tokens this wallet holds."));
       return;
     }
     if (held <= 0n) {
-      setError(`This wallet holds no ${symbol} to sell.`);
+      setError(tr("This wallet holds no {0} to sell.", symbol));
       return;
     }
     const cap = state && state.tokensSold < held ? state.tokensSold : held;
     if (cap <= 0n) {
-      setError("Nobody has bought from this curve yet, so it cannot buy any tokens back. Tokens minted to the creator stay in the wallet.");
+      setError(tr("Nobody has bought from this curve yet, so it cannot buy any tokens back. Tokens minted to the creator stay in the wallet."));
       return;
     }
     const whole = cap / 10n ** BigInt(meta.tokenDecimals);
     const tokens = (whole * BigInt(pct)) / 100n;
     if (tokens <= 0n) {
-      setError("That percent is under 1 whole token. Type the amount if you want to sell the remainder.");
+      setError(tr("That percent is under 1 whole token. Type the amount if you want to sell the remainder."));
       return;
     }
     setError("");
@@ -327,8 +328,8 @@ export function ChainPanel({ chain, address, symbol }: { chain: EvmChainId; addr
       <div>
         <p className="text-3xl font-extrabold tabular-nums">{state && price > 0 ? formatTokensPerNative(price) : "—"}</p>
         <p className="text-sm text-muted">
-          {symbol} per 1 {meta.native}
-          {state && price > 0 ? ` · ${formatPrice(price)} ${meta.native} each` : ""}
+          {symbol}{" "}{tr("per 1")}{" "}{meta.native}
+          {state && price > 0 ? tr(" · {0} {1} each", formatPrice(price), meta.native) : ""}
           {state && price > 0 ? <Dollar chain={chain} nativePerToken={price} /> : null}
         </p>
       </div>
@@ -336,13 +337,13 @@ export function ChainPanel({ chain, address, symbol }: { chain: EvmChainId; addr
         <GasStep address={wallet} chain={chain} />
       ) : onSite ? (
         <p className="text-sm text-muted">
-          Site wallet {wallet.slice(0, 6)}…{wallet.slice(-4)}
-          {gas != null ? ` · ${formatSmart(gas, meta.nativeDecimals)} ${meta.native}` : ""}. Trades sign here.
+          {tr("Site wallet")}{" "}{wallet.slice(0, 6)}…{wallet.slice(-4)}
+          {gas != null ? ` · ${formatSmart(gas, meta.nativeDecimals)} ${meta.native}` : ""}{tr(". Trades sign here.")}
         </p>
       ) : wallet ? (
-        <p className="text-sm text-muted">Extension {wallet.slice(0, 6)}…{wallet.slice(-4)}.</p>
+        <p className="text-sm text-muted">{tr("Extension")}{" "}{wallet.slice(0, 6)}…{wallet.slice(-4)}.</p>
       ) : (
-        <p className="text-sm text-muted">Create a wallet on Account before you trade.</p>
+        <p className="text-sm text-muted">{tr("Create a wallet on Account before you trade.")}</p>
       )}
       <GraduationMeter
         filled={state?.realEth ?? 0n}
@@ -353,34 +354,34 @@ export function ChainPanel({ chain, address, symbol }: { chain: EvmChainId; addr
       />
       {wall && wall.maxBuy > 0n ? (
         <p className="text-sm text-muted">
-          Wallet cap {formatSmart(wall.maxBuy, meta.nativeDecimals)} {meta.native}. It stays until graduation. It does not lift after a few minutes.
+          {tr("Wallet cap")}{" "}{formatSmart(wall.maxBuy, meta.nativeDecimals)} {meta.native}{tr(". It stays until graduation. It does not lift after a few minutes.")}
         </p>
       ) : null}
       {wall && wall.startAt * 1000n > BigInt(Date.now()) ? (
-        <p className="text-sm text-muted">Buys are held until {new Date(Number(wall.startAt) * 1000).toLocaleString()}.</p>
+        <p className="text-sm text-muted">{tr("Buys are held until")}{" "}{new Date(Number(wall.startAt) * 1000).toLocaleString()}.</p>
       ) : null}
       <p className="text-sm text-muted">
-        1% fee. Creator keeps 0.30% and can claim it. Referrer 0.10%. Treasury 0.60% is the Ferzan buyback bucket. That buy is not running yet.
+        {tr("1% fee. Creator keeps 0.30% and can claim it. Referrer 0.10%. Treasury 0.60% is the Ferzan buyback bucket. That buy is not running yet.")}
       </p>
       {pool ? (
         <p className="text-sm text-muted">
-          Graduated in the same buy that filled the curve. The pool is live.
+          {tr("Graduated in the same buy that filled the curve. The pool is live.")}
           {" "}
           <a className="font-semibold text-cyan" href={dexSwapUrl(chain, address) || explorerAddress(chain, pool)} target="_blank" rel="noreferrer">
-            Trade on {CURVE_POOL[chain].dex}
+            {tr("Trade on")}{" "}{CURVE_POOL[chain].dex}
           </a>
         </p>
       ) : state?.graduated ? (
-        <p className="text-sm text-muted">This coin graduated before a pool could open. Selling stays on the curve.</p>
+        <p className="text-sm text-muted">{tr("This coin graduated before a pool could open. Selling stays on the curve.")}</p>
       ) : null}
       <KeyLock address={wallet}>
       <form onSubmit={submit} className="ticket space-y-4">
         <div className="grid grid-cols-2 gap-2">
           <button type="button" className={cn("min-h-11 font-semibold", side === "buy" ? "bg-cyan text-cyan-ink" : "bg-bg text-muted shadow-border")} onClick={() => setSide("buy")}>
-            Buy
+            {tr("Buy")}
           </button>
           <button type="button" className={cn("min-h-11 font-semibold", side === "sell" ? "bg-sell text-cyan-ink" : "bg-bg text-muted shadow-border")} onClick={() => setSide("sell")}>
-            Sell
+            {tr("Sell")}
           </button>
         </div>
         <label className="block">
@@ -410,48 +411,48 @@ export function ChainPanel({ chain, address, symbol }: { chain: EvmChainId; addr
               })}
             </div>
             <p className="mt-2 text-sm text-muted tabular-nums">
-              You hold {held == null ? "…" : formatSmart(held, meta.tokenDecimals)} {symbol}. The curve can buy back{" "}
-              {state ? formatSmart(state.tokensSold, meta.tokenDecimals) : "…"} {symbol}. The percent buttons use whole tokens only.
+              {tr("You hold")}{" "}{held == null ? "…" : formatSmart(held, meta.tokenDecimals)} {symbol}{tr(". The curve can buy back")}{" "}
+              {state ? formatSmart(state.tokensSold, meta.tokenDecimals) : "…"} {symbol}{tr(". The percent buttons use whole tokens only.")}
             </p>
           </div>
         ) : null}
-        {out ? <p className="text-sm font-semibold tabular-nums">You get {out}</p> : null}
+        {out ? <p className="text-sm font-semibold tabular-nums">{tr("You get")}{" "}{out}</p> : null}
         {side === "buy" ? (
           <details className="text-sm text-muted">
-            <summary className="cursor-pointer">Add a referrer wallet</summary>
-            <p className="mt-2">Optional. Leave it blank and the treasury keeps the 10%.</p>
+            <summary className="cursor-pointer">{tr("Add a referrer wallet")}</summary>
+            <p className="mt-2">{tr("Optional. Leave it blank and the treasury keeps the 10%.")}</p>
             <input value={referrer} onChange={(e) => setReferrer(e.target.value)} placeholder="0x…" className="mt-2 min-h-11 w-full bg-bg px-3 shadow-border outline-none" />
           </details>
         ) : (
-          <p className="text-sm text-muted">Sells pay no referrer.</p>
+          <p className="text-sm text-muted">{tr("Sells pay no referrer.")}</p>
         )}
         <label className="block">
-          <span className="mb-1.5 block text-sm font-medium text-muted">Max slippage %</span>
+          <span className="mb-1.5 block text-sm font-medium text-muted">{tr("Max slippage %")}</span>
           <input value={slip} onChange={(e) => setSlip(e.target.value)} inputMode="decimal" className="min-h-11 w-full bg-bg px-3 tabular-nums shadow-border outline-none" />
         </label>
         <p className="text-xs text-muted">
           {guards
-            ? "The transaction reverts if you would receive less than this slippage allows."
-            : "This coin launched before the contract could enforce a minimum. The quote is checked before you sign. The transaction itself cannot refuse a worse fill."}
+            ? tr("The transaction reverts if you would receive less than this slippage allows.")
+            : tr("This coin launched before the contract could enforce a minimum. The quote is checked before you sign. The transaction itself cannot refuse a worse fill.")}
         </p>
-        {busy ? <p className="text-sm text-cyan">{busy}</p> : null}
+        {busy ? <p className="text-sm text-cyan">{tr(busy)}</p> : null}
         {curveNote ? <p className="text-sm break-words text-muted">{curveNote}</p> : null}
         {needTerms ? <TermsGate onAccept={() => setNeedTerms(false)} /> : null}
         {error ? (
           <p role="alert" className="bg-bg px-3 py-3 text-sm leading-normal break-words text-sell shadow-border">
-            {error}
+            {tr(error)}
           </p>
         ) : null}
         {txHash ? (
           <a className="inline-flex min-h-11 items-center text-sm font-semibold text-cyan" href={explorerTx(chain, txHash)}>
-            View transaction
+            {tr("View transaction")}
           </a>
         ) : null}
         <p className="text-sm text-muted">
-          Unaudited. A new curve on {CURVE_POOL[chain].dex || "this chain"} {CURVE_POOL[chain].dex ? "opens that pool when the meter fills. The creator keeps 30% of the LP. The rest is burned." : "has no exchange pool, so selling stays on the curve."} Coins launched before this update burn the whole LP.
+          {tr("Unaudited. A new curve on")}{" "}{CURVE_POOL[chain].dex || tr("this chain")} {CURVE_POOL[chain].dex ? tr("opens that pool when the meter fills. The creator keeps 30% of the LP. The rest is burned.") : tr("has no exchange pool, so selling stays on the curve.")}{" "}{tr("Coins launched before this update burn the whole LP.")}
         </p>
         <Button type="submit" variant={side === "sell" ? "sell" : "cyan"} disabled={Boolean(busy) || (side === "buy" && state?.graduated)}>
-          {side === "buy" && state?.graduated ? "Buys closed" : side === "buy" ? "Buy" : "Sell"}
+          {side === "buy" && state?.graduated ? tr("Buys closed") : side === "buy" ? tr("Buy") : tr("Sell")}
         </Button>
         <Button
           type="button"
@@ -469,7 +470,7 @@ export function ChainPanel({ chain, address, symbol }: { chain: EvmChainId; addr
             });
           }}
         >
-          {owed > 0n ? `Claim ${formatSmart(owed, meta.nativeDecimals)} ${meta.native}` : "Nothing to claim"}
+          {owed > 0n ? tr("Claim {0} {1}", formatSmart(owed, meta.nativeDecimals), meta.native) : tr("Nothing to claim")}
         </Button>
       </form>
       </KeyLock>

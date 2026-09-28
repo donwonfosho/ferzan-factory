@@ -6,6 +6,7 @@ import { ChainMark, type MarkChain } from "./chain-mark";
 import { compactUsd } from "./market-line";
 import { Mark } from "./ui";
 
+import { tr } from "@/lib/i18n";
 const MARKS = new Set(["solana", "base", "bsc", "ethereum", "robinhood", "arc", "tron", "ton"]);
 const CHAIN_NAME: Record<string, string> = {
   solana: "Solana",
@@ -56,12 +57,12 @@ export function CreatorPage({ wallet }: { wallet: string }) {
     }
   }
 
-  if (c === undefined) return <p className="ticket mx-auto max-w-3xl text-sm text-muted">Loading this creator…</p>;
+  if (c === undefined) return <p className="ticket mx-auto max-w-3xl text-sm text-muted">{tr("Loading this creator…")}</p>;
   if (c === null)
     return (
       <div className="ticket mx-auto max-w-3xl">
         <h1 className="text-3xl">{short}</h1>
-        <p className="mt-2 text-sm text-muted">This wallet has not launched a coin through Ferzan yet.</p>
+        <p className="mt-2 text-sm text-muted">{tr("This wallet has not launched a coin through Ferzan yet.")}</p>
       </div>
     );
 
@@ -87,8 +88,8 @@ export function CreatorPage({ wallet }: { wallet: string }) {
           <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted">
             <span className="font-mono text-xs">{short}</span>
             {c.badge ? <span className="chip-on rounded-full px-2 py-0.5 text-xs font-semibold">{c.badge}</span> : null}
-            {c.firstLaunchTs ? <span>· launching since {when(c.firstLaunchTs)}</span> : null}
-            <span>· {c.followers.toLocaleString()} follower{c.followers === 1 ? "" : "s"}</span>
+            {c.firstLaunchTs ? <span>{tr("· launching since")}{" "}{when(c.firstLaunchTs)}</span> : null}
+            <span>· {c.followers.toLocaleString()}{" "}{tr("follower")}{c.followers === 1 ? "" : "s"}</span>
           </p>
           {profile?.bio ? <p className="mt-2 max-w-xl text-sm">{profile.bio}</p> : null}
         </div>
@@ -96,11 +97,11 @@ export function CreatorPage({ wallet }: { wallet: string }) {
         <div className="flex gap-2">
           {c.followUrl ? (
             <a className="btn-cyan" href={c.followUrl} target="_blank" rel="noopener noreferrer">
-              🔔 Follow
+              {tr("🔔 Follow")}
             </a>
           ) : null}
           <button type="button" className="btn-line" onClick={() => void copy()}>
-            {copied ? "Copied" : "Share"}
+            {copied ? tr("Copied") : tr("Share")}
           </button>
         </div>
       </header>
@@ -108,7 +109,7 @@ export function CreatorPage({ wallet }: { wallet: string }) {
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {stats.map((s) => (
           <div key={s.label} className="rounded-2xl bg-surface p-4 shadow-border">
-            <p className="text-xs text-muted">{s.label}</p>
+            <p className="text-xs text-muted">{tr(s.label)}</p>
             <p className="mt-1 text-2xl font-extrabold tabular-nums">{s.value}</p>
           </div>
         ))}
@@ -117,10 +118,10 @@ export function CreatorPage({ wallet }: { wallet: string }) {
       {c.score ? (
         <section className="ticket space-y-2">
           <div className="flex items-baseline justify-between gap-3">
-            <p className="text-sm font-medium text-muted">Creator score (latest launch)</p>
+            <p className="text-sm font-medium text-muted">{tr("Creator score (latest launch)")}</p>
             <p className={cn("text-2xl font-extrabold tabular-nums", TONE[c.score.label] ?? "text-fg")}>
               {c.score.score}
-              <span className="text-sm text-muted">/100 · {c.score.label}</span>
+              <span className="text-sm text-muted">/100 · {tr(c.score.label)}</span>
             </p>
           </div>
           <ul className="space-y-1 text-sm">
@@ -132,7 +133,7 @@ export function CreatorPage({ wallet }: { wallet: string }) {
       ) : null}
 
       <section className="space-y-3">
-        <h2 className="text-2xl">Launches</h2>
+        <h2 className="text-2xl">{tr("Launches")}</h2>
         <div className="grid gap-2 sm:grid-cols-2">
           {c.items.map((it) => (
             <a key={`${it.chain}-${it.token}`} href={it.path} className="ticket flex items-center gap-3">
@@ -141,7 +142,7 @@ export function CreatorPage({ wallet }: { wallet: string }) {
                 <span className="flex items-center gap-1.5">
                   <span className="truncate font-extrabold">${it.symbol}</span>
                   {MARKS.has(it.chain) ? <ChainMark id={it.chain as MarkChain} className="h-4 w-4 shrink-0" /> : null}
-                  {it.graduated ? <span className="text-xs text-cyan">Graduated</span> : null}
+                  {it.graduated ? <span className="text-xs text-cyan">{tr("Graduated")}</span> : null}
                 </span>
                 <span className="block truncate text-sm text-muted">
                   {it.name} · {CHAIN_NAME[it.chain] ?? it.chain} · {when(it.launchedTs)}
@@ -154,14 +155,14 @@ export function CreatorPage({ wallet }: { wallet: string }) {
               </span>
               <span className="shrink-0 text-right text-sm tabular-nums">
                 <span className="block font-semibold">{compactUsd(it.mcapUsd)}</span>
-                <span className="block text-xs text-muted">mcap</span>
+                <span className="block text-xs text-muted">{tr("mcap")}</span>
               </span>
             </a>
           ))}
         </div>
       </section>
       <p className="text-xs text-muted">
-        Follow opens @Ferzan_Launch_Bot in Telegram. It messages you the moment this wallet launches a new coin. Stop any time with /following.
+        {tr("Follow opens @Ferzan_Launch_Bot in Telegram. It messages you the moment this wallet launches a new coin. Stop any time with /following.")}
       </p>
     </div>
   );

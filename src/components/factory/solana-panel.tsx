@@ -16,6 +16,7 @@ import { termsAccepted } from "@/lib/factory/terms";
 import { TermsGate } from "./terms";
 import { KeyLock } from "./key-gate";
 
+import { tr } from "@/lib/i18n";
 export function SolanaPanel({ mint, symbol }: { mint: string; symbol: string }) {
   const wallet = useFactory((s) => s.wallet);
   const [state, setState] = useState<SolanaCurve | null | undefined>(undefined);
@@ -54,11 +55,11 @@ export function SolanaPanel({ mint, symbol }: { mint: string; symbol: string }) 
     };
   }, [mint, tx]);
 
-  if (state === undefined) return <p className="text-sm text-muted">Reading the Solana curve.</p>;
+  if (state === undefined) return <p className="text-sm text-muted">{tr("Reading the Solana curve.")}</p>;
   if (!state) {
     return (
       <div className="ticket text-sm text-muted">
-        This mint has no Solana curve. A launch from this site creates one. Older mints were only a token, with nothing to buy.
+        {tr("This mint has no Solana curve. A launch from this site creates one. Older mints were only a token, with nothing to buy.")}
       </div>
     );
   }
@@ -99,24 +100,24 @@ export function SolanaPanel({ mint, symbol }: { mint: string; symbol: string }) 
     }
     if (!state) return;
     if (!wallet || !siteMatches(wallet)) {
-      setError("Create a wallet on Account before you trade. Opening the site does not create one.");
+      setError(tr("Create a wallet on Account before you trade. Opening the site does not create one."));
       return;
     }
     if (!keySaved(wallet)) {
-      setError("Copy the key on your profile first. That key is how this wallet comes back.");
+      setError(tr("Copy the key on your profile first. That key is how this wallet comes back."));
       return;
     }
     const slipBps = Math.round(Number(slip) * 100);
     if (!Number.isFinite(slipBps) || slipBps < 0 || slipBps > 5_000) {
-      setError("Slippage has to be from 0 to 50%.");
+      setError(tr("Slippage has to be from 0 to 50%."));
       return;
     }
-    setBusy(side === "buy" ? "Signing the buy." : "Signing the sell.");
+    setBusy(side === "buy" ? tr("Signing the buy.") : tr("Signing the sell."));
     if (side === "buy") {
       const solIn = parseDecimal(amount, 9);
       if (!solIn || solIn <= 0n) {
         setBusy("");
-        setError("Type how much SOL to spend, then press Buy.");
+        setError(tr("Type how much SOL to spend, then press Buy."));
         return;
       }
       let minOut = 0n;
@@ -125,7 +126,7 @@ export function SolanaPanel({ mint, symbol }: { mint: string; symbol: string }) 
         minOut = (quoted * BigInt(10_000 - slipBps)) / 10_000n;
       } catch (err) {
         setBusy("");
-        setError(err instanceof Error ? err.message : "That buy does not fit.");
+        setError(err instanceof Error ? err.message : tr("That buy does not fit."));
         return;
       }
       const sent = await buySolanaCurve({ mint, solIn, minOut, referrer: referrer.trim() });
@@ -139,10 +140,10 @@ export function SolanaPanel({ mint, symbol }: { mint: string; symbol: string }) 
       setAmount("");
       const filled = await readSolanaCurve(mint);
       if (filled?.graduated && !filled.pooled) {
-        setBusy("Curve is full. Opening the Raydium pool.");
+        setBusy(tr("Curve is full. Opening the Raydium pool."));
         const migrated = await migrateSolanaCurve(mint);
         setBusy("");
-        if (!migrated.ok) setError(`${migrated.error} The buy is already on chain.`);
+        if (!migrated.ok) setError(tr("{0} The buy is already on chain.", migrated.error));
         else setTx(migrated.signature);
       }
       return;
@@ -150,13 +151,13 @@ export function SolanaPanel({ mint, symbol }: { mint: string; symbol: string }) 
     const parsed = parseDecimal(amount, state.decimals);
     if (!parsed || parsed <= 0n) {
       setBusy("");
-      setError("Type how many tokens to sell, then press Sell.");
+      setError(tr("Type how many tokens to sell, then press Sell."));
       return;
     }
     const whole = parsed / unit;
     if (whole <= 0n) {
       setBusy("");
-      setError("Sell at least 1 whole token.");
+      setError(tr("Sell at least 1 whole token."));
       return;
     }
     const tokens = whole * unit;
@@ -166,7 +167,7 @@ export function SolanaPanel({ mint, symbol }: { mint: string; symbol: string }) 
       minOut = (quoted * BigInt(10_000 - slipBps)) / 10_000n;
     } catch (err) {
       setBusy("");
-      setError(err instanceof Error ? err.message : "That sell does not fit.");
+      setError(err instanceof Error ? err.message : tr("That sell does not fit."));
       return;
     }
     const sent = await sellSolanaCurve({ mint, tokenIn: tokens, minOut });
@@ -183,9 +184,9 @@ export function SolanaPanel({ mint, symbol }: { mint: string; symbol: string }) 
   return (
     <KeyLock address={wallet}>
     <form onSubmit={(e) => void submit(e)} className="ticket space-y-3">
-      <p className="text-lg font-extrabold">Trade with SOL</p>
+      <p className="text-lg font-extrabold">{tr("Trade with SOL")}</p>
       <p className="text-sm text-muted">
-        {formatPrice(spot(curve, 9, state.decimals))} SOL each
+        {formatPrice(spot(curve, 9, state.decimals))}{" "}{tr("SOL each")}
         <Dollar chain="solana" nativePerToken={spot(curve, 9, state.decimals)} />
       </p>
       <GraduationMeter
@@ -196,16 +197,16 @@ export function SolanaPanel({ mint, symbol }: { mint: string; symbol: string }) 
         decimals={9}
       />
       {state.maxBuy > 0n ? (
-        <p className="text-sm text-muted">Wallet cap {formatSmart(state.maxBuy, 9)} SOL. It stays until graduation.</p>
+        <p className="text-sm text-muted">{tr("Wallet cap")}{" "}{formatSmart(state.maxBuy, 9)}{" "}{tr("SOL. It stays until graduation.")}</p>
       ) : null}
-      <p className="text-sm text-muted">1% fee. The creator cut is paid into their Solana wallet on the trade. Treasury’s 0.60% is not buying Ferzan yet.</p>
+      <p className="text-sm text-muted">{tr("1% fee. The creator cut is paid into their Solana wallet on the trade. Treasury’s 0.60% is not buying Ferzan yet.")}</p>
       {sol ? <GasStep address={sol} chain="solana" /> : null}
       <div className="grid grid-cols-2 gap-2">
         <button type="button" className={cn("min-h-11 font-semibold", side === "buy" ? "bg-cyan text-cyan-ink" : "bg-bg text-muted shadow-border")} onClick={() => setSide("buy")}>
-          Buy
+          {tr("Buy")}
         </button>
         <button type="button" className={cn("min-h-11 font-semibold", side === "sell" ? "bg-sell text-cyan-ink" : "bg-bg text-muted shadow-border")} onClick={() => setSide("sell")}>
-          Sell
+          {tr("Sell")}
         </button>
       </div>
       {side === "sell" ? (
@@ -227,33 +228,33 @@ export function SolanaPanel({ mint, symbol }: { mint: string; symbol: string }) 
         </div>
       ) : null}
       <label className="block text-sm">
-        <span className="mb-1.5 block text-sm font-medium text-muted">{side === "buy" ? "SOL" : symbol}</span>
+        <span className="mb-1.5 block text-sm font-medium text-muted">{side === "buy" ? tr("SOL") : symbol}</span>
         <input value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="decimal" className="min-h-11 w-full bg-bg px-3 tabular-nums shadow-border outline-none" />
       </label>
-      <p className="min-h-6 text-sm text-muted">{quote || (side === "sell" ? "Sells pay no referrer." : "Type how much SOL to spend.")}</p>
+      <p className="min-h-6 text-sm text-muted">{quote || (side === "sell" ? tr("Sells pay no referrer.") : tr("Type how much SOL to spend."))}</p>
       {side === "buy" ? (
         <details className="text-sm text-muted">
-          <summary className="cursor-pointer">Add a referrer wallet</summary>
-          <p className="mt-2">Optional. Leave it blank and the treasury keeps the 10%.</p>
-          <input value={referrer} onChange={(e) => setReferrer(e.target.value.trim())} placeholder="Solana address" className="mt-2 min-h-11 w-full bg-bg px-3 text-fg shadow-border outline-none" />
+          <summary className="cursor-pointer">{tr("Add a referrer wallet")}</summary>
+          <p className="mt-2">{tr("Optional. Leave it blank and the treasury keeps the 10%.")}</p>
+          <input value={referrer} onChange={(e) => setReferrer(e.target.value.trim())} placeholder={tr("Solana address")} className="mt-2 min-h-11 w-full bg-bg px-3 text-fg shadow-border outline-none" />
         </details>
       ) : (
-        <p className="text-sm text-muted">You hold {held == null ? "…" : formatSmart(held, state.decimals)} {symbol}. Percent buttons use whole tokens the curve can buy back.</p>
+        <p className="text-sm text-muted">{tr("You hold")}{" "}{held == null ? "…" : formatSmart(held, state.decimals)} {symbol}{tr(". Percent buttons use whole tokens the curve can buy back.")}</p>
       )}
       <label className="block text-sm text-muted">
-        Max slippage %
+        {tr("Max slippage %")}
         <input value={slip} onChange={(e) => setSlip(e.target.value)} inputMode="decimal" className="mt-1 min-h-11 w-full bg-bg px-3 text-fg shadow-border outline-none" />
       </label>
       {needTerms ? <TermsGate onAccept={() => setNeedTerms(false)} /> : null}
-      {error ? <p className="text-sm text-sell">{error}</p> : null}
-      {busy ? <p className="text-sm text-cyan">{busy}</p> : null}
+      {error ? <p className="text-sm text-sell">{tr(error)}</p> : null}
+      {busy ? <p className="text-sm text-cyan">{tr(busy)}</p> : null}
       {tx ? (
         <a className="inline-flex min-h-11 items-center text-sm font-semibold text-cyan" href={solanaExplorerTx(tx)}>
-          View transaction
+          {tr("View transaction")}
         </a>
       ) : null}
       <Button type="submit" variant={side === "sell" ? "sell" : "cyan"} disabled={Boolean(busy) || (side === "buy" && state.graduated) || (side === "sell" && state.pooled)}>
-        {side === "buy" && state.graduated ? "Graduated" : side === "sell" && state.pooled ? "In the pool" : side === "buy" ? "Buy" : "Sell"}
+        {side === "buy" && state.graduated ? tr("Graduated") : side === "sell" && state.pooled ? tr("In the pool") : side === "buy" ? tr("Buy") : tr("Sell")}
       </Button>
       {state.graduated && !state.pooled ? (
         <Button
@@ -270,15 +271,15 @@ export function SolanaPanel({ mint, symbol }: { mint: string; symbol: string }) 
             });
           }}
         >
-          Open Raydium pool
+          {tr("Open Raydium pool")}
         </Button>
       ) : null}
       {state.pooled ? (
         <a className="inline-flex min-h-11 items-center text-sm font-semibold text-cyan" href={raydiumSwapUrl(mint)} target="_blank" rel="noreferrer">
-          Trade on Raydium
+          {tr("Trade on Raydium")}
         </a>
       ) : null}
-      <p className="text-xs text-muted">Fees are paid in the same transaction. 60% treasury, 30% creator, 10% referrer on buys. Sells pay no referrer.</p>
+      <p className="text-xs text-muted">{tr("Fees are paid in the same transaction. 60% treasury, 30% creator, 10% referrer on buys. Sells pay no referrer.")}</p>
     </form>
     </KeyLock>
   );

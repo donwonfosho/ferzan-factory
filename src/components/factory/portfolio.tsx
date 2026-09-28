@@ -15,6 +15,7 @@ import { ChainMark, type MarkChain } from "./chain-mark";
 import { compactUsd } from "./market-line";
 import { Button, Mark } from "./ui";
 
+import { tr } from "@/lib/i18n";
 const MARKS = new Set<string>(["solana", "base", "bsc", "ethereum", "robinhood", "arc", "tron", "ton"]);
 const EMPTY: WalletPortfolio = { holdings: [], launches: [], valueUsd: 0, earnedUsd: 0, referralUsd: 0 };
 
@@ -81,7 +82,7 @@ function CoinRow({ coin, right, sub }: { coin: PortfolioCoin; right: string; sub
           <span className="flex items-center gap-1.5">
             <span className="truncate font-extrabold">{coin.symbol}</span>
             {MARKS.has(coin.chain) ? <ChainMark id={coin.chain as MarkChain} className="h-4 w-4 shrink-0" /> : null}
-            {coin.graduated ? <span className="text-xs text-cyan">Graduated</span> : null}
+            {coin.graduated ? <span className="text-xs text-cyan">{tr("Graduated")}</span> : null}
           </span>
           <span className="block truncate text-sm text-muted">{sub}</span>
         </span>
@@ -104,22 +105,22 @@ export function AccountPortfolio({ evm, sol }: { evm: string | null; sol: string
       <section className="ticket mt-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <p className="text-sm text-muted">Holdings value</p>
+            <p className="text-sm text-muted">{tr("Holdings value")}</p>
             <p className="mt-1 text-2xl font-extrabold tabular-nums">{data ? compactUsd(data.valueUsd) : "…"}</p>
           </div>
           <div>
-            <p className="text-sm text-muted">Creator fees earned</p>
+            <p className="text-sm text-muted">{tr("Creator fees earned")}</p>
             <p className="mt-1 text-2xl font-extrabold tabular-nums">{data ? compactUsd(data.earnedUsd) : "…"}</p>
           </div>
         </div>
-        {failed ? <p className="mt-3 text-sm text-sell">Part of the portfolio did not load. It retries every 30 seconds.</p> : null}
+        {failed ? <p className="mt-3 text-sm text-sell">{tr("Part of the portfolio did not load. It retries every 30 seconds.")}</p> : null}
       </section>
 
       <section className="mt-6">
-        <h2 className="text-xl font-extrabold">Holding</h2>
-        <p className="mt-1 text-sm text-muted">Ferzan coins in your wallets, valued at the curve price.</p>
-        {data === null ? <p className="mt-3 text-sm text-muted">Reading your wallets…</p> : null}
-        {data && data.holdings.length === 0 ? <p className="mt-3 text-sm text-muted">No Ferzan coins yet. Buy one from the board.</p> : null}
+        <h2 className="text-xl font-extrabold">{tr("Holding")}</h2>
+        <p className="mt-1 text-sm text-muted">{tr("Ferzan coins in your wallets, valued at the curve price.")}</p>
+        {data === null ? <p className="mt-3 text-sm text-muted">{tr("Reading your wallets…")}</p> : null}
+        {data && data.holdings.length === 0 ? <p className="mt-3 text-sm text-muted">{tr("No Ferzan coins yet. Buy one from the board.")}</p> : null}
         <ul className="mt-3 divide-y divide-line border-y border-line empty:hidden">
           {(data?.holdings ?? []).map((coin) => (
             <CoinRow
@@ -133,9 +134,9 @@ export function AccountPortfolio({ evm, sol }: { evm: string | null; sol: string
       </section>
 
       <section className="mt-6">
-        <h2 className="text-xl font-extrabold">Launched</h2>
-        <p className="mt-1 text-sm text-muted">Coins launched from these wallets, here or on Telegram.</p>
-        {data && data.launches.length === 0 ? <p className="mt-3 text-sm text-muted">None yet.</p> : null}
+        <h2 className="text-xl font-extrabold">{tr("Launched")}</h2>
+        <p className="mt-1 text-sm text-muted">{tr("Coins launched from these wallets, here or on Telegram.")}</p>
+        {data && data.launches.length === 0 ? <p className="mt-3 text-sm text-muted">{tr("None yet.")}</p> : null}
         <ul className="mt-3 divide-y divide-line border-y border-line empty:hidden">
           {(data?.launches ?? []).map((coin) => (
             <CoinRow
@@ -186,18 +187,18 @@ export function AccountRewards({ evm, sol }: { evm: string | null; sol: string |
     setTx("");
     try {
       const wallet = await solanaWallet();
-      if (wallet.address !== sol) throw new Error("Sign in with the account that launched these coins.");
+      if (wallet.address !== sol) throw new Error(tr("Sign in with the account that launched these coins."));
       const txs = await buildSolFeeClaim({ data: { wallet: sol, pools: fees.pools.map((p) => p.pool) } });
       let last = "";
       for (const [i, b64] of txs.entries()) {
-        setNote(txs.length > 1 ? `Signing claim ${i + 1} of ${txs.length}…` : "Signing the claim…");
+        setNote(txs.length > 1 ? tr("Signing claim {0} of {1}…", i + 1, txs.length) : tr("Signing the claim…"));
         last = await wallet.signAndSend(fromB64(b64));
       }
       setTx(last);
-      setNote("Claimed. The SOL is in your wallet once the chain confirms.");
+      setNote(tr("Claimed. The SOL is in your wallet once the chain confirms."));
       window.setTimeout(() => void loadFees(), 8000);
     } catch (err) {
-      setNote(err instanceof Error ? err.message : "The claim did not go through.");
+      setNote(err instanceof Error ? err.message : tr("The claim did not go through."));
     } finally {
       setBusy(false);
     }
@@ -208,9 +209,9 @@ export function AccountRewards({ evm, sol }: { evm: string | null; sol: string |
   return (
     <>
       <section className="ticket mt-4">
-        <p className="font-semibold">Referrals</p>
+        <p className="font-semibold">{tr("Referrals")}</p>
         <p className="mt-1 text-sm text-muted">
-          When a trade names your wallet as the referrer (your Telegram /refer link does this), 10% of its fee goes to you. Earned so far: {data ? compactUsd(data.referralUsd) : "…"}
+          {tr("When a trade names your wallet as the referrer (your Telegram /refer link does this), 10% of its fee goes to you. Earned so far:")}{" "}{data ? compactUsd(data.referralUsd) : "…"}
         </p>
         {evm ? (
           <button
@@ -223,15 +224,15 @@ export function AccountRewards({ evm, sol }: { evm: string | null; sol: string |
               );
             }}
           >
-            Copy referrer address
+            {tr("Copy referrer address")}
           </button>
         ) : null}
       </section>
 
       <section className="ticket mt-4">
-        <p className="font-semibold">Creator fees on Base, BNB, Ethereum and Robinhood</p>
-        <p className="mt-1 text-sm text-muted">Half of the 1% fee on every trade goes straight to your wallet. Nothing to claim.</p>
-        {evmLaunches.length === 0 ? <p className="mt-3 text-sm text-muted">No launches on these chains yet.</p> : null}
+        <p className="font-semibold">{tr("Creator fees on Base, BNB, Ethereum and Robinhood")}</p>
+        <p className="mt-1 text-sm text-muted">{tr("Half of the 1% fee on every trade goes straight to your wallet. Nothing to claim.")}</p>
+        {evmLaunches.length === 0 ? <p className="mt-3 text-sm text-muted">{tr("No launches on these chains yet.")}</p> : null}
         <ul className="mt-2 divide-y divide-line empty:hidden">
           {evmLaunches.map((coin) => (
             <CoinRow
@@ -245,10 +246,10 @@ export function AccountRewards({ evm, sol }: { evm: string | null; sol: string |
       </section>
 
       <section className="ticket mt-4">
-        <p className="font-semibold">Solana creator fees</p>
-        <p className="mt-1 text-sm text-muted">Meteora holds your share of the trading fees until you claim it.</p>
-        {fees === null ? <p className="mt-3 text-sm text-muted">Checking…</p> : null}
-        {fees && fees.pools.length === 0 ? <p className="mt-3 text-sm text-muted">Nothing to claim right now.</p> : null}
+        <p className="font-semibold">{tr("Solana creator fees")}</p>
+        <p className="mt-1 text-sm text-muted">{tr("Meteora holds your share of the trading fees until you claim it.")}</p>
+        {fees === null ? <p className="mt-3 text-sm text-muted">{tr("Checking…")}</p> : null}
+        {fees && fees.pools.length === 0 ? <p className="mt-3 text-sm text-muted">{tr("Nothing to claim right now.")}</p> : null}
         <ul className="mt-2 divide-y divide-line empty:hidden">
           {(fees?.pools ?? []).map((p) => (
             <li key={p.pool} className="flex items-center justify-between gap-3 py-2 text-sm">
@@ -259,16 +260,16 @@ export function AccountRewards({ evm, sol }: { evm: string | null; sol: string |
         </ul>
         {fees && fees.pools.length ? (
           <Button type="button" className="mt-3 w-full sm:w-auto" disabled={busy} onClick={() => void claim()}>
-            {busy ? "Claiming…" : `Claim ${native(fees.totalSol, "SOL")}`}
+            {busy ? tr("Claiming…") : tr("Claim {0}", native(fees.totalSol, "SOL"))}
           </Button>
         ) : null}
         {tx ? (
           <a className="mt-2 block text-sm font-semibold text-cyan" href={solanaExplorerTx(tx)} target="_blank" rel="noopener noreferrer">
-            View transaction
+            {tr("View transaction")}
           </a>
         ) : null}
       </section>
-      {note ? <p className="mt-3 text-sm text-muted">{note}</p> : null}
+      {note ? <p className="mt-3 text-sm text-muted">{tr(note)}</p> : null}
     </>
   );
 }

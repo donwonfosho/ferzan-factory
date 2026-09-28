@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { X_URL } from "@/lib/factory/catalog";
 
+import { tr } from "@/lib/i18n";
 const ROOMS = [
   {
     name: "Trade Desk",
@@ -67,24 +68,24 @@ const ROOMS = [
 export function BotsPage() {
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="text-4xl">Telegram</h1>
+      <h1 className="text-4xl">{tr("Telegram")}</h1>
       <p className="mt-4 max-w-xl text-muted">
-        These are the Ferzan bots and rooms. They live in Telegram. None of them are minted onto a coin, and none of them hold your key.
+        {tr("These are the Ferzan bots and rooms. They live in Telegram. None of them are minted onto a coin, and none of them hold your key.")}
       </p>
       <ul className="mt-8 space-y-4">
         {ROOMS.map((room) => (
           <li key={room.handle} className="ticket">
             <p className="text-lg font-semibold">{room.name}</p>
             <p className="mt-1 text-sm text-cyan">{room.handle}</p>
-            <p className="mt-3 text-sm leading-relaxed text-muted">{room.text}</p>
+            <p className="mt-3 text-sm leading-relaxed text-muted">{tr(room.text)}</p>
             <a className="mt-3 inline-flex min-h-11 items-center font-semibold text-cyan" href={room.href}>
-              Open
+              {tr("Open")}
             </a>
           </li>
         ))}
       </ul>
       <Link to="/launch" search={{ kind: "curve" }} className="btn-cyan mt-8">
-        Launch a coin
+        {tr("Launch a coin")}
       </Link>
     </div>
   );

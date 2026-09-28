@@ -7,6 +7,7 @@ import type { ChainId } from "@/lib/factory/types";
 import { formatSmart } from "@/lib/factory/units";
 import { Button } from "./ui";
 
+import { tr } from "@/lib/i18n";
 type Row = { coin: BoardCoin; claimable: bigint | null };
 
 export function CreatorFees({ evm, sol }: { evm: string; sol: string | null }) {
@@ -46,16 +47,16 @@ export function CreatorFees({ evm, sol }: { evm: string; sol: string | null }) {
     setNote("");
     const res = await sendCurve({ chain: coin.chain as EvmChainId, address: coin.contract, data: claimData(), from: evm });
     setBusy("");
-    setNote(res.ok ? `Claimed on ${coin.symbol}.` : res.error);
+    setNote(res.ok ? tr("Claimed on {0}.", coin.symbol) : res.error);
   }
 
   return (
     <section className="ticket mt-4">
-      <h2 className="text-lg font-extrabold">Creator fees</h2>
+      <h2 className="text-lg font-extrabold">{tr("Creator fees")}</h2>
       <p className="mt-1 text-sm text-muted">
-        30% of the 1% curve fee sits here until you claim it. Solana pays that cut into the creator wallet on the trade itself, so there is nothing to claim there.
+        {tr("30% of the 1% curve fee sits here until you claim it. Solana pays that cut into the creator wallet on the trade itself, so there is nothing to claim there.")}
       </p>
-      {rows.length === 0 ? <p className="mt-3 text-sm text-muted">No launched coins yet.</p> : null}
+      {rows.length === 0 ? <p className="mt-3 text-sm text-muted">{tr("No launched coins yet.")}</p> : null}
       <ul className="mt-3 divide-y divide-line">
         {rows.map(({ coin, claimable }) => {
           const meta = CHAINS[coin.chain as ChainId];
@@ -67,22 +68,22 @@ export function CreatorFees({ evm, sol }: { evm: string; sol: string | null }) {
                   {coin.symbol}
                 </Link>
                 <p className="text-sm text-muted">
-                  {meta?.label ?? coin.chain}
+                  {tr(meta?.label) ?? coin.chain}
                   {evmCurve
-                    ? ` · ${claimable == null ? "…" : formatSmart(claimable, meta?.nativeDecimals ?? 18)} ${meta?.native ?? ""} to claim`
-                    : " · paid on each trade"}
+                    ? tr(" · {0} {1} to claim", claimable == null ? "…" : formatSmart(claimable, meta?.nativeDecimals ?? 18), meta?.native ?? "")
+                    : tr(" · paid on each trade")}
                 </p>
               </div>
               {evmCurve ? (
                 <Button type="button" variant="ghost" disabled={busy === coin.contract || !claimable || claimable === 0n} onClick={() => void claim(coin)}>
-                  {busy === coin.contract ? "Claiming" : "Claim"}
+                  {busy === coin.contract ? tr("Claiming") : tr("Claim")}
                 </Button>
               ) : null}
             </li>
           );
         })}
       </ul>
-      {note ? <p className="mt-2 text-sm text-muted">{note}</p> : null}
+      {note ? <p className="mt-2 text-sm text-muted">{tr(note)}</p> : null}
     </section>
   );
 }

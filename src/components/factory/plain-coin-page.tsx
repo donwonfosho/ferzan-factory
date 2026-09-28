@@ -6,6 +6,7 @@ import { ShareCoin } from "./perks";
 import { WatchButton } from "./watch";
 import { CoinComments } from "./coin-comments";
 
+import { tr } from "@/lib/i18n";
 const short = (a: string) => (a.length > 12 ? `${a.slice(0, 4)}…${a.slice(-4)}` : a);
 
 function whole(n: string): string {
@@ -23,16 +24,16 @@ export function PlainCoinPage({ chain, token }: { chain: PlainChain; token: stri
     setCoin(undefined);
     getPlainCoin({ data: { chain, token } })
       .then((c) => !stop && setCoin(c))
-      .catch((e: unknown) => !stop && setError(e instanceof Error ? e.message : "Could not load this coin."));
+      .catch((e: unknown) => !stop && setError(e instanceof Error ? e.message : tr("Could not load this coin.")));
     return () => {
       stop = true;
     };
   }, [chain, token]);
 
-  if (error) return <p className="ticket mx-auto max-w-3xl text-sm text-sell">{error}</p>;
-  if (coin === undefined) return <p className="ticket mx-auto max-w-3xl text-sm text-muted">Loading the coin…</p>;
+  if (error) return <p className="ticket mx-auto max-w-3xl text-sm text-sell">{tr(error)}</p>;
+  if (coin === undefined) return <p className="ticket mx-auto max-w-3xl text-sm text-muted">{tr("Loading the coin…")}</p>;
   if (coin === null) {
-    return <p className="ticket mx-auto max-w-3xl text-sm text-muted">This is not a Ferzan launch, or it has not been confirmed yet.</p>;
+    return <p className="ticket mx-auto max-w-3xl text-sm text-muted">{tr("This is not a Ferzan launch, or it has not been confirmed yet.")}</p>;
   }
 
   async function copy() {
@@ -64,14 +65,14 @@ export function PlainCoinPage({ chain, token }: { chain: PlainChain; token: stri
             ) : (
               short(coin.token)
             )}
-            {coin.creator ? <> · by {short(coin.creator)}</> : null}
+            {coin.creator ? <>{" "}{tr("· by")}{" "}{short(coin.creator)}</> : null}
             {launched ? <> · {launched}</> : null}
           </p>
           {coin.description ? <p className="mt-2 text-sm">{coin.description}</p> : null}
           <p className="mt-2 flex flex-wrap gap-3 text-sm">
-            {coin.links.website ? <a className="text-cyan" href={coin.links.website} target="_blank" rel="noopener noreferrer">Website</a> : null}
+            {coin.links.website ? <a className="text-cyan" href={coin.links.website} target="_blank" rel="noopener noreferrer">{tr("Website")}</a> : null}
             {coin.links.x ? <a className="text-cyan" href={coin.links.x} target="_blank" rel="noopener noreferrer">X</a> : null}
-            {coin.links.telegram ? <a className="text-cyan" href={coin.links.telegram} target="_blank" rel="noopener noreferrer">Telegram</a> : null}
+            {coin.links.telegram ? <a className="text-cyan" href={coin.links.telegram} target="_blank" rel="noopener noreferrer">{tr("Telegram")}</a> : null}
           </p>
         </div>
       </div>
@@ -85,32 +86,31 @@ export function PlainCoinPage({ chain, token }: { chain: PlainChain; token: stri
 
       <div className="grid grid-cols-2 gap-2 sm:gap-3">
         <div className="ticket">
-          <p className="text-xs text-muted">Total supply</p>
+          <p className="text-xs text-muted">{tr("Total supply")}</p>
           <p className="text-base font-extrabold tabular-nums sm:text-lg">{whole(coin.supply)}</p>
         </div>
         <div className="ticket">
-          <p className="text-xs text-muted">Type</p>
-          <p className="text-base font-extrabold sm:text-lg">Fixed supply</p>
+          <p className="text-xs text-muted">{tr("Type")}</p>
+          <p className="text-base font-extrabold sm:text-lg">{tr("Fixed supply")}</p>
         </div>
       </div>
 
       <div className="ticket space-y-3">
         <p className="text-sm">
-          Standard token: the whole supply was minted once to the creator, there is no owner and nothing can mint more. It trades once
-          the creator opens a pool; then you can buy it in the Ferzan Trade Bot with your own wallet.
+          {tr("Standard token: the whole supply was minted once to the creator, there is no owner and nothing can mint more. It trades once the creator opens a pool; then you can buy it in the Ferzan Trade Bot with your own wallet.")}
         </p>
         <div className="flex flex-wrap gap-2">
           {coin.tradeBot ? (
             <a className="btn-cyan inline-flex" href={coin.tradeBot} target="_blank" rel="noopener noreferrer">
-              Buy in Ferzan Trade Bot
+              {tr("Buy in Ferzan Trade Bot")}
             </a>
           ) : null}
           <button type="button" className="btn-line min-h-10 px-3 text-sm" onClick={() => void copy()}>
-            {copied ? "Copied" : "Copy contract"}
+            {copied ? tr("Copied") : tr("Copy contract")}
           </button>
           {coin.explorer ? (
             <a className="btn-line inline-flex min-h-10 items-center px-3 text-sm" href={coin.explorer} target="_blank" rel="noopener noreferrer">
-              View on explorer
+              {tr("View on explorer")}
             </a>
           ) : null}
         </div>

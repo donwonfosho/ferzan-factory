@@ -5,6 +5,7 @@ import { CHAINS } from "@/lib/factory/catalog";
 import type { ChainId } from "@/lib/factory/types";
 import { Mark } from "./ui";
 
+import { tr } from "@/lib/i18n";
 export type RecordTone = "clear" | "watch" | "heavy";
 
 export function creatorVerdict(coins: BoardCoin[]): { tone: RecordTone; title: string; line: string } {
@@ -87,11 +88,11 @@ export function CreatorHealth({ creator, highlight }: { creator: string; highlig
   return (
     <section className="mt-6 bg-surface p-4 shadow-border">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-lg font-extrabold">Creator record</h2>
-        {verdict ? <p className={`text-sm font-extrabold ${TONE[verdict.tone]}`}>{verdict.title}</p> : null}
+        <h2 className="text-lg font-extrabold">{tr("Creator record")}</h2>
+        {verdict ? <p className={`text-sm font-extrabold ${TONE[verdict.tone]}`}>{tr(verdict.title)}</p> : null}
       </div>
       <p className="mt-2 text-sm text-muted">
-        {verdict ? verdict.line : "Reading this wallet’s other launches."} Counts only coins published on this board. It does not see other sites, bundled wallets, or the creator’s allocation.
+        {verdict ? verdict.line : tr("Reading this wallet’s other launches.")}{" "}{tr("Counts only coins published on this board. It does not see other sites, bundled wallets, or the creator’s allocation.")}
       </p>
       {others.length > 0 ? (
         <ul className="mt-3 divide-y divide-line">
@@ -102,8 +103,8 @@ export function CreatorHealth({ creator, highlight }: { creator: string; highlig
                 <span className="min-w-0 flex-1">
                   <span className="block font-semibold">{coin.symbol}</span>
                   <span className="block truncate text-sm text-muted">
-                    {CHAINS[coin.chain as ChainId]?.label ?? coin.chain}
-                    {coin.buys > 0 ? ` · ${coin.buys} buys` : " · no buys"}
+                    {tr(CHAINS[coin.chain as ChainId]?.label) ?? coin.chain}
+                    {coin.buys > 0 ? tr(" · {0} buys", coin.buys) : tr(" · no buys")}
                   </span>
                 </span>
               </Link>
@@ -112,7 +113,7 @@ export function CreatorHealth({ creator, highlight }: { creator: string; highlig
         </ul>
       ) : null}
       <Link to="/p/$address" params={{ address: creator }} className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-cyan">
-        Open creator profile
+        {tr("Open creator profile")}
       </Link>
     </section>
   );

@@ -3,6 +3,7 @@ import { useAccountWallets } from "@/lib/factory/wallet-bridge";
 import { getPerks, PERK_DEFAULTS, type Perks } from "@/lib/factory/perks";
 import { cn } from "@/lib/cn";
 
+import { tr } from "@/lib/i18n";
 const whole = (n: number) => (n >= 1e6 ? `${+(n / 1e6).toFixed(2)}M` : n >= 1e3 ? `${+(n / 1e3).toFixed(1)}K` : n.toFixed(0));
 const sol = (n: number) => `${+n.toFixed(4)} SOL`;
 
@@ -24,21 +25,21 @@ function usePerks(wallet: string | null | undefined): Perks | null {
 export function FerzanPerksCard({ sol: wallet }: { sol: string | null }) {
   const p = usePerks(wallet) ?? PERK_DEFAULTS;
   const rows = [
-    { tier: "holder", need: p.holderMin, badge: "🔷 FERZAN holder", perk: `Half-price Solana launch fee (${sol(p.launchFeeSol / 2)})` },
+    { tier: "holder", need: p.holderMin, badge: "🔷 FERZAN holder", perk: tr("Half-price Solana launch fee ({0})", sol(p.launchFeeSol / 2)) },
     { tier: "whale", need: p.whaleMin, badge: "🐋 FERZAN whale", perk: "Free Solana launches" },
   ];
   return (
     <section className="ticket mt-4">
       <div className="flex items-baseline justify-between gap-3">
-        <p className="text-sm font-medium text-cyan">FERZAN holder perks</p>
-        {p.badge ? <span className="chip-on rounded-full px-3 py-1 text-xs font-semibold">{p.badge}</span> : null}
+        <p className="text-sm font-medium text-cyan">{tr("FERZAN holder perks")}</p>
+        {p.badge ? <span className="chip-on rounded-full px-3 py-1 text-xs font-semibold">{tr(p.badge)}</span> : null}
       </div>
       <ul className="mt-3 space-y-2 text-sm">
         {rows.map((r) => (
           <li key={r.tier} className={cn("flex items-start justify-between gap-3", p.tier === r.tier && "text-cyan")}>
             <span>
-              <span className="font-semibold">{r.badge}</span>
-              <span className="block text-muted">{r.perk}, plus the badge on your coins' creator score and on your Solana buys in Buy Bot alerts.</span>
+              <span className="font-semibold">{tr(r.badge)}</span>
+              <span className="block text-muted">{tr(r.perk)}{tr(", plus the badge on your coins' creator score and on your Solana buys in Buy Bot alerts.")}</span>
             </span>
             <span className="shrink-0 tabular-nums text-muted">{whole(r.need)}+</span>
           </li>
@@ -46,12 +47,12 @@ export function FerzanPerksCard({ sol: wallet }: { sol: string | null }) {
       </ul>
       <p className="mt-3 text-sm text-muted">
         {!p.active
-          ? "Switches on when FERZAN launches on Friday, October 9 at 7:00 PM ET. Hold it in the Solana wallet you launch and trade with."
+          ? tr("Switches on when FERZAN launches on Friday, October 9 at 7:00 PM ET. Hold it in the Solana wallet you launch and trade with.")
           : !wallet
-            ? "Sign in to see your status. It is read from your Solana wallet."
+            ? tr("Sign in to see your status. It is read from your Solana wallet.")
             : p.tier === "none"
-              ? `This wallet holds ${whole(p.balance)} FERZAN. ${whole(Math.max(0, p.holderMin - p.balance))} more unlocks the holder perks.`
-              : `This wallet holds ${whole(p.balance)} FERZAN. Your Solana launch fee: ${p.yourLaunchFeeSol === 0 ? "free" : sol(p.yourLaunchFeeSol)}.`}
+              ? tr("This wallet holds {0} FERZAN. {1} more unlocks the holder perks.", whole(p.balance), whole(Math.max(0, p.holderMin - p.balance)))
+              : tr("This wallet holds {0} FERZAN. Your Solana launch fee: {1}.", whole(p.balance), p.yourLaunchFeeSol === 0 ? tr("free") : sol(p.yourLaunchFeeSol))}
       </p>
     </section>
   );
@@ -65,12 +66,11 @@ export function LaunchPerksNote() {
   if (!p) return null;
   const mine =
     p.active && p.tier !== "none"
-      ? ` ${p.badge}: you pay ${p.yourLaunchFeeSol === 0 ? "no launch fee" : sol(p.yourLaunchFeeSol)}.`
+      ? " " + tr("{0}: you pay {1}.", tr(p.badge), p.yourLaunchFeeSol === 0 ? tr("no launch fee") : sol(p.yourLaunchFeeSol))
       : "";
   return (
     <p className="mt-2 text-xs text-muted">
-      Your coin gets a Ferzan address ending in <span className="font-semibold text-fg">…fzn</span>. Launch fee {sol(p.launchFeeSol)}: FERZAN
-      holders ({whole(p.holderMin)}+) pay half, {whole(p.whaleMin)}+ launch free{p.active ? "." : " (from Oct 9)."}
+      {tr("Your coin gets a Ferzan address ending in")}{" "}<span className="font-semibold text-fg">{tr("…fzn")}</span>{tr(". Launch fee")}{" "}{sol(p.launchFeeSol)}{tr(": FERZAN holders (")}{whole(p.holderMin)}{tr("+) pay half,")}{" "}{whole(p.whaleMin)}{tr("+ launch free")}{p.active ? "." : tr(" (from Oct 9).")}
       {mine ? <span className="text-cyan">{mine}</span> : null}
     </p>
   );
@@ -85,7 +85,7 @@ export function ShareCoin({ chain, token, symbol }: { chain: string; token: stri
   async function copy() {
     try {
       await navigator.clipboard.writeText(url);
-      setDone("Link copied");
+      setDone(tr("Link copied"));
     } catch {
       setDone(url);
     }
@@ -93,15 +93,15 @@ export function ShareCoin({ chain, token, symbol }: { chain: string; token: stri
   }
   return (
     <div className="ticket flex flex-wrap items-center gap-2">
-      <p className="mr-auto text-sm font-medium text-muted">Share</p>
+      <p className="mr-auto text-sm font-medium text-muted">{tr("Share")}</p>
       <a className="btn-line" href={`https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`} target="_blank" rel="noopener noreferrer">
-        Post on X
+        {tr("Post on X")}
       </a>
       <a className="btn-line" href={`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`} target="_blank" rel="noopener noreferrer">
-        Telegram
+        {tr("Telegram")}
       </a>
       <button type="button" className="btn-line" onClick={() => void copy()}>
-        {done || "Copy link"}
+        {tr(done) || tr("Copy link")}
       </button>
     </div>
   );
@@ -146,21 +146,21 @@ export function InstallApp({ compact = false }: { compact?: boolean }) {
   const button =
     state === "prompt" ? (
       <button type="button" className="btn-cyan" onClick={() => void install()}>
-        Install the app
+        {tr("Install the app")}
       </button>
     ) : state === "ios" ? (
       <a className="btn-cyan inline-flex" href={iosHref}>
-        Add to Home Screen
+        {tr("Add to Home Screen")}
       </a>
     ) : null;
   if (compact) return button ?? null;
   return (
     <section className="ticket mt-4">
-      <p className="text-sm font-medium text-cyan">Ferzan on your phone</p>
+      <p className="text-sm font-medium text-cyan">{tr("Ferzan on your phone")}</p>
       <p className="mt-2 text-sm text-muted">
         {state === "manual"
-          ? "Open your browser menu and choose Install app or Add to Home Screen. Ferzan then opens full screen like an app, straight to the Floor."
-          : "One tap puts Ferzan on your home screen. It opens full screen like an app, straight to the Floor."}
+          ? tr("Open your browser menu and choose Install app or Add to Home Screen. Ferzan then opens full screen like an app, straight to the Floor.")
+          : tr("One tap puts Ferzan on your home screen. It opens full screen like an app, straight to the Floor.")}
       </p>
       {button ? <div className="mt-3">{button}</div> : null}
     </section>

@@ -4,6 +4,7 @@ import { GROK_PROVIDERS, authEnabled, signIn, signOut } from "./client";
 import { hasGateSessionMarker } from "./gate-session-marker";
 import { resolveSignInGateState } from "./sign-in-gate";
 import { useCurrentUser, useCurrentUserState } from "./use-current-user";
+import { tr } from "@/lib/i18n";
 
 const subscribeToNothing = () => () => {};
 const noGateSessionOnServer = () => false;
@@ -112,7 +113,7 @@ export function UserButton() {
           {label.charAt(0).toUpperCase()}
         </span>
       )}
-      <span className="text-sm font-medium">{label}</span>
+      <span className="text-sm font-medium">{tr(label)}</span>
       {authEnabled && !gateSession && (
         <button
           type="button"

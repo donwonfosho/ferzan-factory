@@ -10,6 +10,7 @@ import { useAccountWallets } from "@/lib/factory/wallet-bridge";
 import { useLive, sameCoin } from "@/lib/factory/live";
 import { cn } from "@/lib/cn";
 
+import { tr } from "@/lib/i18n";
 /** The comment thread under a Ferzan coin. Every comment is signed by the wallet that wrote it. */
 export function CoinComments({ chain, token, creator }: { chain: string; token: string; creator?: string }) {
   const account = useAccountWallets();
@@ -42,8 +43,8 @@ export function CoinComments({ chain, token, creator }: { chain: string; token: 
     setError("");
     const text = postBody(body);
     const why = moderate(text);
-    if (why) return setError(why);
-    if (!me) return setError("Sign in (Profile) to comment. Every comment is signed by your wallet, so nobody can post as you.");
+    if (why) return setError(tr(why));
+    if (!me) return setError(tr("Sign in (Profile) to comment. Every comment is signed by your wallet, so nobody can post as you."));
     setBusy(true);
     try {
       const proof = await signProof("post", me, { contract: proofAddress(token), chain, body: text });
@@ -52,20 +53,20 @@ export function CoinComments({ chain, token, creator }: { chain: string; token: 
       await pull();
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Could not post.";
-      setError(/user (rejected|denied)|rejected the request|4001/i.test(msg) ? "You cancelled the signature." : msg.split("\n")[0]);
+      setError(/user (rejected|denied)|rejected the request|4001/i.test(msg) ? tr("You cancelled the signature.") : msg.split("\n")[0]);
     } finally {
       setBusy(false);
     }
   }
 
   async function report(id: string) {
-    if (!me) return setError("Sign in to report a comment.");
+    if (!me) return setError(tr("Sign in to report a comment."));
     try {
       const proof = await signProof("post", me, { report: id });
       await reportComment({ data: { id, reporter: me, proof } });
       setReported((r) => new Set(r).add(id));
     } catch (err) {
-      setError(err instanceof Error ? err.message.split("\n")[0] : "Could not report.");
+      setError(err instanceof Error ? err.message.split("\n")[0] : tr("Could not report."));
     }
   }
 
@@ -73,30 +74,30 @@ export function CoinComments({ chain, token, creator }: { chain: string; token: 
   return (
     <section className="ticket space-y-3">
       <div className="flex items-baseline justify-between gap-3">
-        <p className="text-sm font-medium text-muted">Comments</p>
-        {items ? <p className="text-xs text-muted">{items.length} shown</p> : null}
+        <p className="text-sm font-medium text-muted">{tr("Comments")}</p>
+        {items ? <p className="text-xs text-muted">{items.length}{" "}{tr("shown")}</p> : null}
       </div>
       <form onSubmit={(e) => void post(e)} className="space-y-2">
         <textarea
           value={body}
           onChange={(e) => setBody(e.target.value.slice(0, 280))}
           rows={2}
-          placeholder="Say something about this coin"
+          placeholder={tr("Say something about this coin")}
           className="w-full rounded-xl bg-bg px-3 py-3 text-sm shadow-border outline-none"
-          aria-label="Your comment"
+          aria-label={tr("Your comment")}
         />
         <div className="flex items-center justify-between gap-3">
-          <p className={cn("text-xs", hint ? "text-sell" : "text-muted")}>{hint || error || `${body.length}/280 · no links or addresses`}</p>
+          <p className={cn("text-xs", hint ? "text-sell" : "text-muted")}>{tr(hint) || tr(error) || tr("{0}/280 · no links or addresses", body.length)}</p>
           <button type="submit" className="btn-cyan shrink-0" disabled={busy || !body.trim() || Boolean(hint)}>
-            {busy ? "Signing…" : "Post"}
+            {busy ? tr("Signing…") : tr("Post")}
           </button>
         </div>
-        {error && hint ? <p className="text-xs text-sell">{error}</p> : null}
+        {error && hint ? <p className="text-xs text-sell">{tr(error)}</p> : null}
       </form>
       {items === null ? (
-        <p className="text-sm text-muted">Loading comments…</p>
+        <p className="text-sm text-muted">{tr("Loading comments…")}</p>
       ) : items.length === 0 ? (
-        <p className="text-sm text-muted">No comments yet. Be the first.</p>
+        <p className="text-sm text-muted">{tr("No comments yet. Be the first.")}</p>
       ) : (
         <ul className="divide-y divide-line">
           {items.map((c) => (
@@ -105,24 +106,24 @@ export function CoinComments({ chain, token, creator }: { chain: string; token: 
                 <a href={`/p/${c.author}`} className="font-semibold text-cyan">
                   {creatorLabel(c.author)}
                 </a>
-                {dev && proofAddress(c.author) === dev ? <span className="rounded-full bg-fg/10 px-2 py-0.5 font-semibold">Dev</span> : null}
+                {dev && proofAddress(c.author) === dev ? <span className="rounded-full bg-fg/10 px-2 py-0.5 font-semibold">{tr("Dev")}</span> : null}
                 <span className="text-muted tabular-nums">{Number.isFinite(Date.parse(c.createdAt)) ? formatWhen(Date.parse(c.createdAt)) : ""}</span>
                 <button
                   type="button"
                   className="ml-auto text-muted hover:text-sell"
                   onClick={() => void report(c.id)}
                   disabled={reported.has(c.id)}
-                  aria-label="Report this comment"
+                  aria-label={tr("Report this comment")}
                 >
-                  {reported.has(c.id) ? "Reported" : "Report"}
+                  {reported.has(c.id) ? tr("Reported") : tr("Report")}
                 </button>
               </div>
-              <p className="mt-1 text-sm break-words">{c.body}</p>
+              <p className="mt-1 text-sm break-words">{tr(c.body)}</p>
             </li>
           ))}
         </ul>
       )}
-      <p className="text-xs text-muted">Links, contract addresses and scam phrases are blocked. A comment reported by 3 wallets is hidden. Admins never DM first.</p>
+      <p className="text-xs text-muted">{tr("Links, contract addresses and scam phrases are blocked. A comment reported by 3 wallets is hidden. Admins never DM first.")}</p>
     </section>
   );
 }

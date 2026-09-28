@@ -18,6 +18,7 @@ import { Dollar } from "./dollar";
 import { Holders } from "./holders";
 import { Button, Mark } from "./ui";
 
+import { tr } from "@/lib/i18n";
 export function TokenView({ id }: { id: string }) {
   const launches = useFactory((s) => s.launches);
   const desk = useFactory((s) => s.desk);
@@ -25,9 +26,9 @@ export function TokenView({ id }: { id: string }) {
   if (!item) {
     return (
       <div>
-        <h1 className="text-3xl font-extrabold">Not on the floor</h1>
+        <h1 className="text-3xl font-extrabold">{tr("Not on the floor")}</h1>
         <Link to="/" className="mt-4 inline-flex min-h-11 items-center text-cyan">
-          Back to the floor
+          {tr("Back to the floor")}
         </Link>
       </div>
     );
@@ -40,7 +41,7 @@ export function TokenView({ id }: { id: string }) {
     <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
       <div>
         <p className="text-sm font-medium text-cyan">
-          {item.kind === "primary" ? "Primary" : "Attached"} · {chain.label}
+          {item.kind === "primary" ? tr("Primary") : tr("Attached")} · {tr(chain.label)}
         </p>
         <div className="mt-3 flex items-center gap-4">
           <Mark symbol={item.symbol} image={picture?.image} className="frame h-28 w-28 text-2xl" />
@@ -51,7 +52,7 @@ export function TokenView({ id }: { id: string }) {
             <p className="mt-1 text-muted">
               {item.kind === "attached" ? (
                 <>
-                  On{" "}
+                  {tr("On")}{" "}
                   <Link to="/t/$id" params={{ id: item.primaryId ?? "" }} className="text-cyan">
                     {item.symbol}
                   </Link>
@@ -64,7 +65,7 @@ export function TokenView({ id }: { id: string }) {
             </p>
           </div>
         </div>
-        <p className="mt-4 max-w-xl">{item.blurb}</p>
+        <p className="mt-4 max-w-xl">{tr(item.blurb)}</p>
         <Social item={item.kind === "primary" ? item : (primary ?? item)} />
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <CopyLink />
@@ -77,21 +78,21 @@ export function TokenView({ id }: { id: string }) {
         ) : null}
         {item.kind === "primary" && item.mode === "plain" ? (
           <p className="mt-4 text-sm text-muted">
-            Regular pool. Supply {compactWhole(item.supplyWhole)}
-            {item.contract ? " is on this contract." : "."} No curve.
+            {tr("Regular pool. Supply")}{" "}{compactWhole(item.supplyWhole)}
+            {item.contract ? tr(" is on this contract.") : "."}{" "}{tr("No curve.")}
           </p>
         ) : null}
 
         {primary && item.kind === "primary" ? <Rules item={primary} /> : null}
         {item.contract ? <Holders chain={item.chain} address={item.contract} decimals={chain.tokenDecimals} /> : null}
 
-        <h2 className="mt-8 text-lg font-extrabold">Tape</h2>
+        <h2 className="mt-8 text-lg font-extrabold">{tr("Tape")}</h2>
         <ul className="mt-2 space-y-2 text-sm">
-          {(primary ?? item).tape.length === 0 && item.tape.length === 0 ? <li className="text-muted">Quiet.</li> : null}
+          {(primary ?? item).tape.length === 0 && item.tape.length === 0 ? <li className="text-muted">{tr("Quiet.")}</li> : null}
           {(item.kind === "attached" ? item.tape : (primary?.tape ?? [])).map((tick, index) => (
             <li key={`${tick.t}-${index}`} className="flex justify-between gap-4">
               <span>
-                <span className="text-cyan">{tick.side}</span> {tick.who} — {tick.detail}
+                <span className="text-cyan">{tick.side}</span> {tick.who} — {tr(tick.detail)}
               </span>
               <span className="shrink-0 text-muted tabular-nums">{formatWhen(tick.t)}</span>
             </li>
@@ -110,21 +111,21 @@ export function TokenView({ id }: { id: string }) {
           <TradeTicket id={item.id} />
         ) : item.kind === "attached" && primary?.mode === "curve" ? (
           <div className="ticket">
-            <p className="text-lg font-extrabold">Trade the primary</p>
-            <p className="mt-2 text-sm text-muted">Buys that pick {item.name} pay the referrer cut here.</p>
+            <p className="text-lg font-extrabold">{tr("Trade the primary")}</p>
+            <p className="mt-2 text-sm text-muted">{tr("Buys that pick")}{" "}{item.name}{" "}{tr("pay the referrer cut here.")}</p>
             <Link
               to="/t/$id"
               params={{ id: primary.id }}
               className="mt-4 inline-flex min-h-11 items-center bg-cyan px-4 font-semibold text-cyan-ink"
             >
-              Open {primary.symbol}
+              {tr("Open")}{" "}{primary.symbol}
             </Link>
           </div>
         ) : (
-          <div className="ticket text-sm text-muted">This coin has no curve.</div>
+          <div className="ticket text-sm text-muted">{tr("This coin has no curve.")}</div>
         )}
         <p className="mt-4 text-xs text-muted">
-          Desk {chain.label}: {formatSmart(BigInt(desk.balances[item.chain] ?? "0"), chain.nativeDecimals)} {chain.native}
+          {tr("Desk")}{" "}{tr(chain.label)}: {formatSmart(BigInt(desk.balances[item.chain] ?? "0"), chain.nativeDecimals)} {chain.native}
         </p>
         {item.contract ? <CoinThread contract={item.contract} chain={item.chain} /> : null}
       </aside>
@@ -150,10 +151,10 @@ function Social({ item }: { item: { telegram: string; xHandle: string; creator: 
       {item.telegram ? (
         live ? (
           <a className="btn-line" href={`https://t.me/${item.telegram}`}>
-            Telegram @{item.telegram}
+            {tr("Telegram @")}{item.telegram}
           </a>
         ) : (
-          <span className="btn-line">Telegram @{item.telegram}</span>
+          <span className="btn-line">{tr("Telegram @")}{item.telegram}</span>
         )
       ) : null}
       {item.xHandle ? (
@@ -182,7 +183,7 @@ function CopyLink() {
         });
       }}
     >
-      {copied ? "Copied" : "Copy link"}
+      {copied ? tr("Copied") : tr("Copy link")}
     </button>
   );
 }
@@ -194,23 +195,23 @@ function Rules({ item }: { item: Launch }) {
   const delay = item.startAt > item.createdAt ? `${Math.round((item.startAt - item.createdAt) / 60_000)} min` : "Opens immediately";
   return (
     <div className="mt-6">
-      <h2 className="text-lg font-extrabold">Rules</h2>
+      <h2 className="text-lg font-extrabold">{tr("Rules")}</h2>
       <dl className="mt-3 grid gap-2 sm:grid-cols-3">
-        <Fee label="Dev buy" value={dev} />
-        <Fee label="Max buy" value={cap} />
-        <Fee label="Opens" value={delay} />
+        <Fee label={tr("Dev buy")} value={dev} />
+        <Fee label={tr("Max buy")} value={cap} />
+        <Fee label={tr("Opens")} value={delay} />
       </dl>
       {item.allocs.length ? (
         <ul className="mt-3 space-y-1 text-sm">
           {item.allocs.map((row) => (
             <li key={row.label} className="flex justify-between gap-4">
-              <span>{row.label}</span>
+              <span>{tr(row.label)}</span>
               <span className="tabular-nums text-muted">{bpsLabel(row.bps)}</span>
             </li>
           ))}
         </ul>
       ) : (
-        <p className="mt-3 text-sm text-muted">No team allocation.</p>
+        <p className="mt-3 text-sm text-muted">{tr("No team allocation.")}</p>
       )}
     </div>
   );
@@ -224,16 +225,16 @@ function Position({ primary }: { primary: Launch }) {
   const bought = BigInt(desk.bought[primary.id] ?? "0");
   return (
     <div className="mb-4 bg-surface p-4 shadow-border">
-      <p className="text-sm font-medium text-muted">Your position</p>
+      <p className="text-sm font-medium text-muted">{tr("Your position")}</p>
       <p className="mt-2 text-lg font-extrabold tabular-nums">
         {formatSmart(held, chain.tokenDecimals)} {primary.symbol}
       </p>
       <p className="text-sm text-muted tabular-nums">
-        Bought {formatSmart(bought, chain.nativeDecimals)} {chain.native}
+        {tr("Bought")}{" "}{formatSmart(bought, chain.nativeDecimals)} {chain.native}
       </p>
       {owns(primary.creator, wallet) ? (
         <p className="mt-2 text-sm tabular-nums">
-          Creator cut {formatSmart(BigInt(primary.feeCreator), chain.nativeDecimals)} {chain.native}
+          {tr("Creator cut")}{" "}{formatSmart(BigInt(primary.feeCreator), chain.nativeDecimals)} {chain.native}
         </p>
       ) : null}
     </div>
@@ -251,8 +252,8 @@ function CurveBlock({ launchId }: { launchId: string }) {
       <div>
         <p className="text-3xl font-extrabold tabular-nums">{formatTokensPerNative(launch.lastPrice)}</p>
         <p className="text-sm text-muted">
-          {launch.symbol} per 1 {chain.native}
-          {launch.lastPrice > 0 ? ` · ${formatPrice(launch.lastPrice)} ${chain.native} each` : ""}
+          {launch.symbol}{" "}{tr("per 1")}{" "}{chain.native}
+          {launch.lastPrice > 0 ? tr(" · {0} {1} each", formatPrice(launch.lastPrice), chain.native) : ""}
           {launch.lastPrice > 0 ? <Dollar chain={launch.chain} nativePerToken={launch.lastPrice} /> : null}
         </p>
       </div>
@@ -265,9 +266,9 @@ function CurveBlock({ launchId }: { launchId: string }) {
         decimals={chain.nativeDecimals}
       />
       <dl className="mt-4 grid grid-cols-3 gap-2 text-sm">
-        <Fee label="Treasury 60%" value={`${formatSmart(BigInt(launch.feePlatform), chain.nativeDecimals)} ${chain.native}`} />
-        <Fee label="Creator 30%" value={`${formatSmart(BigInt(launch.feeCreator), chain.nativeDecimals)} ${chain.native}`} />
-        <Fee label="Referrer 10%" value={`${formatSmart(BigInt(launch.feeReferrer), chain.nativeDecimals)} ${chain.native}`} />
+        <Fee label={tr("Treasury 60%")} value={`${formatSmart(BigInt(launch.feePlatform), chain.nativeDecimals)} ${chain.native}`} />
+        <Fee label={tr("Creator 30%")} value={`${formatSmart(BigInt(launch.feeCreator), chain.nativeDecimals)} ${chain.native}`} />
+        <Fee label={tr("Referrer 10%")} value={`${formatSmart(BigInt(launch.feeReferrer), chain.nativeDecimals)} ${chain.native}`} />
       </dl>
     </div>
   );
@@ -276,7 +277,7 @@ function CurveBlock({ launchId }: { launchId: string }) {
 function Fee({ label, value }: { label: string; value: string }) {
   return (
     <div className="bg-surface p-3 shadow-border">
-      <dt className="text-sm text-muted">{label}</dt>
+      <dt className="text-sm text-muted">{tr(label)}</dt>
       <dd className="mt-1 font-semibold tabular-nums">{value}</dd>
     </div>
   );
@@ -342,14 +343,14 @@ function TradeTicket({ id }: { id: string }) {
           className={cn("min-h-11 font-semibold", side === "buy" ? "bg-cyan text-cyan-ink" : "bg-bg text-muted shadow-border")}
           onClick={() => setSide("buy")}
         >
-          Buy
+          {tr("Buy")}
         </button>
         <button
           type="button"
           className={cn("min-h-11 font-semibold", side === "sell" ? "bg-sell text-cyan-ink" : "bg-bg text-muted shadow-border")}
           onClick={() => setSide("sell")}
         >
-          Sell
+          {tr("Sell")}
         </button>
       </div>
       <label className="block">
@@ -385,15 +386,15 @@ function TradeTicket({ id }: { id: string }) {
         ))}
       </div>
       <p className="min-h-6 text-sm text-muted" aria-live="polite">
-        {preview ? (preview.ok ? preview.line : preview.error) : side === "sell" ? "Sells pay no referrer." : "Quote shows before you fill."}
+        {preview ? (preview.ok ? preview.line : preview.error) : side === "sell" ? tr("Sells pay no referrer.") : tr("Quote shows before you fill.")}
       </p>
       {error ? (
         <p role="alert" className="text-sm text-sell">
-          {error}
+          {tr(error)}
         </p>
       ) : null}
       <Button type="submit" variant={side === "sell" ? "sell" : "cyan"} disabled={launch.graduated}>
-        {launch.graduated ? "Graduated" : side === "buy" ? "Buy the curve" : "Sell the curve"}
+        {launch.graduated ? tr("Graduated") : side === "buy" ? tr("Buy the curve") : tr("Sell the curve")}
       </Button>
     </form>
   );
@@ -420,7 +421,7 @@ export function ContractLine({ chain, address }: { chain: string; address: strin
 
   return (
     <div className="mt-4 bg-surface px-3 py-3 shadow-border">
-      <p className="text-sm font-medium text-cyan">Contract</p>
+      <p className="text-sm font-medium text-cyan">{tr("Contract")}</p>
       <p className="mt-2 text-sm font-semibold break-all">{address}</p>
       <div className="mt-3 flex flex-wrap gap-2">
         <button
@@ -433,11 +434,11 @@ export function ContractLine({ chain, address }: { chain: string; address: strin
             );
           }}
         >
-          Copy contract
+          {tr("Copy contract")}
         </button>
         {href ? (
           <a className="btn-line" href={href}>
-            View on {scan}
+            {tr("View on")}{" "}{scan}
           </a>
         ) : null}
       </div>

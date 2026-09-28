@@ -9,6 +9,7 @@ import { Mark } from "./ui";
 import { ChainMark, type MarkChain } from "./chain-mark";
 import { compactUsd } from "./market-line";
 
+import { tr } from "@/lib/i18n";
 const pad = (n: number) => String(Math.max(0, Math.floor(n))).padStart(2, "0");
 
 function useNow(ms = 1000) {
@@ -33,13 +34,13 @@ export function FerzanHero() {
       <section className="hero-live ticket overflow-hidden">
         <div className="flex flex-wrap items-center gap-2">
           <span className="live-dot" aria-hidden />
-          <span className="text-sm font-semibold text-cyan">FERZAN is live</span>
+          <span className="text-sm font-semibold text-cyan">{tr("FERZAN is live")}</span>
         </div>
         <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <Stat label="Price" value={f.priceUsd ? `$${f.priceUsd.toPrecision(3)}` : "—"} />
-          <Stat label="Market cap" value={compactUsd(f.mcapUsd)} />
-          <Stat label={f.graduated ? "Graduated" : "To graduation"} value={f.progress === null ? "—" : `${f.progress.toFixed(1)}%`} />
-          <Stat label="Burned so far" value={`${Math.round(f.burned).toLocaleString()} FERZAN`} accent />
+          <Stat label={tr("Price")} value={f.priceUsd ? `$${f.priceUsd.toPrecision(3)}` : "—"} />
+          <Stat label={tr("Market cap")} value={compactUsd(f.mcapUsd)} />
+          <Stat label={f.graduated ? tr("Graduated") : tr("To graduation")} value={f.progress === null ? "—" : `${f.progress.toFixed(1)}%`} />
+          <Stat label={tr("Burned so far")} value={`${Math.round(f.burned).toLocaleString()} FERZAN`} accent />
         </div>
         {f.progress !== null ? (
           <div className="mt-4 h-2 overflow-hidden rounded-full bg-line">
@@ -48,13 +49,13 @@ export function FerzanHero() {
         ) : null}
         <div className="mt-5 flex flex-col gap-3 sm:flex-row">
           <a href={`/coin/solana/${f.token}`} className="btn-cyan w-full sm:w-auto">
-            Buy FERZAN
+            {tr("Buy FERZAN")}
           </a>
           <Link to="/ferzan" className="btn-line w-full sm:w-auto">
-            How the burn works
+            {tr("How the burn works")}
           </Link>
         </div>
-        <p className="mt-3 break-all text-xs text-muted">Contract {f.token}</p>
+        <p className="mt-3 break-all text-xs text-muted">{tr("Contract")}{" "}{f.token}</p>
       </section>
     );
   }
@@ -62,8 +63,8 @@ export function FerzanHero() {
   if (left <= 0) {
     return (
       <section className="ticket">
-        <p className="text-sm font-semibold text-cyan">FERZAN is launching now</p>
-        <p className="mt-2 text-sm text-muted">The contract appears here and in @Ferzan_Launches the moment the pool is created. Only trust that address.</p>
+        <p className="text-sm font-semibold text-cyan">{tr("FERZAN is launching now")}</p>
+        <p className="mt-2 text-sm text-muted">{tr("The contract appears here and in @Ferzan_Launches the moment the pool is created. Only trust that address.")}</p>
       </section>
     );
   }
@@ -74,8 +75,8 @@ export function FerzanHero() {
   const s = (left % 60_000) / 1000;
   return (
     <section className="hero-count ticket overflow-hidden" data-floor-rev="3">
-      <p className="text-sm font-semibold text-cyan">FERZAN launches Friday, October 9 · 7:00 PM ET</p>
-      <div className="mt-4 flex flex-wrap gap-2 sm:gap-3" role="timer" aria-live="off" aria-label="Time until FERZAN launches">
+      <p className="text-sm font-semibold text-cyan">{tr("FERZAN launches Friday, October 9 · 7:00 PM ET")}</p>
+      <div className="mt-4 flex flex-wrap gap-2 sm:gap-3" role="timer" aria-live="off" aria-label={tr("Time until FERZAN launches")}>
         {[
           [d, "days"],
           [h, "hours"],
@@ -84,20 +85,19 @@ export function FerzanHero() {
         ].map(([v, label]) => (
           <div key={label as string} className="count-box">
             <span className="block text-3xl font-extrabold tabular-nums sm:text-5xl">{pad(v as number)}</span>
-            <span className="block text-xs uppercase tracking-wider text-muted">{label}</span>
+            <span className="block text-xs uppercase tracking-wider text-muted">{tr(label)}</span>
           </div>
         ))}
       </div>
       <p className="mt-4 max-w-xl text-sm text-muted">
-        The token behind the Ferzan launchpad and bots. Every day, part of the platform's trading fees buys FERZAN and burns it. The contract is posted
-        here and in @Ferzan_Launches at 7:00 PM. Any address before that is fake.
+        {tr("The token behind the Ferzan launchpad and bots. Every day, part of the platform's trading fees buys FERZAN and burns it. The contract is posted here and in @Ferzan_Launches at 7:00 PM. Any address before that is fake.")}
       </p>
       <div className="mt-5 flex flex-col gap-3 sm:flex-row">
         <a href="https://t.me/Ferzan_Launches" target="_blank" rel="noopener noreferrer" className="btn-cyan w-full sm:w-auto">
-          Get the launch alert
+          {tr("Get the launch alert")}
         </a>
         <Link to="/ferzan" className="btn-line w-full sm:w-auto">
-          About FERZAN
+          {tr("About FERZAN")}
         </Link>
       </div>
     </section>
@@ -107,7 +107,7 @@ export function FerzanHero() {
 function Stat({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
   return (
     <div className="min-w-0">
-      <p className="text-xs text-muted">{label}</p>
+      <p className="text-xs text-muted">{tr(label)}</p>
       <p className={cn("truncate text-xl font-extrabold tabular-nums sm:text-2xl", accent && "text-cyan")}>{value}</p>
     </div>
   );
@@ -176,13 +176,13 @@ export function KingOfTheHill() {
         </span>
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-xs font-semibold uppercase tracking-wider text-cyan">{crowned ? "New King of the Hill" : "King of the Hill"}</p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-cyan">{crowned ? tr("New King of the Hill") : tr("King of the Hill")}</p>
         <p className="mt-1 flex items-center gap-1.5">
           <span className="truncate text-xl font-extrabold">${king.symbol}</span>
           {MARKS.has(king.chain) ? <ChainMark id={king.chain as MarkChain} className="h-4 w-4 shrink-0" /> : null}
         </p>
         <p className="truncate text-sm text-muted">
-          {pct.toFixed(0)}% to graduation · {compactUsd(king.mcapUsd)} mcap · {king.trades} trades
+          {pct.toFixed(0)}{tr("% to graduation ·")}{" "}{compactUsd(king.mcapUsd)}{" "}{tr("mcap ·")}{" "}{king.trades}{" "}{tr("trades")}
         </p>
       </div>
     </a>
@@ -207,20 +207,20 @@ export function OnlyOnFerzan() {
   const st = p?.stats;
   return (
     <section>
-      <h2 className="text-2xl">Only on Ferzan</h2>
-      <p className="mt-1 max-w-xl text-sm text-muted">What you get here that a single-chain launchpad doesn't give you.</p>
+      <h2 className="text-2xl">{tr("Only on Ferzan")}</h2>
+      <p className="mt-1 max-w-xl text-sm text-muted">{tr("What you get here that a single-chain launchpad doesn't give you.")}</p>
       {st && st.launches > 0 ? (
         <div className="mt-4 grid grid-cols-3 gap-2 sm:gap-3">
           <div className="ticket">
-            <p className="text-xs text-muted">Coins launched</p>
+            <p className="text-xs text-muted">{tr("Coins launched")}</p>
             <p className="text-2xl font-extrabold tabular-nums">{st.launches.toLocaleString()}</p>
           </div>
           <div className="ticket">
-            <p className="text-xs text-muted">Graduated</p>
+            <p className="text-xs text-muted">{tr("Graduated")}</p>
             <p className="text-2xl font-extrabold tabular-nums">{st.graduated.toLocaleString()}</p>
           </div>
           <div className="ticket">
-            <p className="text-xs text-muted">Chains live</p>
+            <p className="text-xs text-muted">{tr("Chains live")}</p>
             <p className="text-2xl font-extrabold tabular-nums">{st.chains}</p>
           </div>
         </div>
