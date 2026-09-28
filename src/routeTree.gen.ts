@@ -19,6 +19,7 @@ import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as PulseRouteImport } from './routes/pulse'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as CompeteRouteImport } from './routes/compete'
 import { Route as TransparencyRouteImport } from './routes/transparency'
 import { Route as ApiLaunchesRouteImport } from './routes/api/launches'
 import { Route as ApiRelayStatusRouteImport } from './routes/api/relay-status'
@@ -79,6 +80,11 @@ const TermsRoute = TermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CompeteRoute = CompeteRouteImport.update({
+  id: '/compete',
+  path: '/compete',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TransparencyRoute = TransparencyRouteImport.update({
   id: '/transparency',
   path: '/transparency',
@@ -136,6 +142,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/pulse': typeof PulseRoute
   '/terms': typeof TermsRoute
+  '/compete': typeof CompeteRoute
   '/transparency': typeof TransparencyRoute
   '/api/launches': typeof ApiLaunchesRoute
   '/api/relay-status': typeof ApiRelayStatusRoute
@@ -157,6 +164,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/pulse': typeof PulseRoute
   '/terms': typeof TermsRoute
+  '/compete': typeof CompeteRoute
   '/transparency': typeof TransparencyRoute
   '/api/launches': typeof ApiLaunchesRoute
   '/api/relay-status': typeof ApiRelayStatusRoute
@@ -179,6 +187,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/pulse': typeof PulseRoute
   '/terms': typeof TermsRoute
+  '/compete': typeof CompeteRoute
   '/transparency': typeof TransparencyRoute
   '/api/launches': typeof ApiLaunchesRoute
   '/api/relay-status': typeof ApiRelayStatusRoute
@@ -202,6 +211,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/pulse'
     | '/terms'
+    | '/compete'
     | '/transparency'
     | '/api/launches'
     | '/api/relay-status'
@@ -223,6 +233,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/pulse'
     | '/terms'
+    | '/compete'
     | '/transparency'
     | '/api/launches'
     | '/api/relay-status'
@@ -244,6 +255,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/pulse'
     | '/terms'
+    | '/compete'
     | '/transparency'
     | '/api/launches'
     | '/api/relay-status'
@@ -266,6 +278,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   PulseRoute: typeof PulseRoute
   TermsRoute: typeof TermsRoute
+  CompeteRoute: typeof CompeteRoute
   TransparencyRoute: typeof TransparencyRoute
   ApiLaunchesRoute: typeof ApiLaunchesRoute
   ApiRelayStatusRoute: typeof ApiRelayStatusRoute
@@ -349,6 +362,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/compete': {
+      id: '/compete'
+      path: '/compete'
+      fullPath: '/compete'
+      preLoaderRoute: typeof CompeteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/transparency': {
       id: '/transparency'
       path: '/transparency'
@@ -426,6 +446,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   PulseRoute: PulseRoute,
   TermsRoute: TermsRoute,
+  CompeteRoute: CompeteRoute,
   TransparencyRoute: TransparencyRoute,
   ApiLaunchesRoute: ApiLaunchesRoute,
   ApiRelayStatusRoute: ApiRelayStatusRoute,

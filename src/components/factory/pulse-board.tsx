@@ -145,7 +145,10 @@ export function PulseBoard() {
           <h1 className="flex items-center gap-3 text-4xl">
             {tr("Pulse")}{" "}{live ? <span className="live-dot" aria-label={tr("Live")} /> : null}
           </h1>
-          <p className="mt-1 text-sm text-muted">{tr("Every Ferzan launch on every chain, as it happens.")}</p>
+          <p className="mt-1 text-sm text-muted">
+            {tr("Every Ferzan launch on every chain, as it happens.")}{" "}
+            <a href="/compete" className="font-semibold text-cyan">{tr("🏆 Weekly competition →")}</a>
+          </p>
         </div>
         <div className="flex max-w-full gap-1 overflow-x-auto">
           {BOARD_PICKS.filter((p) => p.id === "all" || API_CHAINS.has(p.id)).map((p) => {

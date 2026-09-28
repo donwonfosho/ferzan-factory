@@ -79,8 +79,10 @@ export function LaunchPerksNote() {
 /** Share a coin: link previews show its live card. */
 export function ShareCoin({ chain, token, symbol }: { chain: string; token: string; symbol: string }) {
   const [done, setDone] = useState("");
+  const account = useAccountWallets();
   if (!/^[a-z]{2,12}$/.test(chain) || !/^[0-9A-Za-z_-]{20,70}$/.test(token)) return null;
-  const url = `https://launch.ferzaneco.com/api/share/${chain}/${token}`;
+  const me = !account?.authenticated ? "" : chain === "solana" || chain === "ton" ? (account.solAddress ?? "") : chain === "tron" ? "" : (account.evmAddress ?? "");
+  const url = `https://launch.ferzaneco.com/api/share/${chain}/${token}${me ? `?r=${encodeURIComponent(me)}` : ""}`;
   const text = symbol ? `$${symbol} on Ferzan` : "On Ferzan";
   async function copy() {
     try {
@@ -93,7 +95,10 @@ export function ShareCoin({ chain, token, symbol }: { chain: string; token: stri
   }
   return (
     <div className="ticket flex flex-wrap items-center gap-2">
-      <p className="mr-auto text-sm font-medium text-muted">{tr("Share")}</p>
+      <p className="mr-auto text-sm font-medium text-muted">
+        {tr("Share")}
+        {me ? <span className="block text-xs font-normal">{tr("Buys through your link count for you on the callers board.")}</span> : null}
+      </p>
       <a className="btn-line" href={`https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`} target="_blank" rel="noopener noreferrer">
         {tr("Post on X")}
       </a>

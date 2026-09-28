@@ -24,6 +24,7 @@ import { AlertsButton, WatchButton } from "./watch";
 import { CoinComments } from "./coin-comments";
 
 import { tr } from "@/lib/i18n";
+import { sharedBy } from "@/lib/factory/compete";
 const ZERO = "0x0000000000000000000000000000000000000000";
 const TIMEFRAMES = [
   { tf: 60, label: "1m" },
@@ -64,7 +65,7 @@ function referrerFor(account: string): string {
   let ref = new URLSearchParams(window.location.search).get("ref")?.toLowerCase() ?? "";
   try {
     if (/^0x[0-9a-f]{40}$/.test(ref)) window.sessionStorage.setItem("ferzan-ref", ref);
-    else ref = window.sessionStorage.getItem("ferzan-ref") ?? "";
+    else ref = window.sessionStorage.getItem("ferzan-ref") ?? sharedBy(account).toLowerCase();
   } catch {
     /* private mode: the URL value still works */
   }

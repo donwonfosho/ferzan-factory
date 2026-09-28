@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { siteCoinHref } from "@/lib/factory/bot-curve";
 import { useEffect, useState } from "react";
 import { listTelegramLeaders, type TelegramChain, type TelegramLeader } from "@/lib/factory/telegram-feed";
@@ -54,6 +54,7 @@ function LeaderboardPage() {
       <div>
         <h1 className="text-4xl">{tr("Top creators")}</h1>
         <p className="mt-2 text-muted">{tr("Ranked by coins that graduated, then by trading volume on their curves. Telegram launches, every chain.")}</p>
+        <Link to="/compete" className="mt-2 inline-block text-sm font-semibold text-cyan">{tr("🏆 Weekly competition: top traders and callers →")}</Link>
       </div>
       <div className="flex flex-wrap gap-1.5">
         {PERIODS.map((p) => (

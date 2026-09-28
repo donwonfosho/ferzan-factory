@@ -14,6 +14,7 @@ import { AlertsButton, WatchButton } from "./watch";
 import { CoinComments } from "./coin-comments";
 
 import { tr } from "@/lib/i18n";
+import { creditCall } from "@/lib/factory/compete";
 const TIMEFRAMES = [
   { tf: 60, label: "1m" },
   { tf: 300, label: "5m" },
@@ -135,6 +136,7 @@ export function SolCoinPage({ mint }: { mint: string }) {
       }
       setBusy(tr("Approve it in your wallet."));
       const signature = await w.signAndSend(fromB64(built.txB64));
+      if (side === "buy") creditCall("solana", signature, w.address);
       setLastTx(signature);
       setAmount("");
       setBusy(tr("Sent. Updating in a few seconds."));

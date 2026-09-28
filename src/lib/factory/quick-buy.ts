@@ -9,6 +9,7 @@ import { buildSolSwap } from "@/lib/factory/sol-coin";
 import { evmWallet, solanaWallet } from "@/lib/factory/wallet-bridge";
 import { getReceipt } from "@/lib/factory/relay";
 import { parseDecimal } from "@/lib/factory/units";
+import { creditCall } from "./compete";
 
 export type QuickUnit = "SOL" | "ETH" | "BNB" | "USDC";
 const DEFAULTS: Record<QuickUnit, string> = { SOL: "0.1", ETH: "0.005", BNB: "0.02", USDC: "5" };
@@ -103,7 +104,9 @@ export async function quickBuy(target: { chain: string; id: string }, amount: st
       throw new Error(/insufficient/i.test(built.simError) ? "Not enough SOL for this buy plus fees (keep about 0.01 SOL extra)." : `Solana would reject this buy: ${built.simError}`);
     }
     step("Approve the buy in your wallet.");
-    return w.signAndSend(fromB64(built.txB64));
+    const sig = await w.signAndSend(fromB64(built.txB64));
+    creditCall("solana", sig, w.address);
+    return sig;
   }
   const chain = target.chain as BotCurveChain;
   const curve = target.id.toLowerCase();

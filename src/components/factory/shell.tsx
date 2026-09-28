@@ -20,6 +20,7 @@ import { SearchButton, SearchOverlay } from "./search";
 
 import { tr } from "@/lib/i18n";
 import { LangPicker } from "./lang";
+import { captureRef } from "@/lib/factory/compete";
 const LINKS = [
   { to: "/", label: "Floor" },
   { to: "/pulse", label: "Pulse" },
@@ -40,6 +41,7 @@ export function Shell({ children }: { children: ReactNode }) {
   const account = useAccountWallets();
 
   useEffect(() => {
+    captureRef();
     const done = useFactory.persist.rehydrate();
     void Promise.resolve(done).then(() => {
       const site = readSiteWallet();
@@ -126,6 +128,10 @@ export function Shell({ children }: { children: ReactNode }) {
                     <span className="block font-semibold">{tr("Rewards")}</span>
                     <span className="text-sm text-muted">{tr("Creator fees and your referrer link")}</span>
                   </Link>
+                  <Link to="/compete" className="rounded-xl bg-bg px-3 py-3 shadow-border" onClick={() => setOpen(false)}>
+                    <span className="block font-semibold">{tr("🏆 Weekly competition")}</span>
+                    <span className="text-sm text-muted">{tr("Top traders and top callers this week")}</span>
+                  </Link>
                   <Link to="/docs" className="rounded-xl bg-bg px-3 py-3 shadow-border" onClick={() => setOpen(false)}>
                     <span className="block font-semibold">{tr("Docs")}</span>
                     <span className="text-sm text-muted">{tr("How a launch, a trade, and graduation work")}</span>
@@ -178,6 +184,10 @@ export function Shell({ children }: { children: ReactNode }) {
           {" · "}
           <Link to="/leaderboard" className="text-cyan">
             {tr("Leaderboard")}
+          </Link>
+          {" · "}
+          <Link to="/compete" className="text-cyan">
+            {tr("Competition")}
           </Link>
           {" · "}
           <Link to="/docs" className="text-cyan">
