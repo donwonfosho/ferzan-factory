@@ -17,7 +17,7 @@ export function LangPicker({ className }: { className?: string }) {
   const lang = useLang();
   return (
     <label className={cn("relative inline-flex min-h-10 items-center rounded-lg px-2 text-sm text-muted shadow-border hover:text-fg", className)}>
-      <span aria-hidden className="mr-1">
+      <span aria-hidden className="mr-1 hidden sm:inline">
         🌐
       </span>
       <select

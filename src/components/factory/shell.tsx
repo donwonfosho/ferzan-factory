@@ -68,10 +68,10 @@ export function Shell({ children }: { children: ReactNode }) {
     <div className="min-h-screen">
       <div className="h-px bg-cyan" />
       <header className="sticky top-0 z-40 border-b border-line bg-bg/90 backdrop-blur-md">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-3 px-4 py-3">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-2 px-4 py-3 sm:gap-3">
           <Link to="/" className="mr-auto flex items-center gap-2">
             <img src="/brand/seal.jpg" alt="" className="h-10 w-10 rounded-full object-cover" />
-            <span className="text-base font-semibold text-fg">{tr("Ferzan")}</span>
+            <span className="hidden text-base font-semibold text-fg min-[420px]:inline">{tr("Ferzan")}</span>
           </Link>
           <nav className="order-last flex w-full gap-1 overflow-x-auto sm:order-none sm:w-auto">
             {LINKS.filter((link) => wallet || link.to !== "/login").map((link) => {
