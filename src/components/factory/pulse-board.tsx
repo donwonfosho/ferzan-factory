@@ -43,9 +43,9 @@ function Row({ coin, flash, now }: { coin: TelegramCoin; flash: boolean; now: nu
           {coin.safe ? <span className="shrink-0 text-xs" title={tr("Safe launch")}>🛡️</span> : null}
           <span className="shrink-0 text-xs text-muted">{coin.launchedTs ? age(coin.launchedTs, now) : ""}</span>
         </span>
-        <span className="mt-0.5 flex items-center gap-2 text-xs text-muted">
+        <span className="mt-0.5 flex min-w-0 items-center gap-2 whitespace-nowrap text-xs text-muted">
           <span className="tabular-nums text-fg">{compactUsd(coin.mcapUsd)}</span>
-          <span className="tabular-nums">{coin.trades}{" "}{tr("trades")}</span>
+          <span className="truncate tabular-nums">{coin.trades}{" "}{tr("trades")}</span>
         </span>
         <span className="mt-1 block h-1 overflow-hidden rounded-full bg-line">
           <span className="block h-full bg-cyan transition-[width] duration-700" style={{ width: `${Math.max(2, prog)}%` }} />

@@ -54,7 +54,7 @@ export function PortfolioPnl({ wallets }: { wallets: string[] }) {
       <div className="ticket space-y-4">
         <div className="flex items-baseline justify-between gap-3">
           <h2 className="text-xl">{tr("Your trades on Ferzan")}</h2>
-          {data && data.all.coins ? <p className={cn("text-2xl font-extrabold tabular-nums", data.all.pnlUsd >= 0 ? "text-cyan" : "text-sell")}>{usd(data.all.pnlUsd)}</p> : null}
+          {data && data.all.coins ? <p className={cn("shrink-0 whitespace-nowrap text-2xl font-extrabold tabular-nums", data.all.pnlUsd >= 0 ? "text-cyan" : "text-sell")}>{usd(data.all.pnlUsd)}</p> : null}
         </div>
         {data === undefined ? (
           <p className="text-sm text-muted">{tr("Loading your trades…")}</p>

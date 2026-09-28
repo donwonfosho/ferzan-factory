@@ -7,6 +7,11 @@ import { cn } from "@/lib/cn";
 export function LangRoot({ children }: { children: ReactNode }) {
   const lang = useLang();
   useEffect(() => {
+    const link = new URLSearchParams(window.location.search).get("lang");
+    if (link === "en" || link === "zh" || link === "es") {
+      void setLang(link); // a link like ?lang=zh opens in that language and remembers it
+      return;
+    }
     const want = preferredLang();
     if (want !== "en") void setLang(want, false);
   }, []);
