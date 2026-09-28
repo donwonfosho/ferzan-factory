@@ -15,8 +15,8 @@ import { Route as DocsRouteImport } from './routes/docs'
 import { Route as FerzanRouteImport } from './routes/ferzan'
 import { Route as LaunchRouteImport } from './routes/launch'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
-import { Route as PulseRouteImport } from './routes/pulse'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as PulseRouteImport } from './routes/pulse'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as ApiLaunchesRouteImport } from './routes/api/launches'
 import { Route as ApiRelayStatusRouteImport } from './routes/api/relay-status'
@@ -56,14 +56,14 @@ const LeaderboardRoute = LeaderboardRouteImport.update({
   path: '/leaderboard',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PulseRoute = PulseRouteImport.update({
-  id: '/pulse',
-  path: '/pulse',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PulseRoute = PulseRouteImport.update({
+  id: '/pulse',
+  path: '/pulse',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TermsRoute = TermsRouteImport.update({
@@ -114,8 +114,8 @@ export interface FileRoutesByFullPath {
   '/ferzan': typeof FerzanRoute
   '/launch': typeof LaunchRoute
   '/leaderboard': typeof LeaderboardRoute
-  '/pulse': typeof PulseRoute
   '/login': typeof LoginRoute
+  '/pulse': typeof PulseRoute
   '/terms': typeof TermsRoute
   '/api/launches': typeof ApiLaunchesRoute
   '/api/relay-status': typeof ApiRelayStatusRoute
@@ -132,8 +132,8 @@ export interface FileRoutesByTo {
   '/ferzan': typeof FerzanRoute
   '/launch': typeof LaunchRoute
   '/leaderboard': typeof LeaderboardRoute
-  '/pulse': typeof PulseRoute
   '/login': typeof LoginRoute
+  '/pulse': typeof PulseRoute
   '/terms': typeof TermsRoute
   '/api/launches': typeof ApiLaunchesRoute
   '/api/relay-status': typeof ApiRelayStatusRoute
@@ -151,8 +151,8 @@ export interface FileRoutesById {
   '/ferzan': typeof FerzanRoute
   '/launch': typeof LaunchRoute
   '/leaderboard': typeof LeaderboardRoute
-  '/pulse': typeof PulseRoute
   '/login': typeof LoginRoute
+  '/pulse': typeof PulseRoute
   '/terms': typeof TermsRoute
   '/api/launches': typeof ApiLaunchesRoute
   '/api/relay-status': typeof ApiRelayStatusRoute
@@ -171,8 +171,8 @@ export interface FileRouteTypes {
     | '/ferzan'
     | '/launch'
     | '/leaderboard'
-    | '/pulse'
     | '/login'
+    | '/pulse'
     | '/terms'
     | '/api/launches'
     | '/api/relay-status'
@@ -189,8 +189,8 @@ export interface FileRouteTypes {
     | '/ferzan'
     | '/launch'
     | '/leaderboard'
-    | '/pulse'
     | '/login'
+    | '/pulse'
     | '/terms'
     | '/api/launches'
     | '/api/relay-status'
@@ -207,8 +207,8 @@ export interface FileRouteTypes {
     | '/ferzan'
     | '/launch'
     | '/leaderboard'
-    | '/pulse'
     | '/login'
+    | '/pulse'
     | '/terms'
     | '/api/launches'
     | '/api/relay-status'
@@ -226,8 +226,8 @@ export interface RootRouteChildren {
   FerzanRoute: typeof FerzanRoute
   LaunchRoute: typeof LaunchRoute
   LeaderboardRoute: typeof LeaderboardRoute
-  PulseRoute: typeof PulseRoute
   LoginRoute: typeof LoginRoute
+  PulseRoute: typeof PulseRoute
   TermsRoute: typeof TermsRoute
   ApiLaunchesRoute: typeof ApiLaunchesRoute
   ApiRelayStatusRoute: typeof ApiRelayStatusRoute
@@ -282,18 +282,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LeaderboardRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/pulse': {
-      id: '/pulse'
-      path: '/pulse'
-      fullPath: '/pulse'
-      preLoaderRoute: typeof PulseRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/login': {
       id: '/login'
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pulse': {
+      id: '/pulse'
+      path: '/pulse'
+      fullPath: '/pulse'
+      preLoaderRoute: typeof PulseRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/terms': {
@@ -362,8 +362,8 @@ const rootRouteChildren: RootRouteChildren = {
   FerzanRoute: FerzanRoute,
   LaunchRoute: LaunchRoute,
   LeaderboardRoute: LeaderboardRoute,
-  PulseRoute: PulseRoute,
   LoginRoute: LoginRoute,
+  PulseRoute: PulseRoute,
   TermsRoute: TermsRoute,
   ApiLaunchesRoute: ApiLaunchesRoute,
   ApiRelayStatusRoute: ApiRelayStatusRoute,
