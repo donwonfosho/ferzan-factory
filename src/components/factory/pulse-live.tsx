@@ -106,7 +106,7 @@ export function TradeTape() {
 }
 
 /* ---------------- graduation celebration ---------------- */
-function confetti(canvas: HTMLCanvasElement) {
+export function confetti(canvas: HTMLCanvasElement) {
   const ctx = canvas.getContext("2d");
   if (!ctx) return () => {};
   const w = (canvas.width = window.innerWidth);

@@ -46,6 +46,11 @@ function AboutPage() {
             </Link>
           </li>
         </ul>
+        <p className="text-sm">
+          <Link to="/transparency" className="font-semibold text-cyan">
+            Every number behind Ferzan, with receipts →
+          </Link>
+        </p>
         <p className="text-sm text-muted">
           Ferzan never holds your funds. Every launch and trade is signed by your own wallet. Nothing on this site is financial advice or a promise of price or
           profit.

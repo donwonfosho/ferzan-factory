@@ -39,6 +39,11 @@ export function CreatorScoreBox({ token }: { token: string }) {
           ))}
         </ul>
       ) : null}
+      {cs.creator ? (
+        <a className="inline-block text-sm font-semibold text-cyan" href={`/creator/${cs.creator}`}>
+          All launches by this creator →
+        </a>
+      ) : null}
       <p className="text-xs text-muted">
         From Ferzan's own launch records: other coins by this creator, launch sprees and what the dev bought and sold on the curve. A
         signal, not a guarantee.

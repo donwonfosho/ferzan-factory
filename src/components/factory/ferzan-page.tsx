@@ -154,6 +154,11 @@ export function FerzanPage() {
           </li>
           <li>No transfer tax. No staking promises. Nothing here is a promise of price or profit.</li>
         </ul>
+        <p className="mt-3 text-sm">
+          <a className="font-semibold text-cyan" href="/transparency">
+            See every buyback and burn, with its transactions →
+          </a>
+        </p>
       </section>
 
       <OnlyOnFerzan />

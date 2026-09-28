@@ -7,7 +7,7 @@ import { createServerFn } from "@tanstack/react-start";
 
 const API = "https://launch.ferzaneco.com/api";
 
-export type CreatorScore = { score: number; label: "Good" | "Caution" | "Risky"; lines: string[]; badge: string };
+export type CreatorScore = { score: number; label: "Good" | "Caution" | "Risky"; lines: string[]; badge: string; creator: string };
 
 const ADDRESS = /^(0x[0-9a-fA-F]{40}|[1-9A-HJ-NP-Za-km-z]{32,48}|[EUk]Q[A-Za-z0-9_-]{46})$/;
 
@@ -30,5 +30,6 @@ export const getCreatorScore = createServerFn({ method: "GET" })
     const label = it.label === "Good" || it.label === "Caution" || it.label === "Risky" ? it.label : "Caution";
     const lines = Array.isArray(it.lines) ? it.lines.filter((x): x is string => typeof x === "string").map((x) => x.slice(0, 120)).slice(0, 6) : [];
     const badge = typeof it.ferzan_badge === "string" ? it.ferzan_badge.slice(0, 40) : "";
-    return { score, label, lines, badge };
+    const creator = typeof it.creator === "string" && ADDRESS.test(it.creator) ? it.creator : "";
+    return { score, label, lines, badge, creator };
   });

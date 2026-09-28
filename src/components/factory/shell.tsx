@@ -186,6 +186,10 @@ export function Shell({ children }: { children: ReactNode }) {
             About
           </Link>
           {" · "}
+          <Link to="/transparency" className="text-cyan">
+            Transparency
+          </Link>
+          {" · "}
           <Link to="/terms" className="text-cyan">
             Terms
           </Link>

@@ -25,6 +25,7 @@ import { ProjectPicture } from "./launch-form";
 import { TermsGate } from "./terms";
 import { Button, Label, TextInput } from "./ui";
 import { LaunchPerksNote } from "./perks";
+import { LaunchCelebration, LaunchPreview } from "./launch-preview";
 
 function bytesFromHex(hex: string): Uint8Array<ArrayBuffer> {
   const out = new Uint8Array(hex.length / 2);
@@ -280,6 +281,7 @@ export function OwnWalletLaunch() {
             Launch another
           </button>
         </div>
+        <LaunchCelebration chain={launched.chain} token={launched.token} symbol={launched.symbol} />
       </div>
     );
   }
@@ -408,6 +410,7 @@ export function OwnWalletLaunch() {
         </div>
       </div>
 
+      <LaunchPreview chain={chain} name={name} symbol={symbol} image={image} description={description} devBuy={devBuy} startMinutes={startMinutes} plain={plain} />
       {wallet ? <p className="break-all text-xs text-muted">Wallet {wallet}</p> : null}
       {error ? <p className="text-sm text-sell">{error}</p> : null}
       {error.startsWith("No Tron wallet") ? (

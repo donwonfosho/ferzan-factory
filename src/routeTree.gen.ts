@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
+import { Route as TransparencyRouteImport } from './routes/transparency'
 import { Route as BotsRouteImport } from './routes/bots'
 import { Route as DocsRouteImport } from './routes/docs'
 import { Route as FerzanRouteImport } from './routes/ferzan'
@@ -22,6 +23,7 @@ import { Route as TermsRouteImport } from './routes/terms'
 import { Route as ApiLaunchesRouteImport } from './routes/api/launches'
 import { Route as ApiRelayStatusRouteImport } from './routes/api/relay-status'
 import { Route as PAddressRouteImport } from './routes/p/$address'
+import { Route as CreatorWalletRouteImport } from './routes/creator/$wallet'
 import { Route as TIdRouteImport } from './routes/t/$id'
 import { Route as CChainAddressRouteImport } from './routes/c/$chain/$address'
 import { Route as CoinChainCurveRouteImport } from './routes/coin/$chain/$curve'
@@ -35,6 +37,11 @@ const IndexRoute = IndexRouteImport.update({
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TransparencyRoute = TransparencyRouteImport.update({
+  id: '/transparency',
+  path: '/transparency',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BotsRoute = BotsRouteImport.update({
@@ -92,6 +99,11 @@ const PAddressRoute = PAddressRouteImport.update({
   path: '/p/$address',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CreatorWalletRoute = CreatorWalletRouteImport.update({
+  id: '/creator/$wallet',
+  path: '/creator/$wallet',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TIdRoute = TIdRouteImport.update({
   id: '/t/$id',
   path: '/t/$id',
@@ -116,6 +128,7 @@ const TokenChainAddressRoute = TokenChainAddressRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/transparency': typeof TransparencyRoute
   '/bots': typeof BotsRoute
   '/docs': typeof DocsRoute
   '/ferzan': typeof FerzanRoute
@@ -127,6 +140,7 @@ export interface FileRoutesByFullPath {
   '/api/launches': typeof ApiLaunchesRoute
   '/api/relay-status': typeof ApiRelayStatusRoute
   '/p/$address': typeof PAddressRoute
+  '/creator/$wallet': typeof CreatorWalletRoute
   '/t/$id': typeof TIdRoute
   '/c/$chain/$address': typeof CChainAddressRoute
   '/coin/$chain/$curve': typeof CoinChainCurveRoute
@@ -135,6 +149,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/transparency': typeof TransparencyRoute
   '/bots': typeof BotsRoute
   '/docs': typeof DocsRoute
   '/ferzan': typeof FerzanRoute
@@ -146,6 +161,7 @@ export interface FileRoutesByTo {
   '/api/launches': typeof ApiLaunchesRoute
   '/api/relay-status': typeof ApiRelayStatusRoute
   '/p/$address': typeof PAddressRoute
+  '/creator/$wallet': typeof CreatorWalletRoute
   '/t/$id': typeof TIdRoute
   '/c/$chain/$address': typeof CChainAddressRoute
   '/coin/$chain/$curve': typeof CoinChainCurveRoute
@@ -155,6 +171,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/transparency': typeof TransparencyRoute
   '/bots': typeof BotsRoute
   '/docs': typeof DocsRoute
   '/ferzan': typeof FerzanRoute
@@ -166,6 +183,7 @@ export interface FileRoutesById {
   '/api/launches': typeof ApiLaunchesRoute
   '/api/relay-status': typeof ApiRelayStatusRoute
   '/p/$address': typeof PAddressRoute
+  '/creator/$wallet': typeof CreatorWalletRoute
   '/t/$id': typeof TIdRoute
   '/c/$chain/$address': typeof CChainAddressRoute
   '/coin/$chain/$curve': typeof CoinChainCurveRoute
@@ -176,6 +194,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/about'
+    | '/transparency'
     | '/bots'
     | '/docs'
     | '/ferzan'
@@ -187,6 +206,7 @@ export interface FileRouteTypes {
     | '/api/launches'
     | '/api/relay-status'
     | '/p/$address'
+    | '/creator/$wallet'
     | '/t/$id'
     | '/c/$chain/$address'
     | '/coin/$chain/$curve'
@@ -195,6 +215,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/about'
+    | '/transparency'
     | '/bots'
     | '/docs'
     | '/ferzan'
@@ -206,6 +227,7 @@ export interface FileRouteTypes {
     | '/api/launches'
     | '/api/relay-status'
     | '/p/$address'
+    | '/creator/$wallet'
     | '/t/$id'
     | '/c/$chain/$address'
     | '/coin/$chain/$curve'
@@ -214,6 +236,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/about'
+    | '/transparency'
     | '/bots'
     | '/docs'
     | '/ferzan'
@@ -225,6 +248,7 @@ export interface FileRouteTypes {
     | '/api/launches'
     | '/api/relay-status'
     | '/p/$address'
+    | '/creator/$wallet'
     | '/t/$id'
     | '/c/$chain/$address'
     | '/coin/$chain/$curve'
@@ -234,6 +258,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
+  TransparencyRoute: typeof TransparencyRoute
   BotsRoute: typeof BotsRoute
   DocsRoute: typeof DocsRoute
   FerzanRoute: typeof FerzanRoute
@@ -245,6 +270,7 @@ export interface RootRouteChildren {
   ApiLaunchesRoute: typeof ApiLaunchesRoute
   ApiRelayStatusRoute: typeof ApiRelayStatusRoute
   PAddressRoute: typeof PAddressRoute
+  CreatorWalletRoute: typeof CreatorWalletRoute
   TIdRoute: typeof TIdRoute
   CChainAddressRoute: typeof CChainAddressRoute
   CoinChainCurveRoute: typeof CoinChainCurveRoute
@@ -265,6 +291,13 @@ declare module '@tanstack/react-router' {
       path: '/about'
       fullPath: '/about'
       preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/transparency': {
+      id: '/transparency'
+      path: '/transparency'
+      fullPath: '/transparency'
+      preLoaderRoute: typeof TransparencyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/bots': {
@@ -344,6 +377,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PAddressRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/creator/$wallet': {
+      id: '/creator/$wallet'
+      path: '/creator/$wallet'
+      fullPath: '/creator/$wallet'
+      preLoaderRoute: typeof CreatorWalletRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/t/$id': {
       id: '/t/$id'
       path: '/t/$id'
@@ -378,6 +418,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
+  TransparencyRoute: TransparencyRoute,
   BotsRoute: BotsRoute,
   DocsRoute: DocsRoute,
   FerzanRoute: FerzanRoute,
@@ -389,6 +430,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiLaunchesRoute: ApiLaunchesRoute,
   ApiRelayStatusRoute: ApiRelayStatusRoute,
   PAddressRoute: PAddressRoute,
+  CreatorWalletRoute: CreatorWalletRoute,
   TIdRoute: TIdRoute,
   CChainAddressRoute: CChainAddressRoute,
   CoinChainCurveRoute: CoinChainCurveRoute,

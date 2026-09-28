@@ -54,6 +54,9 @@ export function PublicProfile({ address }: { address: string }) {
         {image ? <img src={image} alt="" className="h-16 w-16 object-cover shadow-border" /> : null}
         <div>
           <h1 className="text-4xl">{name || "Profile"}</h1>
+          <a className="mt-1 inline-block text-sm text-cyan" href={`/creator/${address}`}>
+            Full Ferzan launch record →
+          </a>
           {bio ? <p className="mt-2 text-muted">{bio}</p> : null}
         </div>
       </div>
