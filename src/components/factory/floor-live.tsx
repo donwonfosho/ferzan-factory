@@ -73,7 +73,7 @@ export function FerzanHero() {
   const m = (left % 3_600_000) / 60_000;
   const s = (left % 60_000) / 1000;
   return (
-    <section className="hero-count ticket overflow-hidden">
+    <section className="hero-count ticket overflow-hidden" data-floor-rev="3">
       <p className="text-sm font-semibold text-cyan">FERZAN launches Friday, October 9 · 7:00 PM ET</p>
       <div className="mt-4 flex flex-wrap gap-2 sm:gap-3" role="timer" aria-live="off" aria-label="Time until FERZAN launches">
         {[
