@@ -17,7 +17,7 @@ const HEADERS: Record<string, string> = {
 };
 
 export default async function securityHeadersMiddleware(
-  _event: unknown,
+  event: { url?: URL },
   next: () => unknown | Promise<unknown>,
 ): Promise<unknown> {
   const result = await next();
@@ -25,6 +25,12 @@ export default async function securityHeadersMiddleware(
   const headers = new Headers(result.headers);
   for (const [key, value] of Object.entries(HEADERS)) {
     if (!headers.has(key)) headers.set(key, value);
+  }
+  // A missing script must not be cached. grok.me otherwise remembers the 404 for a year.
+  const path = event.url?.pathname ?? "";
+  const type = headers.get("content-type") ?? "";
+  if (/\.(?:js|mjs|css)$/.test(path) && type.includes("text/html")) {
+    headers.set("cache-control", "no-store");
   }
   return new Response(result.body, { status: result.status, statusText: result.statusText, headers });
 }

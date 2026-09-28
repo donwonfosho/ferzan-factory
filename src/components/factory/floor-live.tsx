@@ -1,4 +1,4 @@
-/** Live floor sections. File revision so a cached 404 of the previous script name is not reused. */
+/** Live floor sections. Revision 2: the previous script name is stuck as a missing file on grok.me. */
 import { Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { listTelegram, type TelegramCoin } from "@/lib/factory/telegram-feed";
