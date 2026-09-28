@@ -17,16 +17,53 @@ type TronWebLike = {
 };
 type TronLinkLike = { request: (args: { method: string }) => Promise<unknown>; tronWeb?: TronWebLike };
 
-function tronGlobals(): { tronLink?: TronLinkLike; tronWeb?: TronWebLike } {
+type TronHost = { tronLink?: TronLinkLike; tronWeb?: TronWebLike };
+
+/** TronLink, or another wallet that offers the same Tron interface (OKX, Bitget, Trust). */
+function tronGlobals(): TronHost {
   if (typeof window === "undefined") return {};
-  return window as unknown as { tronLink?: TronLinkLike; tronWeb?: TronWebLike };
+  const w = window as unknown as TronHost & Record<string, { tronLink?: TronLinkLike } | undefined>;
+  if (w.tronLink || w.tronWeb) return { tronLink: w.tronLink, tronWeb: w.tronWeb };
+  for (const k of ["okxwallet", "bitkeep", "trustwallet"]) {
+    const link = w[k]?.tronLink;
+    if (link) return { tronLink: link, tronWeb: link.tronWeb };
+  }
+  return {};
+}
+
+/** Wallets add their Tron object a moment after the page loads: wait up to ~3 seconds for it. */
+async function waitForTron(): Promise<TronHost> {
+  let g = tronGlobals();
+  if (g.tronLink || g.tronWeb || typeof window === "undefined") return g;
+  await new Promise<void>((resolve) => {
+    const done = () => {
+      window.removeEventListener("tronLink#initialized", done);
+      clearInterval(timer);
+      clearTimeout(stop);
+      resolve();
+    };
+    window.addEventListener("tronLink#initialized", done);
+    const timer = setInterval(() => {
+      if (tronGlobals().tronLink || tronGlobals().tronWeb) done();
+    }, 250);
+    const stop = setTimeout(done, 3000);
+  });
+  g = tronGlobals();
+  return g;
+}
+
+/** Opens this page inside the TronLink phone app (its built-in browser has the wallet). */
+export function tronLinkAppLink(): string {
+  if (typeof window === "undefined") return "https://www.tronlink.org/";
+  const param = { url: window.location.href, action: "open", protocol: "tronlink", version: "1.0" };
+  return `tronlinkoutside://pull.activity?param=${encodeURIComponent(JSON.stringify(param))}`;
 }
 
 /** Connects TronLink and returns the visitor's Tron address. */
 export async function tronWallet(): Promise<{ address: string; signAndSend: (transactionJson: string) => Promise<string> }> {
-  const g = tronGlobals();
+  const g = await waitForTron();
   if (!g.tronLink && !g.tronWeb) {
-    throw new WalletNeeded("No Tron wallet found. Install TronLink, or open this page in the TronLink app's browser.");
+    throw new WalletNeeded("No Tron wallet found in this browser. Use one of the options below.");
   }
   if (g.tronLink) {
     const res = (await g.tronLink.request({ method: "tron_requestAccounts" }).catch(() => null)) as { code?: number } | null;

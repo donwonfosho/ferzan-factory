@@ -12,7 +12,7 @@ import {
   type EvmLaunchTx,
   type SolanaLaunchTx,
 } from "@/lib/factory/bot-launch";
-import { tonWallet, tronWallet } from "@/lib/factory/tron-ton-wallets";
+import { tonWallet, tronLinkAppLink, tronWallet } from "@/lib/factory/tron-ton-wallets";
 import { explorerTx, type EvmChainId } from "@/lib/factory/deploy";
 import { siteCoinHref } from "@/lib/factory/bot-curve";
 import { getReceipt } from "@/lib/factory/relay";
@@ -406,7 +406,32 @@ export function OwnWalletLaunch() {
 
       {wallet ? <p className="break-all text-xs text-muted">Wallet {wallet}</p> : null}
       {error ? <p className="text-sm text-sell">{error}</p> : null}
-      {error.startsWith("No ") && !plain ? (
+      {error.startsWith("No Tron wallet") ? (
+        <div className="space-y-1 text-sm">
+          <p>
+            <b>On a phone:</b>{" "}
+            <a className="font-semibold text-cyan" href={tronLinkAppLink()}>
+              Open this page in the TronLink app
+            </a>{" "}
+            (install TronLink first if you don't have it).
+          </p>
+          <p>
+            <b>On a computer:</b> add the{" "}
+            <a className="font-semibold text-cyan" href="https://www.tronlink.org/" target="_blank" rel="noopener noreferrer">
+              TronLink extension
+            </a>
+            , unlock it, then reload this page.
+          </p>
+          <p>
+            <b>No TronLink?</b> Launch from your Ferzan Trade Bot wallet in{" "}
+            <a className="font-semibold text-cyan" href="https://t.me/Ferzan_Launch_Bot?start=launch" target="_blank" rel="noopener noreferrer">
+              @Ferzan_Launch_Bot
+            </a>{" "}
+            (pick Tron).
+          </p>
+        </div>
+      ) : null}
+      {error.startsWith("No ") && !error.startsWith("No Tron") && !plain ? (
         <p className="text-sm">
           <a className="font-semibold text-cyan" href={evm ? links.metamask : links.phantom}>
             Open in the {evm ? "MetaMask" : "Phantom"} app
