@@ -7,6 +7,7 @@ import { BOARD_PICKS, coinHref } from "./launch-board";
 import { compactUsd } from "./market-line";
 import { QuickBuyBar, QuickBuyButton } from "./quick-buy";
 import { Mark } from "./ui";
+import { WatchlistStrip } from "./watch";
 
 const COLS: { sort: TelegramSort; title: string; hint: string }[] = [
   { sort: "new", title: "New", hint: "Just launched" },
@@ -38,6 +39,7 @@ function Row({ coin, flash, now }: { coin: TelegramCoin; flash: boolean; now: nu
         <span className="flex items-center gap-1.5">
           <span className="truncate font-semibold">${coin.symbol}</span>
           {MARKS.has(coin.chain) ? <ChainMark id={coin.chain as MarkChain} className="h-3.5 w-3.5 shrink-0" /> : null}
+          {coin.safe ? <span className="shrink-0 text-xs" title="Safe launch">🛡️</span> : null}
           <span className="shrink-0 text-xs text-muted">{coin.launchedTs ? age(coin.launchedTs, now) : ""}</span>
         </span>
         <span className="mt-0.5 flex items-center gap-2 text-xs text-muted">
@@ -160,6 +162,7 @@ export function PulseBoard() {
           })}
         </div>
       </div>
+      <WatchlistStrip />
       <QuickBuyBar />
       <div className="grid grid-cols-3 gap-1 lg:hidden" role="tablist">
         {COLS.map((c, i) => (

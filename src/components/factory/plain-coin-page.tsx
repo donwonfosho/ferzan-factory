@@ -3,6 +3,8 @@ import { getPlainCoin, type PlainChain, type PlainCoin } from "@/lib/factory/pla
 import { ChainMark } from "./chain-mark";
 import { CreatorScoreBox } from "./creator-score";
 import { ShareCoin } from "./perks";
+import { WatchButton } from "./watch";
+import { CoinComments } from "./coin-comments";
 
 const short = (a: string) => (a.length > 12 ? `${a.slice(0, 4)}…${a.slice(-4)}` : a);
 
@@ -75,6 +77,10 @@ export function PlainCoinPage({ chain, token }: { chain: PlainChain; token: stri
       </div>
 
       <ShareCoin chain={coin.chain} token={coin.token} symbol={coin.symbol} />
+      <div className="flex flex-wrap gap-2">
+        <WatchButton chain={coin.chain} token={coin.token} symbol={coin.symbol} path={`/token/${coin.chain}/${coin.token}`} />
+      </div>
+      <CoinComments chain={coin.chain} token={coin.token} creator={coin.creator} />
       <CreatorScoreBox token={coin.token} />
 
       <div className="grid grid-cols-2 gap-2 sm:gap-3">

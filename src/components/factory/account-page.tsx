@@ -27,6 +27,7 @@ import { readPrefs, writePrefs, type ChartPlot, type LaunchAlerts } from "@/lib/
 import { FundButton } from "./fund-wallet";
 import type { EvmChainId } from "@/lib/factory/deploy";
 import { FerzanPerksCard, InstallApp } from "./perks";
+import { PortfolioPnl } from "./portfolio-pnl";
 
 const PROFILE_ID = "ferzan-profile-id";
 
@@ -343,6 +344,7 @@ export function AccountPage() {
         <>
           <h1 className="text-3xl">Portfolio</h1>
           <AccountPortfolio evm={mineEvm} sol={mineSol} />
+          <PortfolioPnl wallets={[mineEvm ?? "", mineSol ?? ""]} />
           <div className="mt-4 flex flex-wrap gap-2">
             {mineEvm ? (
               <Link to="/p/$address" params={{ address: mineEvm }} className="btn-line">

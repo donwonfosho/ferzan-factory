@@ -218,6 +218,7 @@ export function LaunchCard({ coin, flash = false }: { coin: TelegramCoin; flash?
             {MARKS.has(coin.chain) ? <ChainMark id={coin.chain as MarkChain} className="h-4 w-4 shrink-0" /> : null}
             {coin.graduated ? <span className="text-xs text-cyan">Graduated</span> : null}
             {coin.source === "site" ? <span className="text-xs text-muted">Site</span> : null}
+            {coin.safe ? <span className="text-xs font-semibold text-cyan" title="Safe launch: small or no dev buy, no dev selling, no launch spree">🛡️ Safe</span> : null}
           </span>
           <span className="block truncate text-sm text-muted">{coin.name}</span>
         </span>

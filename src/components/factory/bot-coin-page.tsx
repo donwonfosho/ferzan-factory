@@ -20,6 +20,8 @@ import { CreatorScoreBox } from "./creator-score";
 import { ShareCoin } from "./perks";
 import { useLive, sameCoin } from "@/lib/factory/live";
 import { HoldersPanel, PnlShare } from "./coin-extras";
+import { AlertsButton, WatchButton } from "./watch";
+import { CoinComments } from "./coin-comments";
 
 const ZERO = "0x0000000000000000000000000000000000000000";
 const TIMEFRAMES = [
@@ -264,8 +266,13 @@ export function BotCoinPage({ chain, curve }: { chain: BotCurveChain; curve: str
       </div>
 
       <ShareCoin chain={state.chain} token={state.token} symbol={state.symbol} />
+      <div className="flex flex-wrap gap-2">
+        <WatchButton chain={state.chain} token={state.token} symbol={state.symbol} path={`/coin/${state.chain}/${curve.toLowerCase()}`} />
+        <AlertsButton chain={state.chain} token={state.token} />
+      </div>
       <PnlShare chain={state.chain} token={state.token} wallet={pnlWallet} />
       <HoldersPanel chain={state.chain} token={state.token} />
+      <CoinComments chain={state.chain} token={state.token} creator={state.creator} />
       <CreatorScoreBox token={state.token} />
 
       <div className="grid grid-cols-3 gap-2 sm:gap-3">

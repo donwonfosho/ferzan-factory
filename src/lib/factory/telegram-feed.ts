@@ -25,6 +25,8 @@ export type TelegramCoin = {
   /** "site" when it was launched on this website, otherwise "telegram". */
   source: string;
   native: string;
+  /** Safe launch: small or no dev buy, no dev selling, no launch spree. */
+  safe: boolean;
 };
 
 export type TelegramLeader = {
@@ -88,6 +90,7 @@ function toCoin(raw: unknown): TelegramCoin {
     creatorGraduated: num(stats.graduated),
     source: it.source === "site" ? "site" : "telegram",
     native: str(it.native).slice(0, 6),
+    safe: it.safe === true,
   };
 }
 

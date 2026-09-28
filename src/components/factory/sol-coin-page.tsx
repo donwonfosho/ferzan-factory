@@ -10,6 +10,8 @@ import { CreatorScoreBox } from "./creator-score";
 import { ShareCoin } from "./perks";
 import { useLive } from "@/lib/factory/live";
 import { HoldersPanel, PnlShare } from "./coin-extras";
+import { AlertsButton, WatchButton } from "./watch";
+import { CoinComments } from "./coin-comments";
 
 const TIMEFRAMES = [
   { tf: 60, label: "1m" },
@@ -186,8 +188,13 @@ export function SolCoinPage({ mint }: { mint: string }) {
       </div>
 
       <ShareCoin chain="solana" token={coin.mint} symbol={coin.symbol} />
+      <div className="flex flex-wrap gap-2">
+        <WatchButton chain="solana" token={coin.mint} symbol={coin.symbol} path={`/coin/solana/${coin.mint}`} />
+        <AlertsButton chain="solana" token={coin.mint} />
+      </div>
       <PnlShare chain="solana" token={coin.mint} wallet={knownWallet} />
       <HoldersPanel chain="solana" token={coin.mint} />
+      <CoinComments chain="solana" token={coin.mint} creator={coin.creator} />
       <CreatorScoreBox token={coin.mint} />
 
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
