@@ -94,7 +94,7 @@ export function LaunchPreview({
           </>
         ) : null}
         <dt className="text-muted">{tr("Network")}</dt>
-        <dd>{FEE[chain].extra}</dd>
+        <dd>{chain === "tron" && !plain ? "about 50 TRX of Tron energy" : FEE[chain].extra}</dd>
         {!plain && chain !== "solana" ? (
           <>
             <dt className="text-muted">{tr("Trading")}</dt>

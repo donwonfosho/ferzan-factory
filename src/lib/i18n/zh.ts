@@ -1056,6 +1056,21 @@ const dict: Record<string, string> = {
   "Profit": "收益",
   "Callers": "喊单者",
   "1 call · {0} buyers through the link · {1}": "1 次喊单 · {0} 人通过链接买入 · {1}",
+  "Approve in TronLink: {0} TRX (launch fee and first buy) + about 50 TRX of network energy.": "在 TronLink 中确认：{0} TRX（发射费和首次买入）+ 约 50 TRX 网络能量。",
+  "Approve the buy in TronLink.": "请在 TronLink 中确认买入。",
+  "Approve the sell in TronLink.": "请在 TronLink 中确认卖出。",
+  "Keep about 40 TRX in the wallet for Tron network energy on top of what you spend.": "除了你要花费的金额，钱包里还需保留约 40 TRX 作为波场网络能量。",
+  "Sent. Waiting for Tron to confirm.": "已发送。等待波场确认。",
+  "That is not a Ferzan curve.": "这不是 Ferzan 曲线。",
+  "The TRX amount looks wrong. Nothing was sent.": "TRX 金额有误。未发送任何内容。",
+  "The service sent a transaction we cannot use.": "服务返回了无法使用的交易。",
+  "The transaction does not go to the right contract. Nothing was sent.": "该交易没有发往正确的合约。未发送任何内容。",
+  "The transaction was built for another wallet. Nothing was sent.": "该交易是为另一个钱包构建的。未发送任何内容。",
+  "This curve is full. Its SunSwap pool opens in a moment.": "这条曲线已满，SunSwap 池即将开启。",
+  "Trading on the curve is closed. The SunSwap pool opens in a moment.": "曲线交易已关闭，SunSwap 池即将开启。",
+  "Tron address looks wrong.": "波场地址有误。",
+  "Tron also charges network energy, usually 20 to 40 TRX per trade, paid to the network and not to Ferzan.": "波场还会收取网络能量，通常每笔交易 20 至 40 TRX，付给网络而不是 Ferzan。",
+  "Tron bonding curve: 1,000,000,000 supply, trades on the curve from the first second, then moves to a SunSwap pool. Cost: 5 TRX launch fee + about 50 TRX of Tron energy + your first buy, if any.": "波场联合曲线：总量 1,000,000,000，从第一秒起就在曲线上交易，之后迁移到 SunSwap 池。费用：5 TRX 发射费 + 约 50 TRX 波场能量 + 你的首次买入（如有）。",
 };
 
 export default dict;

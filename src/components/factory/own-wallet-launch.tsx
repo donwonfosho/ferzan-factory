@@ -1,14 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { WalletNeeded, evmWallet, solanaWallet } from "@/lib/factory/wallet-bridge";
 import {
   BOT_LAUNCH_CHAINS,
   GRAD_PRESETS,
   LAUNCH_CHAIN_META,
   finishBotLaunch,
+  getChainModes,
   isPlainLaunch,
   startBotLaunch,
   type BotLaunchChain,
-  type CurveLaunchChain,
+  type ChainModes,
   type EvmLaunchTx,
   type SolanaLaunchTx,
 } from "@/lib/factory/bot-launch";
@@ -95,14 +96,27 @@ export function OwnWalletLaunch() {
   const [needTerms, setNeedTerms] = useState(false);
   const [launched, setLaunched] = useState<Launched | null>(null);
 
-  const plain = isPlainLaunch(chain);
+  // Tron and TON launch a standard coin until their bonding curve is open; then the curve is the default.
+  const [modes, setModes] = useState<ChainModes>({});
+  useEffect(() => {
+    let stop = false;
+    getChainModes()
+      .then((m) => !stop && setModes(m))
+      .catch(() => undefined);
+    return () => {
+      stop = true;
+    };
+  }, []);
+  const curveOpen = modes[chain]?.curve === true;
+  const plain = isPlainLaunch(chain) && !curveOpen;
   const evm = chain !== "solana" && !plain;
   const meta = LAUNCH_CHAIN_META[chain];
 
   function pickChain(next: BotLaunchChain) {
     setChain(next);
     setWallet("");
-    if (next !== "solana" && !isPlainLaunch(next)) setGrad(GRAD_PRESETS[next as CurveLaunchChain][1]);
+    const presets = (GRAD_PRESETS as Record<string, string[] | undefined>)[next];
+    if (next !== "solana" && presets) setGrad(presets[1]);
   }
 
   // Signed in -> the account's wallet; otherwise a browser extension; otherwise the sign-in opens.
@@ -189,12 +203,17 @@ export function OwnWalletLaunch() {
           x: xHandle.trim(),
           telegram: telegram.trim(),
           supplyWhole: plain ? supply.trim() : "1000000000",
+          mode: isPlainLaunch(chain) && plain ? "plain" : "",
         },
       });
       let txHash: string;
       let mint = "";
       if (built.kind === "tron") {
-        setBusy(tr("Approve in TronLink: {0} TRX launch fee + about 16 TRX of network energy.", formatSmart(BigInt(built.feeSun), 6)));
+        setBusy(
+          plain
+            ? tr("Approve in TronLink: {0} TRX launch fee + about 16 TRX of network energy.", formatSmart(BigInt(built.feeSun), 6))
+            : tr("Approve in TronLink: {0} TRX (launch fee and first buy) + about 50 TRX of network energy.", formatSmart(BigInt(built.feeSun), 6)),
+        );
         const { signAndSend } = await tronWallet();
         txHash = await signAndSend(built.transactionJson);
         setHash(txHash);
@@ -331,6 +350,11 @@ export function OwnWalletLaunch() {
             <LaunchPerksNote />
           </>
         ) : null}
+        {chain === "tron" && !plain ? (
+          <p className="mt-2 text-xs text-muted">
+            {tr("Tron bonding curve: 1,000,000,000 supply, trades on the curve from the first second, then moves to a SunSwap pool. Cost: 5 TRX launch fee + about 50 TRX of Tron energy + your first buy, if any.")}
+          </p>
+        ) : null}
         {plain ? (
           <p className="mt-2 text-xs text-muted">
             {chain === "tron"
@@ -364,7 +388,7 @@ export function OwnWalletLaunch() {
         <div>
           <Label>{tr("Graduates at (")}{meta.native})</Label>
           <div className="grid grid-cols-3 gap-2">
-            {GRAD_PRESETS[chain as CurveLaunchChain].map((p) => (
+            {(GRAD_PRESETS as Record<string, string[]>)[chain].map((p) => (
               <button key={p} type="button" onClick={() => setGrad(p)} className={cn("min-h-11", grad === p ? "btn-cyan" : "btn-line")}>
                 {p} {meta.native}
               </button>

@@ -29,12 +29,14 @@ export const LAUNCH_CHAIN_META: Record<BotLaunchChain, { label: string; native: 
 };
 
 /** Graduation presets, same as @Ferzan_Launch_Bot. */
-export const GRAD_PRESETS: Record<CurveLaunchChain, string[]> = {
+export const GRAD_PRESETS: Record<CurveLaunchChain | "tron" | "ton", string[]> = {
   bsc: ["5", "10", "20"],
   base: ["1", "2.5", "5"],
   ethereum: ["1", "2.5", "5"],
   robinhood: ["1", "2.5", "5"],
   arc: ["5000", "10000", "25000"],
+  tron: ["10000", "25000", "50000"], // TRX; the curve needs at least the minimum set on the server
+  ton: ["500", "1000", "2500"], // TON; used once the TON curve is open
 };
 
 export type BotLaunchInput = {
@@ -53,6 +55,8 @@ export type BotLaunchInput = {
   telegram: string;
   /** Tron / TON only: whole coins to mint once. */
   supplyWhole: string;
+  /** Tron only: "plain" asks for a standard coin; empty uses the curve when it is open. */
+  mode: string;
 };
 
 export type EvmLaunchTx = {
@@ -77,7 +81,7 @@ export type AnyLaunchTx = EvmLaunchTx | SolanaLaunchTx | TronLaunchTx | TonLaunc
 
 export function tradeUrl(chain: BotLaunchChain, token: string, curve: string): string {
   if (chain === "solana") return `https://jup.ag/tokens/${token}`;
-  if (chain === "tron") return `https://tronscan.org/#/token20/${token}`;
+  if (chain === "tron") return curve ? `https://ferzan-factory.com/coin/tron/${curve}` : `https://tronscan.org/#/token20/${token}`;
   if (chain === "ton") return `https://tonviewer.com/${token}`;
   return `https://launch.ferzaneco.com/miniapp/curve.html?chain=${chain}&curve=${curve}`;
 }
@@ -118,6 +122,7 @@ function readInput(data: unknown): BotLaunchInput {
     website: str(row, "website", 200),
     x: str(row, "x", 200),
     telegram: str(row, "telegram", 200),
+    mode: str(row, "mode", 8) === "plain" ? "plain" : "",
     supplyWhole: (() => {
       const v = str(row, "supplyWhole", 16) || "1000000000";
       if (!/^[1-9]\d{0,12}$/.test(v)) throw new Error("Supply looks wrong.");
@@ -174,3 +179,10 @@ export const finishBotLaunch = createServerFn({ method: "POST" })
     const done = await (await import("./bot-launch.server")).finishLaunch(data);
     return { ...done, url: tradeUrl(data.chain, done.token, done.curve) };
   });
+
+/** Which launch modes are open on each chain right now (from the Launch Bot), so the form only offers what works. */
+export type ChainModes = Record<string, { curve: boolean; plain: boolean }>;
+
+export const getChainModes = createServerFn({ method: "GET" }).handler(async (): Promise<ChainModes> => {
+  return (await import("./bot-launch.server")).chainModes();
+});

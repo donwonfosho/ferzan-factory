@@ -35,6 +35,9 @@ export const addrWord = (a: string) => a.toLowerCase().replace(/^0x/, "").padSta
 export function siteCoinHref(url: string): string | null {
   const m = /curve\.html\?chain=(base|bsc|ethereum|robinhood|arc)&curve=(0x[0-9a-fA-F]{40})/.exec(url);
   if (m) return `/coin/${m[1]}/${m[2].toLowerCase()}`;
+  // Ferzan Tron bonding curves have their own page here (trade with TronLink).
+  const tronCurve = /^https:\/\/(?:www\.)?ferzan-factory\.com\/coin\/tron\/(T[1-9A-HJ-NP-Za-km-z]{33})$/.exec(url);
+  if (tronCurve) return `/coin/tron/${tronCurve[1]}`;
   // Standard (fixed-supply) coins on Tron, TON and Arc: the bots link their explorer page; show ours instead.
   const tron = /^https:\/\/tronscan\.org\/#\/token20\/(T[1-9A-HJ-NP-Za-km-z]{33})$/.exec(url);
   if (tron) return `/token/tron/${tron[1]}`;

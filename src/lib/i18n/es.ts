@@ -1043,6 +1043,21 @@ const dict: Record<string, string> = {
   "Profit": "Ganancia",
   "Callers": "Callers",
   "1 call · {0} buyers through the link · {1}": "1 llamada · {0} compradores con el enlace · {1}",
+  "Approve in TronLink: {0} TRX (launch fee and first buy) + about 50 TRX of network energy.": "Aprueba en TronLink: {0} TRX (tarifa de lanzamiento y primera compra) + unos 50 TRX de energía de la red.",
+  "Approve the buy in TronLink.": "Aprueba la compra en TronLink.",
+  "Approve the sell in TronLink.": "Aprueba la venta en TronLink.",
+  "Keep about 40 TRX in the wallet for Tron network energy on top of what you spend.": "Deja unos 40 TRX en la billetera para la energía de la red Tron, además de lo que gastes.",
+  "Sent. Waiting for Tron to confirm.": "Enviado. Esperando la confirmación de Tron.",
+  "That is not a Ferzan curve.": "Esa no es una curva de Ferzan.",
+  "The TRX amount looks wrong. Nothing was sent.": "El monto de TRX no parece correcto. No se envió nada.",
+  "The service sent a transaction we cannot use.": "El servicio envió una transacción que no podemos usar.",
+  "The transaction does not go to the right contract. Nothing was sent.": "La transacción no va al contrato correcto. No se envió nada.",
+  "The transaction was built for another wallet. Nothing was sent.": "La transacción se creó para otra billetera. No se envió nada.",
+  "This curve is full. Its SunSwap pool opens in a moment.": "Esta curva está llena. Su pool de SunSwap se abre en un momento.",
+  "Trading on the curve is closed. The SunSwap pool opens in a moment.": "El trading en la curva está cerrado. El pool de SunSwap se abre en un momento.",
+  "Tron address looks wrong.": "La dirección de Tron no parece correcta.",
+  "Tron also charges network energy, usually 20 to 40 TRX per trade, paid to the network and not to Ferzan.": "Tron también cobra energía de la red, normalmente de 20 a 40 TRX por operación, que se paga a la red y no a Ferzan.",
+  "Tron bonding curve: 1,000,000,000 supply, trades on the curve from the first second, then moves to a SunSwap pool. Cost: 5 TRX launch fee + about 50 TRX of Tron energy + your first buy, if any.": "Curva de Tron: suministro de 1,000,000,000, opera en la curva desde el primer segundo y luego pasa a un pool de SunSwap. Costo: 5 TRX de tarifa de lanzamiento + unos 50 TRX de energía de Tron + tu primera compra, si la hay.",
 };
 
 export default dict;

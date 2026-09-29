@@ -4,7 +4,8 @@
  */
 import { env } from "@/lib/env.server";
 import { chainRpc, type RelayChain } from "./relay";
-import type { AnyLaunchTx, BotLaunchChain, BotLaunchInput, CurveLaunchChain, TonMessage } from "./bot-launch";
+import type { AnyLaunchTx, BotLaunchChain, BotLaunchInput, ChainModes, CurveLaunchChain, TonMessage } from "./bot-launch";
+import { TRON_CURVE_FACTORY } from "./tron-curve";
 
 const API = "https://launch.ferzaneco.com/api";
 
@@ -20,6 +21,8 @@ const CHAIN_IDS: Record<CurveLaunchChain, number> = { bsc: 56, base: 8453, ether
 /** Ferzan's Tron launch factory (TBcPG1XKutsns1dJtgJeWQDuGRxeESeMXn), as TronGrid writes it. */
 const TRON_FACTORY_HEX = "4112001441b5746c26ce9f287e48404e4fbc7d57d8";
 const TRON_MAX_FEE_SUN = 50_000_000n; // the launch fee is fixed in the factory (5 TRX); refuse anything above 50
+/** A Tron curve launch may carry a first buy on top of the fee: the form checks the exact amount, this is the hard ceiling. */
+const TRON_MAX_CURVE_SUN = 5_000_000_000_000n;
 const TON_MAX_NANO = 1_500_000_000n; // a TON launch sends about 0.6 TON in total
 
 const B58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
@@ -86,6 +89,7 @@ export async function startLaunch(input: BotLaunchInput): Promise<AnyLaunchTx> {
       x: input.x,
       telegram: input.telegram,
       supply_whole: input.supplyWhole || "1000000000",
+      ...(input.mode ? { mode: input.mode } : {}),
     },
     true,
   );
@@ -98,12 +102,14 @@ export async function startLaunch(input: BotLaunchInput): Promise<AnyLaunchTx> {
     const raw = (tx.raw_data ?? {}) as { contract?: { type?: string; parameter?: { value?: Record<string, unknown> } }[] };
     const c = raw.contract?.[0];
     const v = c?.parameter?.value ?? {};
-    if (c?.type !== "TriggerSmartContract" || String(v.contract_address ?? "").toLowerCase() !== TRON_FACTORY_HEX) {
+    const curveLaunch = asString(built.factory) === TRON_CURVE_FACTORY;
+    const wantFactory = curveLaunch ? tronHex(TRON_CURVE_FACTORY) : TRON_FACTORY_HEX;
+    if (c?.type !== "TriggerSmartContract" || String(v.contract_address ?? "").toLowerCase() !== wantFactory) {
       throw new Error("The launch transaction does not go to the Ferzan Tron factory.");
     }
     if (String(v.owner_address ?? "").toLowerCase() !== tronHex(input.wallet)) throw new Error("The launch was built for another wallet.");
     const fee = BigInt(asBig(v.call_value ?? "0"));
-    if (fee > TRON_MAX_FEE_SUN) throw new Error("The launch fee looks wrong.");
+    if (fee > (curveLaunch ? TRON_MAX_CURVE_SUN : TRON_MAX_FEE_SUN)) throw new Error("The launch fee looks wrong.");
     if (!/^[0-9a-f]{64}$/.test(asString(tx.txID))) throw new Error("The launch service sent a transaction we cannot use.");
     return { kind: "tron", requestId, transactionJson: JSON.stringify(tx), feeSun: fee.toString() };
   }
@@ -180,7 +186,8 @@ export async function finishLaunch(input: {
   if (input.chain === "tron" || input.chain === "ton") {
     const token = asString(out.token);
     if (!token) throw new Error("The coin launched, but its address is not readable yet. It will show on the floor shortly.");
-    return { token, curve: "" };
+    const curve = asString(out.curve);
+    return { token, curve: /^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(curve) ? curve : "" };
   }
   const receipt = (await chainRpc(input.chain as RelayChain, "eth_getTransactionReceipt", [input.hash])) as {
     logs?: { address?: string; topics?: string[] }[];
@@ -192,4 +199,21 @@ export async function finishLaunch(input: {
     }
   }
   throw new Error("The coin launched, but the site could not read its address yet. It will show on the floor shortly.");
+}
+
+let modesCache: { at: number; value: ChainModes } | null = null;
+
+/** Launch modes per chain, cached for 30 seconds. If the Launch Bot does not answer, nothing is offered as a curve. */
+export async function chainModes(): Promise<ChainModes> {
+  if (modesCache && Date.now() - modesCache.at < 30_000) return modesCache.value;
+  let value: ChainModes = {};
+  try {
+    const res = await fetch(`${API}/chains`, { headers: { accept: "application/json" }, signal: AbortSignal.timeout(6_000) });
+    const body = (await res.json()) as { chains?: Record<string, { curve?: unknown; plain?: unknown }> };
+    for (const [k, v] of Object.entries(body.chains ?? {})) value[k] = { curve: v?.curve === true, plain: v?.plain === true };
+  } catch {
+    value = modesCache?.value ?? {};
+  }
+  modesCache = { at: Date.now(), value };
+  return value;
 }
