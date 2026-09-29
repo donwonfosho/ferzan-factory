@@ -22,6 +22,7 @@ import { useLive, sameCoin } from "@/lib/factory/live";
 import { HoldersPanel, PnlShare } from "./coin-extras";
 import { AlertsButton, WatchButton } from "./watch";
 import { CoinComments } from "./coin-comments";
+import { BridgeBuy } from "./bridge-buy-panel";
 
 import { tr } from "@/lib/i18n";
 import { sharedBy } from "@/lib/factory/compete";
@@ -403,6 +404,8 @@ export function BotCoinPage({ chain, curve }: { chain: BotCurveChain; curve: str
           <p className="text-xs text-muted">{tr("1% fee on every trade: half to the creator, half to Ferzan. A referrer gets 10% of the fee.")}</p>
         </form>
       )}
+
+      <BridgeBuy dest={chain} />
 
       <div className="ticket">
         <div className="flex items-center justify-between gap-3">

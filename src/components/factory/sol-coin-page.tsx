@@ -13,6 +13,7 @@ import { HoldersPanel, PnlShare } from "./coin-extras";
 import { AlertsButton, WatchButton } from "./watch";
 import { CoinComments } from "./coin-comments";
 
+import { BridgeBuy } from "./bridge-buy-panel";
 import { tr } from "@/lib/i18n";
 import { creditCall } from "@/lib/factory/compete";
 const TIMEFRAMES = [
@@ -297,6 +298,8 @@ export function SolCoinPage({ mint }: { mint: string }) {
           </Button>
         </form>
       )}
+
+      {coin.graduated ? null : <BridgeBuy dest="solana" />}
     </div>
   );
 }

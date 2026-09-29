@@ -1071,6 +1071,23 @@ const dict: Record<string, string> = {
   "TON bonding curve: 1,000,000,000 supply, trades on the curve about 2 minutes after launch, then moves to a STON.fi pool with the liquidity locked. Cost: 0.3 TON launch fee + about 0.35 TON for the contracts (most comes back).": "Curva de TON: suministro de 1,000,000,000, opera en la curva unos 2 minutos después del lanzamiento y luego pasa a un pool de STON.fi con la liquidez bloqueada. Costo: 0.3 TON de tarifa de lanzamiento + unos 0.35 TON para los contratos (la mayor parte regresa).",
   "The TON amount looks wrong. Nothing was sent.": "El monto de TON parece incorrecto. No se envió nada.",
   "TON did not answer": "TON no respondió",
+  "Type how much {0} to send.": "Escribe cuántos {0} enviar.",
+  "The smallest bridge from here is {0} {1}.": "El puente mínimo desde aquí es de {0} {1}.",
+  "Finding the best route.": "Buscando la mejor ruta.",
+  "No route for that right now. Try another chain or a different size.": "No hay ruta por ahora. Prueba otra cadena u otro monto.",
+  "Approve the bridge in your wallet.": "Aprueba el puente en tu billetera.",
+  "Sent. Waiting for the coins to arrive on {0}. This usually takes under two minutes and can take up to seven.": "Enviado. Esperando que los fondos lleguen a {0}. Suele tardar menos de dos minutos y puede llegar a siete.",
+  "Arrived: +{0} {1} on {2}. Now use the Buy box on this page.": "Llegó: +{0} {1} en {2}. Ahora usa el cuadro de compra de esta página.",
+  "Not there yet. Bridges can be slow; check your wallet on {0} in a few minutes. Your funds are safe with the bridge.": "Aún no llega. Los puentes pueden tardar; revisa tu billetera en {0} en unos minutos. Tus fondos están seguros en el puente.",
+  "The bridge did not go through.": "El puente no se completó.",
+  "Pay with a coin from another chain": "Paga con una moneda de otra cadena",
+  "Step 1: bridge to your own wallet on {0}. Step 2: buy here with the normal Buy box. Bridge buys take a little longer than a normal buy.": "Paso 1: haz el puente a tu propia billetera en {0}. Paso 2: compra aquí con el cuadro de compra normal. Las compras con puente tardan un poco más que una compra normal.",
+  "{0} to send": "{0} a enviar",
+  "Bridges into Tron need about $20 or more.": "Los puentes hacia Tron requieren unos 20 dólares o más.",
+  "You receive about {0} on {1}.": "Recibirás unos {0} en {1}.",
+  "Route found.": "Ruta encontrada.",
+  "Approve in wallet": "Aprobar en la billetera",
+  "Get a quote": "Obtener cotización",
 };
 
 export default dict;

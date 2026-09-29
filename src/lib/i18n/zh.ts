@@ -1084,6 +1084,23 @@ const dict: Record<string, string> = {
   "TON bonding curve: 1,000,000,000 supply, trades on the curve about 2 minutes after launch, then moves to a STON.fi pool with the liquidity locked. Cost: 0.3 TON launch fee + about 0.35 TON for the contracts (most comes back).": "TON 联合曲线：总量 1,000,000,000，发射约 2 分钟后开始在曲线上交易，之后迁移到 STON.fi 池并锁定流动性。费用：0.3 TON 发射费 + 约 0.35 TON 合约费用（大部分会退回）。",
   "The TON amount looks wrong. Nothing was sent.": "TON 金额有误。未发送任何内容。",
   "TON did not answer": "TON 没有响应",
+  "Type how much {0} to send.": "请输入要发送多少 {0}。",
+  "The smallest bridge from here is {0} {1}.": "从这里跨链的最小金额为 {0} {1}。",
+  "Finding the best route.": "正在寻找最佳路线。",
+  "No route for that right now. Try another chain or a different size.": "目前没有可用路线。请换一条链或调整金额。",
+  "Approve the bridge in your wallet.": "请在钱包中确认跨链。",
+  "Sent. Waiting for the coins to arrive on {0}. This usually takes under two minutes and can take up to seven.": "已发送。正在等待资金到达 {0}。通常不到两分钟，最长可能需要七分钟。",
+  "Arrived: +{0} {1} on {2}. Now use the Buy box on this page.": "已到账：{2} 上 +{0} {1}。现在请使用本页的买入框。",
+  "Not there yet. Bridges can be slow; check your wallet on {0} in a few minutes. Your funds are safe with the bridge.": "还没到账。跨链有时较慢，请几分钟后在 {0} 上查看你的钱包。你的资金由跨链桥保管，是安全的。",
+  "The bridge did not go through.": "跨链没有成功。",
+  "Pay with a coin from another chain": "用其他链上的币支付",
+  "Step 1: bridge to your own wallet on {0}. Step 2: buy here with the normal Buy box. Bridge buys take a little longer than a normal buy.": "第 1 步：跨链到你在 {0} 上的钱包。第 2 步：用普通买入框在这里买入。跨链买入比普通买入稍慢一些。",
+  "{0} to send": "要发送的 {0}",
+  "Bridges into Tron need about $20 or more.": "跨链到波场需要约 20 美元以上。",
+  "You receive about {0} on {1}.": "你将在 {1} 上收到约 {0}。",
+  "Route found.": "已找到路线。",
+  "Approve in wallet": "在钱包中确认",
+  "Get a quote": "获取报价",
 };
 
 export default dict;

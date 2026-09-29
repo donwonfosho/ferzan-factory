@@ -11,6 +11,7 @@ import { ShareCoin } from "./perks";
 import { HoldersPanel } from "./coin-extras";
 import { AlertsButton, WatchButton } from "./watch";
 import { CoinComments } from "./coin-comments";
+import { BridgeBuy } from "./bridge-buy-panel";
 import { ChainMark } from "./chain-mark";
 
 import { tr } from "@/lib/i18n";
@@ -356,6 +357,8 @@ export function TronCurvePage({ curve }: { curve: string }) {
           <p className="text-xs text-muted">{tr("Tron also charges network energy, usually 20 to 40 TRX per trade, paid to the network and not to Ferzan.")}</p>
         </form>
       )}
+
+      <BridgeBuy dest="tron" />
 
       <div className="ticket">
         <div className="flex items-center justify-between gap-3">
