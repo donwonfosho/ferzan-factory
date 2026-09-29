@@ -36,7 +36,7 @@ export const GRAD_PRESETS: Record<CurveLaunchChain | "tron" | "ton", string[]> =
   robinhood: ["1", "2.5", "5"],
   arc: ["5000", "10000", "25000"],
   tron: ["10000", "25000", "50000"], // TRX; the curve needs at least the minimum set on the server
-  ton: ["500", "1000", "2500"], // TON; used once the TON curve is open
+  ton: ["2000", "5000", "10000"], // TON; the curve needs at least the minimum set on the server (2,000 unless changed)
 };
 
 export type BotLaunchInput = {
@@ -82,7 +82,7 @@ export type AnyLaunchTx = EvmLaunchTx | SolanaLaunchTx | TronLaunchTx | TonLaunc
 export function tradeUrl(chain: BotLaunchChain, token: string, curve: string): string {
   if (chain === "solana") return `https://jup.ag/tokens/${token}`;
   if (chain === "tron") return curve ? `https://ferzan-factory.com/coin/tron/${curve}` : `https://tronscan.org/#/token20/${token}`;
-  if (chain === "ton") return `https://tonviewer.com/${token}`;
+  if (chain === "ton") return curve ? `https://ferzan-factory.com/coin/ton/${curve}` : `https://tonviewer.com/${token}`;
   return `https://launch.ferzaneco.com/miniapp/curve.html?chain=${chain}&curve=${curve}`;
 }
 

@@ -1058,6 +1058,19 @@ const dict: Record<string, string> = {
   "Tron address looks wrong.": "La dirección de Tron no parece correcta.",
   "Tron also charges network energy, usually 20 to 40 TRX per trade, paid to the network and not to Ferzan.": "Tron también cobra energía de la red, normalmente de 20 a 40 TRX por operación, que se paga a la red y no a Ferzan.",
   "Tron bonding curve: 1,000,000,000 supply, trades on the curve from the first second, then moves to a SunSwap pool. Cost: 5 TRX launch fee + about 50 TRX of Tron energy + your first buy, if any.": "Curva de Tron: suministro de 1,000,000,000, opera en la curva desde el primer segundo y luego pasa a un pool de SunSwap. Costo: 5 TRX de tarifa de lanzamiento + unos 50 TRX de energía de Tron + tu primera compra, si la hay.",
+  "The smallest buy is 0.01 TON.": "La compra mínima es de 0.01 TON.",
+  "This curve is full. Trading moved to STON.fi.": "Esta curva está llena. El trading pasó a STON.fi.",
+  "Approve the buy in your TON wallet.": "Aprueba la compra en tu billetera TON.",
+  "Approve the sell in your TON wallet.": "Aprueba la venta en tu billetera TON.",
+  "Sent. Waiting for TON to confirm.": "Enviado. Esperando la confirmación de TON.",
+  "This curve is full. Its STON.fi pool opens in a moment.": "Esta curva está llena. Su pool de STON.fi se abre en un momento.",
+  "Trading on the curve is closed. The STON.fi pool opens in a moment.": "El trading en la curva está cerrado. El pool de STON.fi se abre en un momento.",
+  "View the curve on Tonviewer": "Ver la curva en Tonviewer",
+  "A buy also sends about 0.12 TON for network gas. The curve returns what it does not use.": "Una compra también envía unos 0.12 TON para el gas de la red. La curva devuelve lo que no use.",
+  "Approve in your TON wallet: 0.3 TON launch fee + about 0.35 TON for the curve and coin contracts (most comes back). Trading opens about 2 minutes later.": "Aprueba en tu billetera TON: 0.3 TON de tarifa de lanzamiento + unos 0.35 TON para los contratos de la curva y la moneda (la mayor parte regresa). El trading abre unos 2 minutos después.",
+  "TON bonding curve: 1,000,000,000 supply, trades on the curve about 2 minutes after launch, then moves to a STON.fi pool with the liquidity locked. Cost: 0.3 TON launch fee + about 0.35 TON for the contracts (most comes back).": "Curva de TON: suministro de 1,000,000,000, opera en la curva unos 2 minutos después del lanzamiento y luego pasa a un pool de STON.fi con la liquidez bloqueada. Costo: 0.3 TON de tarifa de lanzamiento + unos 0.35 TON para los contratos (la mayor parte regresa).",
+  "The TON amount looks wrong. Nothing was sent.": "El monto de TON parece incorrecto. No se envió nada.",
+  "TON did not answer": "TON no respondió",
 };
 
 export default dict;

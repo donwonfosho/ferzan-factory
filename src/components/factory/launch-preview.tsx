@@ -87,14 +87,14 @@ export function LaunchPreview({
       <dl className="grid gap-x-4 gap-y-1 text-sm sm:grid-cols-[auto_1fr]">
         <dt className="text-muted">{tr("Launch fee")}</dt>
         <dd>{FEE[chain].fee}</dd>
-        {!plain ? (
+        {!plain && chain !== "ton" ? (
           <>
             <dt className="text-muted">{tr("Your first buy")}</dt>
             <dd>{buy}</dd>
           </>
         ) : null}
         <dt className="text-muted">{tr("Network")}</dt>
-        <dd>{chain === "tron" && !plain ? "about 50 TRX of Tron energy" : FEE[chain].extra}</dd>
+        <dd>{chain === "tron" && !plain ? "about 50 TRX of Tron energy" : chain === "ton" && !plain ? "about 0.35 TON for the contracts (most comes back)" : FEE[chain].extra}</dd>
         {!plain && chain !== "solana" ? (
           <>
             <dt className="text-muted">{tr("Trading")}</dt>

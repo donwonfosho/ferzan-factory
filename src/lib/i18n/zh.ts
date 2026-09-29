@@ -1071,6 +1071,19 @@ const dict: Record<string, string> = {
   "Tron address looks wrong.": "波场地址有误。",
   "Tron also charges network energy, usually 20 to 40 TRX per trade, paid to the network and not to Ferzan.": "波场还会收取网络能量，通常每笔交易 20 至 40 TRX，付给网络而不是 Ferzan。",
   "Tron bonding curve: 1,000,000,000 supply, trades on the curve from the first second, then moves to a SunSwap pool. Cost: 5 TRX launch fee + about 50 TRX of Tron energy + your first buy, if any.": "波场联合曲线：总量 1,000,000,000，从第一秒起就在曲线上交易，之后迁移到 SunSwap 池。费用：5 TRX 发射费 + 约 50 TRX 波场能量 + 你的首次买入（如有）。",
+  "The smallest buy is 0.01 TON.": "最小买入为 0.01 TON。",
+  "This curve is full. Trading moved to STON.fi.": "这条曲线已满，交易已迁移到 STON.fi。",
+  "Approve the buy in your TON wallet.": "请在你的 TON 钱包中确认买入。",
+  "Approve the sell in your TON wallet.": "请在你的 TON 钱包中确认卖出。",
+  "Sent. Waiting for TON to confirm.": "已发送。等待 TON 确认。",
+  "This curve is full. Its STON.fi pool opens in a moment.": "这条曲线已满，STON.fi 池即将开启。",
+  "Trading on the curve is closed. The STON.fi pool opens in a moment.": "曲线交易已关闭，STON.fi 池即将开启。",
+  "View the curve on Tonviewer": "在 Tonviewer 上查看曲线",
+  "A buy also sends about 0.12 TON for network gas. The curve returns what it does not use.": "买入时还会额外发送约 0.12 TON 作为网络 gas，曲线会退回未使用的部分。",
+  "Approve in your TON wallet: 0.3 TON launch fee + about 0.35 TON for the curve and coin contracts (most comes back). Trading opens about 2 minutes later.": "请在你的 TON 钱包中确认：0.3 TON 发射费 + 约 0.35 TON 用于曲线和代币合约（大部分会退回）。约 2 分钟后开放交易。",
+  "TON bonding curve: 1,000,000,000 supply, trades on the curve about 2 minutes after launch, then moves to a STON.fi pool with the liquidity locked. Cost: 0.3 TON launch fee + about 0.35 TON for the contracts (most comes back).": "TON 联合曲线：总量 1,000,000,000，发射约 2 分钟后开始在曲线上交易，之后迁移到 STON.fi 池并锁定流动性。费用：0.3 TON 发射费 + 约 0.35 TON 合约费用（大部分会退回）。",
+  "The TON amount looks wrong. Nothing was sent.": "TON 金额有误。未发送任何内容。",
+  "TON did not answer": "TON 没有响应",
 };
 
 export default dict;

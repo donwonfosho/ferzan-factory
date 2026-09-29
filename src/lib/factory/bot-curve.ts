@@ -38,6 +38,8 @@ export function siteCoinHref(url: string): string | null {
   // Ferzan Tron bonding curves have their own page here (trade with TronLink).
   const tronCurve = /^https:\/\/(?:www\.)?ferzan-factory\.com\/coin\/tron\/(T[1-9A-HJ-NP-Za-km-z]{33})$/.exec(url);
   if (tronCurve) return `/coin/tron/${tronCurve[1]}`;
+  const tonCurve = /^https:\/\/(?:www\.)?ferzan-factory\.com\/coin\/ton\/(EQ[A-Za-z0-9_-]{46})$/.exec(url);
+  if (tonCurve) return `/coin/ton/${tonCurve[1]}`;
   // Standard (fixed-supply) coins on Tron, TON and Arc: the bots link their explorer page; show ours instead.
   const tron = /^https:\/\/tronscan\.org\/#\/token20\/(T[1-9A-HJ-NP-Za-km-z]{33})$/.exec(url);
   if (tron) return `/token/tron/${tron[1]}`;

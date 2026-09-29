@@ -196,9 +196,9 @@ export function OwnWalletLaunch() {
           description: description.trim(),
           image,
           gradNative: evm ? grad.trim() : "",
-          devBuy: plain ? "0" : devBuy.trim() || "0",
-          maxBuy: evm ? maxBuy.trim() || "0" : "0",
-          startMinutes: evm ? startMinutes.trim() || "0" : "0",
+          devBuy: plain || chain === "ton" ? "0" : devBuy.trim() || "0",
+          maxBuy: evm && chain !== "ton" ? maxBuy.trim() || "0" : "0",
+          startMinutes: evm && chain !== "ton" ? startMinutes.trim() || "0" : "0",
           website: website.trim(),
           x: xHandle.trim(),
           telegram: telegram.trim(),
@@ -219,7 +219,11 @@ export function OwnWalletLaunch() {
         setHash(txHash);
         setBusy(tr("Sent. Waiting for Tron to confirm (up to a minute)."));
       } else if (built.kind === "ton") {
-        setBusy(tr("Approve in your TON wallet: 0.3 TON launch fee + about 0.3 TON for the coin contract (most comes back)."));
+        setBusy(
+          plain
+            ? tr("Approve in your TON wallet: 0.3 TON launch fee + about 0.3 TON for the coin contract (most comes back).")
+            : tr("Approve in your TON wallet: 0.3 TON launch fee + about 0.35 TON for the curve and coin contracts (most comes back). Trading opens about 2 minutes later."),
+        );
         const { send } = await tonWallet();
         await send({ validUntil: built.validUntil, network: built.network, messages: built.messages });
         txHash = "ton-connect";
@@ -239,14 +243,14 @@ export function OwnWalletLaunch() {
         txHash = await signSolana(built);
         setBusy(tr("Sent. Waiting for Solana to confirm."));
       }
-      setBusy(plain ? tr("Waiting for the chain to confirm the coin. This can take a minute or two.") : tr("Confirmed. Listing it everywhere."));
+      setBusy(plain || chain === "ton" ? tr("Waiting for the chain to confirm the coin. This can take a minute or two.") : tr("Confirmed. Listing it everywhere."));
       let done: { token: string; curve: string; url: string } | null = null;
-      for (let attempt = 0; attempt < (plain ? 4 : 1); attempt += 1) {
+      for (let attempt = 0; attempt < (plain || chain === "ton" ? 4 : 1); attempt += 1) {
         try {
           done = await finishBotLaunch({ data: { requestId: built.requestId, chain, hash: txHash, mint } });
           break;
         } catch (err) {
-          const last = attempt === (plain ? 3 : 0);
+          const last = attempt === (plain || chain === "ton" ? 3 : 0);
           const msg = err instanceof Error ? err.message : "";
           if (last || !/not confirmed|has not confirmed|did not answer/i.test(msg)) throw err;
           await new Promise((resolve) => setTimeout(resolve, 10_000));
@@ -350,6 +354,11 @@ export function OwnWalletLaunch() {
             <LaunchPerksNote />
           </>
         ) : null}
+        {chain === "ton" && !plain ? (
+          <p className="mt-2 text-xs text-muted">
+            {tr("TON bonding curve: 1,000,000,000 supply, trades on the curve about 2 minutes after launch, then moves to a STON.fi pool with the liquidity locked. Cost: 0.3 TON launch fee + about 0.35 TON for the contracts (most comes back).")}
+          </p>
+        ) : null}
         {chain === "tron" && !plain ? (
           <p className="mt-2 text-xs text-muted">
             {tr("Tron bonding curve: 1,000,000,000 supply, trades on the curve from the first second, then moves to a SunSwap pool. Cost: 5 TRX launch fee + about 50 TRX of Tron energy + your first buy, if any.")}
@@ -399,7 +408,7 @@ export function OwnWalletLaunch() {
         </div>
       ) : null}
 
-      {plain ? null : (
+      {plain || chain === "ton" ? null : (
         <div>
           <Label>{tr("First buy (")}{meta.native})</Label>
           <TextInput value={devBuy} onChange={(e) => setDevBuy(e.target.value)} placeholder={tr("0 — skip it")} inputMode="decimal" />
@@ -407,7 +416,7 @@ export function OwnWalletLaunch() {
         </div>
       )}
 
-      {evm ? (
+      {evm && chain !== "ton" ? (
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <Label>{tr("Max buy per wallet (")}{meta.native})</Label>

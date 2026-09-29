@@ -123,7 +123,8 @@ export async function startLaunch(input: BotLaunchInput): Promise<AnyLaunchTx> {
       return msg;
     });
     const total = messages.reduce((sum, m) => sum + BigInt(m.amount), 0n);
-    if (messages.length < 2 || messages.length > 3 || !messages[0].stateInit || total > TON_MAX_NANO) {
+    // 3 messages for a standard coin; a curve launch has one more (the curve contract itself).
+    if (messages.length < 2 || messages.length > 4 || !messages[0].stateInit || total > TON_MAX_NANO) {
       throw new Error("The TON launch looks wrong. Nothing was sent.");
     }
     if (!messages.every((m) => /^[A-Za-z0-9_-]{48}$/.test(m.address))) throw new Error("The TON launch looks wrong.");
@@ -187,7 +188,8 @@ export async function finishLaunch(input: {
     const token = asString(out.token);
     if (!token) throw new Error("The coin launched, but its address is not readable yet. It will show on the floor shortly.");
     const curve = asString(out.curve);
-    return { token, curve: /^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(curve) ? curve : "" };
+    const okCurve = input.chain === "tron" ? /^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(curve) : /^EQ[A-Za-z0-9_-]{46}$/.test(curve);
+    return { token, curve: okCurve ? curve : "" };
   }
   const receipt = (await chainRpc(input.chain as RelayChain, "eth_getTransactionReceipt", [input.hash])) as {
     logs?: { address?: string; topics?: string[] }[];
