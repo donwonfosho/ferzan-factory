@@ -11,7 +11,7 @@ import { tr } from "@/lib/i18n";
  */
 export function LaunchForm(_props: { initialMode?: Mode; initialChain?: MarkChain }) {
   return (
-    <div className="mx-auto max-w-xl">
+    <div className="mx-auto max-w-5xl">
       <p className="text-sm font-medium text-cyan">{tr("Curve")}</p>
       <h1 className="mt-2 text-4xl">{tr("Launch a coin")}</h1>
       <p className="mt-2 text-sm text-muted">

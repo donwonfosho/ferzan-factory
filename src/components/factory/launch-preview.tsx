@@ -7,7 +7,7 @@ import { Mark } from "./ui";
 
 import { tr } from "@/lib/i18n";
 /** Launch fees fixed in the Ferzan factories (the wallet always shows the exact amount before you sign). */
-const FEE: Record<BotLaunchChain, { fee: string; extra: string }> = {
+export const FEE: Record<BotLaunchChain, { fee: string; extra: string }> = {
   solana: { fee: "0.05 SOL (half for FERZAN holders, free for 10M+)", extra: "about 0.03 SOL of Solana rent and fees" },
   base: { fee: "0.003 ETH", extra: "Base gas (usually cents)" },
   bsc: { fee: "0.015 BNB", extra: "BNB Chain gas (usually cents)" },

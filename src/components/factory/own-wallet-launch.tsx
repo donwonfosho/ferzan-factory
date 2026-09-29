@@ -24,9 +24,9 @@ import { cn } from "@/lib/cn";
 import { ChainMark } from "./chain-mark";
 import { ProjectPicture } from "./launch-form";
 import { TermsGate } from "./terms";
-import { Button, Label, TextInput } from "./ui";
+import { Button, Label, Mark, TextInput } from "./ui";
 import { LaunchPerksNote } from "./perks";
-import { LaunchCelebration, LaunchPreview } from "./launch-preview";
+import { FEE, LaunchCelebration, LaunchPreview } from "./launch-preview";
 
 import { tr } from "@/lib/i18n";
 function bytesFromHex(hex: string): Uint8Array<ArrayBuffer> {
@@ -46,6 +46,8 @@ function walletAppLinks(): { metamask: string; phantom: string } {
     )}`,
   };
 }
+
+type LaunchTab = "info" | "links" | "curve" | "dev" | "protect" | "launch";
 
 type Launched = { chain: BotLaunchChain; name: string; symbol: string; token: string; curve: string; url: string; hash: string };
 
@@ -95,6 +97,34 @@ export function OwnWalletLaunch() {
   const [hash, setHash] = useState("");
   const [needTerms, setNeedTerms] = useState(false);
   const [launched, setLaunched] = useState<Launched | null>(null);
+  const [tab, setTab] = useState<LaunchTab>("info");
+  const [advanced, setAdvanced] = useState(false);
+
+  // The form is a draft: text fields are kept in this browser so a refresh does not lose them (never the picture or wallet).
+  const [draftLoaded, setDraftLoaded] = useState(false);
+  useEffect(() => {
+    try {
+      const d = JSON.parse(window.localStorage.getItem("ferzan-launch-draft") || "{}") as Record<string, string>;
+      if (typeof d.name === "string") setName(d.name.slice(0, 32));
+      if (typeof d.symbol === "string") setSymbol(d.symbol.slice(0, 10));
+      if (typeof d.description === "string") setDescription(d.description.slice(0, 280));
+      if (typeof d.website === "string") setWebsite(d.website.slice(0, 200));
+      if (typeof d.xHandle === "string") setXHandle(d.xHandle.slice(0, 200));
+      if (typeof d.telegram === "string") setTelegram(d.telegram.slice(0, 200));
+    } catch {
+      /* no saved draft */
+    }
+    setDraftLoaded(true);
+  }, []);
+  useEffect(() => {
+    if (!draftLoaded) return;
+    try {
+      window.localStorage.setItem("ferzan-launch-draft", JSON.stringify({ name, symbol, description, website, xHandle, telegram }));
+    } catch {
+      /* storage blocked */
+    }
+  }, [draftLoaded, name, symbol, description, website, xHandle, telegram]);
+
 
   // Tron and TON launch a standard coin until their bonding curve is open; then the curve is the default.
   const [modes, setModes] = useState<ChainModes>({});
@@ -115,6 +145,7 @@ export function OwnWalletLaunch() {
   function pickChain(next: BotLaunchChain) {
     setChain(next);
     setWallet("");
+    if (next === "solana") setAdvanced(false);
     const presets = (GRAD_PRESETS as Record<string, string[] | undefined>)[next];
     if (next !== "solana" && presets) setGrad(presets[1]);
   }
@@ -311,188 +342,351 @@ export function OwnWalletLaunch() {
   }
 
   const links = walletAppLinks();
+  const ton = chain === "ton";
+  const hasBuy = !plain && !ton;
+  const hasProtect = evm && !ton;
+  const tabs: { id: LaunchTab; label: string }[] = [
+    { id: "info", label: "Info" },
+    { id: "links", label: "Links" },
+    ...(evm && advanced ? [{ id: "curve" as LaunchTab, label: "Graduation" }] : []),
+    ...(hasBuy ? [{ id: "dev" as LaunchTab, label: "First buy" }] : []),
+    ...(hasProtect && advanced ? [{ id: "protect" as LaunchTab, label: "Protection" }] : []),
+    { id: "launch", label: "Launch" },
+  ];
+  const at = Math.max(0, tabs.findIndex((t) => t.id === tab));
+  const current = tabs[at]?.id ?? "info";
+  const isLast = at >= tabs.length - 1;
+  const sym = (symbol || "TOKEN").slice(0, 12);
+  const firstBuy = Number(devBuy) > 0 ? `${devBuy} ${meta.native}` : "None";
+  const opens = Number(startMinutes) > 0 ? `${startMinutes} min after launch` : "Right away";
+
+  function clearDraft() {
+    setName("");
+    setSymbol("");
+    setDescription("");
+    setWebsite("");
+    setXHandle("");
+    setTelegram("");
+    setDevBuy("");
+    setMaxBuy("");
+    setStartMinutes("0");
+    setImage("");
+    try {
+      window.localStorage.removeItem("ferzan-launch-draft");
+    } catch {
+      /* private mode */
+    }
+  }
+
+  const rows: [string, string][] = [
+    ["Launch type", plain ? "Standard coin" : advanced ? "Curve, advanced" : "Curve, simple"],
+    ...(hasBuy ? ([["First buy", firstBuy]] as [string, string][]) : []),
+    ...(evm ? ([["Graduates at", `${grad || "?"} ${meta.native}`]] as [string, string][]) : []),
+    ...(hasProtect ? ([["Max buy per wallet", Number(maxBuy) > 0 ? `${maxBuy} ${meta.native}` : "No limit"], ["Trading opens", opens]] as [string, string][]) : []),
+    ...(chain === "solana" ? ([["Anti-sniper fee", "Built in"]] as [string, string][]) : []),
+    ...(plain ? ([["Supply", Number(supply) > 0 ? Number(supply).toLocaleString("en-US") : "?"]] as [string, string][]) : []),
+    ["Launch fee", FEE[chain].fee],
+    ["You earn", plain ? "The whole supply is yours" : "Half of every trading fee"],
+    ["Wallet", wallet ? `${wallet.slice(0, 6)}…${wallet.slice(-4)}` : "Connect at launch"],
+  ];
+
   return (
-    <form onSubmit={(e) => void submit(e)} className="ticket mt-6 space-y-5">
-      <p className="text-sm text-muted">
-        {tr("Signs with your own wallet:")}{" "}{WALLET_TEXT[chain]}{tr(". No Telegram needed.")}{" "}
-        {plain
-          ? tr("A standard coin: the whole supply is minted once to your wallet, with no owner and no way to mint more.")
-          : tr("The coin goes on the same curves as @Ferzan_Launch_Bot launches.")}
-      </p>
-      <ProjectPicture image={image} onChange={setImage} onError={setError} />
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <Label>{tr("Name")}</Label>
-          <TextInput value={name} onChange={(e) => setName(e.target.value)} placeholder={tr("Forged Rail")} required />
+    <form
+      onSubmit={(e) => {
+        if (!isLast) {
+          e.preventDefault();
+          setTab(tabs[at + 1].id);
+          return;
+        }
+        void submit(e);
+      }}
+      className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] lg:items-start"
+    >
+      <aside className="ticket space-y-4 lg:sticky lg:top-24" aria-label={tr("Preview")}>
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted">{tr("Preview")}</p>
+        <div className="flex items-center gap-3 rounded-xl bg-bg p-3 shadow-border">
+          <Mark symbol={sym} image={image || undefined} />
+          <span className="min-w-0 flex-1">
+            <span className="block truncate font-extrabold">
+              {name.trim() || tr("Your token")} <span className="text-muted">${sym}</span>
+            </span>
+            <span className="mt-1 flex items-center gap-1.5 text-xs text-muted">
+              <ChainMark id={chain} className="h-4 w-4 shrink-0" />
+              {tr(meta.label)}
+            </span>
+          </span>
         </div>
-        <div>
-          <Label>{tr("Ticker")}</Label>
-          <TextInput value={symbol} onChange={(e) => setSymbol(e.target.value.toUpperCase())} placeholder={tr("FORGE")} required />
+        {description.trim() ? <p className="line-clamp-3 text-xs text-muted">{description}</p> : null}
+        <dl className="hidden space-y-2 text-sm lg:block">
+          {rows.map(([k, v]) => (
+            <div key={k} className="flex items-baseline justify-between gap-3">
+              <dt className="text-muted">{tr(k)}</dt>
+              <dd className="text-right font-semibold tabular-nums">{tr(v)}</dd>
+            </div>
+          ))}
+        </dl>
+        <div className="hidden items-center justify-between border-t border-line pt-3 text-xs text-muted lg:flex">
+          <span>{tr("Draft saved automatically")}</span>
+          <button type="button" className="min-h-11 font-semibold text-sell" onClick={clearDraft}>
+            {tr("Clear draft")}
+          </button>
         </div>
-      </div>
+      </aside>
 
-      <div>
-        <Label>{tr("Chain")}</Label>
-        <div className="grid grid-cols-4 gap-2">
-          {BOT_LAUNCH_CHAINS.map((id) => (
+      <div className="ticket min-w-0 space-y-5">
+        <div className="flex gap-2 overflow-x-auto pb-1" role="tablist">
+          {tabs.map((t) => (
             <button
-              key={id}
+              key={t.id}
               type="button"
-              aria-pressed={chain === id}
-              onClick={() => pickChain(id)}
-              className={cn("min-h-11 px-2 py-3 text-center", chain === id ? "bg-cyan text-cyan-ink" : "bg-bg text-fg shadow-border")}
+              role="tab"
+              aria-selected={current === t.id}
+              onClick={() => setTab(t.id)}
+              className={cn("min-h-11 shrink-0 rounded-full px-4 text-sm font-semibold", current === t.id ? "bg-cyan text-cyan-ink" : "bg-bg text-fg shadow-border")}
             >
-              <ChainMark id={id} className="mx-auto h-8 w-8" />
-              <span className="mt-2 block text-xs font-extrabold">{tr(LAUNCH_CHAIN_META[id].label)}</span>
+              {tr(t.label)}
             </button>
           ))}
         </div>
-        {chain === "solana" ? (
-          <>
-            <p className="mt-2 text-xs text-muted">{tr("Meteora bonding curve: 1,000,000,000 supply, graduates to a locked pool. Supply and graduation are fixed by the Ferzan config.")}</p>
-            <LaunchPerksNote />
-          </>
-        ) : null}
-        {chain === "ton" && !plain ? (
-          <p className="mt-2 text-xs text-muted">
-            {tr("TON bonding curve: 1,000,000,000 supply, trades on the curve about 2 minutes after launch, then moves to a STON.fi pool with the liquidity locked. Cost: 0.3 TON launch fee + about 0.35 TON for the contracts (most comes back).")}
-          </p>
-        ) : null}
-        {chain === "tron" && !plain ? (
-          <p className="mt-2 text-xs text-muted">
-            {tr("Tron bonding curve: 1,000,000,000 supply, trades on the curve from the first second, then moves to a SunSwap pool. Cost: 5 TRX launch fee + about 50 TRX of Tron energy + your first buy, if any.")}
-          </p>
-        ) : null}
-        {plain ? (
-          <p className="mt-2 text-xs text-muted">
-            {chain === "tron"
-              ? tr("Standard TRC-20 coin. Cost: 5 TRX launch fee + about 16 TRX of Tron energy. Open a SunSwap pool afterwards so people can trade it.")
-              : tr("Standard TON jetton. Cost: 0.3 TON launch fee + about 0.3 TON for the coin contract (most of it comes back).")}
-          </p>
-        ) : null}
-      </div>
 
-      {plain ? (
-        <div>
-          <Label>{tr("Supply")}</Label>
-          <div className="grid grid-cols-4 gap-2">
-            {SUPPLY_PRESETS.map((p) => (
-              <button key={p.value} type="button" onClick={() => setSupply(p.value)} className={cn("min-h-11", supply === p.value ? "btn-cyan" : "btn-line")}>
-                {tr(p.label)}
-              </button>
-            ))}
+        {current === "info" ? (
+          <div className="space-y-5">
+            <div>
+              <Label>{tr("Chain")}</Label>
+              <p className="mb-2 text-xs text-muted">{tr("Where your coin lives and trades. The pair, the fees and the rewards all follow it.")}</p>
+              <div className="grid grid-cols-4 gap-2">
+                {BOT_LAUNCH_CHAINS.map((id) => (
+                  <button
+                    key={id}
+                    type="button"
+                    aria-pressed={chain === id}
+                    onClick={() => pickChain(id)}
+                    className={cn("min-h-11 px-2 py-3 text-center", chain === id ? "bg-cyan text-cyan-ink" : "bg-bg text-fg shadow-border")}
+                  >
+                    <ChainMark id={id} className="mx-auto h-8 w-8" />
+                    <span className="mt-2 block text-xs font-extrabold">{tr(LAUNCH_CHAIN_META[id].label)}</span>
+                  </button>
+                ))}
+              </div>
+              {chain === "solana" ? (
+                <>
+                  <p className="mt-2 text-xs text-muted">{tr("Meteora bonding curve: 1,000,000,000 supply, graduates to a locked pool. Supply and graduation are fixed by the Ferzan config.")}</p>
+                  <LaunchPerksNote />
+                </>
+              ) : null}
+              {chain === "ton" && !plain ? (
+                <p className="mt-2 text-xs text-muted">{tr("TON bonding curve: 1,000,000,000 supply, trades on the curve about 2 minutes after launch, then moves to a STON.fi pool with the liquidity locked. Cost: 0.3 TON launch fee + about 0.35 TON for the contracts (most comes back).")}</p>
+              ) : null}
+              {chain === "tron" && !plain ? (
+                <p className="mt-2 text-xs text-muted">{tr("Tron bonding curve: 1,000,000,000 supply, trades on the curve from the first second, then moves to a SunSwap pool. Cost: 5 TRX launch fee + about 50 TRX of Tron energy + your first buy, if any.")}</p>
+              ) : null}
+              {plain ? (
+                <p className="mt-2 text-xs text-muted">
+                  {chain === "tron"
+                    ? tr("Standard TRC-20 coin. Cost: 5 TRX launch fee + about 16 TRX of Tron energy. Open a SunSwap pool afterwards so people can trade it.")
+                    : tr("Standard TON jetton. Cost: 0.3 TON launch fee + about 0.3 TON for the coin contract (most of it comes back).")}
+                </p>
+              ) : null}
+            </div>
+
+            {plain ? null : (
+              <div>
+                <Label>{tr("Launch type")}</Label>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <button type="button" aria-pressed={!advanced} onClick={() => {
+                    setAdvanced(false);
+                    setMaxBuy("");
+                    setStartMinutes("0");
+                  }} className={cn("min-h-11 rounded-xl p-3 text-left", !advanced ? "bg-cyan text-cyan-ink" : "bg-bg text-fg shadow-border")}>
+                    <span className="block text-sm font-extrabold">{tr("Simple")} <span className="text-[10px] uppercase tracking-wider">{tr("Recommended")}</span></span>
+                    <span className="mt-1 block text-xs opacity-80">{tr("Keep it basic. Ferzan defaults, you earn half of every trading fee.")}</span>
+                  </button>
+                  {chain === "solana" ? null : (
+                    <button type="button" aria-pressed={advanced} onClick={() => setAdvanced(true)} className={cn("min-h-11 rounded-xl p-3 text-left", advanced ? "bg-cyan text-cyan-ink" : "bg-bg text-fg shadow-border")}>
+                      <span className="block text-sm font-extrabold">{tr("Advanced")}</span>
+                      <span className="mt-1 block text-xs opacity-80">{ton ? tr("Choose how much TON the curve collects before it graduates.") : tr("Choose the graduation target, a max buy per wallet and a delayed start.")}</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <ProjectPicture image={image} onChange={setImage} onError={setError} />
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <Label>{tr("Name")}</Label>
+                <TextInput value={name} onChange={(e) => setName(e.target.value)} placeholder={tr("Forged Rail")} maxLength={32} />
+              </div>
+              <div>
+                <Label>{tr("Ticker")}</Label>
+                <TextInput value={symbol} onChange={(e) => setSymbol(e.target.value.toUpperCase())} placeholder={tr("FORGE")} maxLength={10} />
+              </div>
+            </div>
+
+            <div>
+              <Label>{tr("Description")}</Label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder={tr("What is this coin about?")}
+                rows={3}
+                maxLength={280}
+                className="w-full rounded-lg bg-bg p-3 text-fg shadow-border outline-none placeholder:text-muted"
+              />
+              <p className="mt-1.5 text-xs text-muted">{tr("Optional, and worth a sentence: this is what link previews show for your coin.")}</p>
+            </div>
+
+            {plain ? (
+              <div>
+                <Label>{tr("Supply")}</Label>
+                <div className="grid grid-cols-4 gap-2">
+                  {SUPPLY_PRESETS.map((p) => (
+                    <button key={p.value} type="button" onClick={() => setSupply(p.value)} className={cn("min-h-11", supply === p.value ? "btn-cyan" : "btn-line")}>
+                      {tr(p.label)}
+                    </button>
+                  ))}
+                </div>
+                <TextInput className="mt-2" value={supply} onChange={(e) => setSupply(e.target.value.replace(/[^0-9]/g, ""))} inputMode="numeric" />
+                <p className="mt-1.5 text-xs text-muted">{tr("All of it goes to your wallet at launch.")}</p>
+              </div>
+            ) : null}
           </div>
-          <TextInput className="mt-2" value={supply} onChange={(e) => setSupply(e.target.value.replace(/[^0-9]/g, ""))} inputMode="numeric" />
-          <p className="mt-1.5 text-xs text-muted">{tr("All of it goes to your wallet at launch.")}</p>
-        </div>
-      ) : null}
+        ) : null}
 
-      <div>
-        <Label>{tr("Description")}</Label>
-        <TextInput value={description} onChange={(e) => setDescription(e.target.value)} placeholder={tr("Optional")} />
-      </div>
-
-      {evm ? (
-        <div>
-          <Label>{tr("Graduates at (")}{meta.native})</Label>
-          <div className="grid grid-cols-3 gap-2">
-            {(GRAD_PRESETS as Record<string, string[]>)[chain].map((p) => (
-              <button key={p} type="button" onClick={() => setGrad(p)} className={cn("min-h-11", grad === p ? "btn-cyan" : "btn-line")}>
-                {p} {meta.native}
-              </button>
-            ))}
+        {current === "links" ? (
+          <div className="space-y-3">
+            <p className="text-sm text-muted">{tr("All optional. They show on your coin page and in link previews.")}</p>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div>
+                <Label>X / Twitter</Label>
+                <TextInput value={xHandle} onChange={(e) => setXHandle(e.target.value)} placeholder="@handle" />
+              </div>
+              <div>
+                <Label>{tr("Telegram")}</Label>
+                <TextInput value={telegram} onChange={(e) => setTelegram(e.target.value)} placeholder="@group" />
+              </div>
+              <div>
+                <Label>{tr("Website")}</Label>
+                <TextInput value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://" />
+              </div>
+            </div>
           </div>
-          <TextInput className="mt-2" value={grad} onChange={(e) => setGrad(e.target.value)} inputMode="decimal" />
-          <p className="mt-1.5 text-xs text-muted">{tr("The curve moves to a DEX pool once it has collected this much. Supply is 1,000,000,000.")}</p>
-        </div>
-      ) : null}
+        ) : null}
 
-      {plain || chain === "ton" ? null : (
-        <div>
-          <Label>{tr("First buy (")}{meta.native})</Label>
-          <TextInput value={devBuy} onChange={(e) => setDevBuy(e.target.value)} placeholder={tr("0 — skip it")} inputMode="decimal" />
-          <p className="mt-1.5 text-xs text-muted">{tr("Optional. It happens in the same transaction, so nobody can buy before you.")}</p>
-        </div>
-      )}
-
-      {evm && chain !== "ton" ? (
-        <div className="grid gap-4 sm:grid-cols-2">
+        {current === "curve" && evm ? (
           <div>
-            <Label>{tr("Max buy per wallet (")}{meta.native})</Label>
-            <TextInput value={maxBuy} onChange={(e) => setMaxBuy(e.target.value)} placeholder={tr("0 — no limit")} inputMode="decimal" />
+            <Label>{tr("Graduates at (")}{meta.native})</Label>
+            <div className="grid grid-cols-3 gap-2">
+              {(GRAD_PRESETS as Record<string, string[]>)[chain].map((p) => (
+                <button key={p} type="button" onClick={() => setGrad(p)} className={cn("min-h-11", grad === p ? "btn-cyan" : "btn-line")}>
+                  {p} {meta.native}
+                </button>
+              ))}
+            </div>
+            <TextInput className="mt-2" value={grad} onChange={(e) => setGrad(e.target.value)} inputMode="decimal" />
+            <p className="mt-1.5 text-xs text-muted">{tr("The curve moves to a DEX pool once it has collected this much. Supply is 1,000,000,000.")}</p>
           </div>
+        ) : null}
+
+        {current === "dev" && hasBuy ? (
           <div>
-            <Label>{tr("Open trading after (minutes)")}</Label>
-            <TextInput value={startMinutes} onChange={(e) => setStartMinutes(e.target.value)} inputMode="numeric" />
+            <Label>{tr("First buy (")}{meta.native})</Label>
+            <TextInput value={devBuy} onChange={(e) => setDevBuy(e.target.value)} placeholder={tr("0 — skip it")} inputMode="decimal" />
+            <p className="mt-1.5 text-xs text-muted">{tr("Optional. It happens in the same transaction, so nobody can buy before you.")}</p>
           </div>
-        </div>
-      ) : null}
+        ) : null}
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div>
-          <Label>{tr("Website")}</Label>
-          <TextInput value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://" />
-        </div>
-        <div>
-          <Label>X</Label>
-          <TextInput value={xHandle} onChange={(e) => setXHandle(e.target.value)} placeholder="@handle" />
-        </div>
-        <div>
-          <Label>{tr("Telegram")}</Label>
-          <TextInput value={telegram} onChange={(e) => setTelegram(e.target.value)} placeholder="@group" />
-        </div>
-      </div>
+        {current === "protect" && hasProtect ? (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <Label>{tr("Max buy per wallet (")}{meta.native})</Label>
+              <TextInput value={maxBuy} onChange={(e) => setMaxBuy(e.target.value)} placeholder={tr("0 — no limit")} inputMode="decimal" />
+              <p className="mt-1.5 text-xs text-muted">{tr("Stops one wallet from sweeping the curve.")}</p>
+            </div>
+            <div>
+              <Label>{tr("Open trading after (minutes)")}</Label>
+              <TextInput value={startMinutes} onChange={(e) => setStartMinutes(e.target.value)} inputMode="numeric" />
+              <p className="mt-1.5 text-xs text-muted">{tr("Delay the start so you can announce first. 0 opens right away.")}</p>
+            </div>
+          </div>
+        ) : null}
 
-      <LaunchPreview chain={chain} name={name} symbol={symbol} image={image} description={description} devBuy={devBuy} startMinutes={startMinutes} plain={plain} />
-      {wallet ? <p className="break-all text-xs text-muted">{tr("Wallet")}{" "}{wallet}</p> : null}
-      {error ? <p className="text-sm text-sell">{tr(error)}</p> : null}
+        {current === "launch" ? (
+          <div className="space-y-4">
+            <p className="text-sm text-muted">
+              {tr("Signs with your own wallet:")}{" "}{WALLET_TEXT[chain]}{tr(". No Telegram needed.")}{" "}
+              {plain
+                ? tr("A standard coin: the whole supply is minted once to your wallet, with no owner and no way to mint more.")
+                : tr("The coin goes on the same curves as @Ferzan_Launch_Bot launches.")}
+            </p>
+            <LaunchPreview chain={chain} name={name} symbol={symbol} image={image} description={description} devBuy={devBuy} startMinutes={startMinutes} plain={plain} />
+            {wallet ? <p className="break-all text-xs text-muted">{tr("Wallet")}{" "}{wallet}</p> : null}
+          </div>
+        ) : null}
+
+        {error ? <p className="text-sm text-sell">{tr(error)}</p> : null}
+
       {error.startsWith("No Tron wallet") ? (
-        <div className="space-y-1 text-sm">
-          <p>
-            <b>{tr("On a phone:")}</b>{" "}
-            <a className="font-semibold text-cyan" href={tronLinkAppLink()}>
-              {tr("Open this page in the TronLink app")}
-            </a>{" "}
-            {tr("(install TronLink first if you don't have it).")}
-          </p>
-          <p>
-            <b>{tr("On a computer:")}</b>{" "}{tr("add the")}{" "}
-            <a className="font-semibold text-cyan" href="https://www.tronlink.org/" target="_blank" rel="noopener noreferrer">
-              {tr("TronLink extension")}
+          <div className="space-y-1 text-sm">
+            <p>
+              <b>{tr("On a phone:")}</b>{" "}
+              <a className="font-semibold text-cyan" href={tronLinkAppLink()}>
+                {tr("Open this page in the TronLink app")}
+              </a>{" "}
+              {tr("(install TronLink first if you don't have it).")}
+            </p>
+            <p>
+              <b>{tr("On a computer:")}</b>{" "}{tr("add the")}{" "}
+              <a className="font-semibold text-cyan" href="https://www.tronlink.org/" target="_blank" rel="noopener noreferrer">
+                {tr("TronLink extension")}
+              </a>
+              {tr(", unlock it, then reload this page.")}
+            </p>
+            <p>
+              <b>{tr("No TronLink?")}</b>{" "}{tr("Launch from your Ferzan Trade Bot wallet in")}{" "}
+              <a className="font-semibold text-cyan" href="https://t.me/Ferzan_Launch_Bot?start=launch" target="_blank" rel="noopener noreferrer">
+                {tr("@Ferzan_Launch_Bot")}
+              </a>{" "}
+              {tr("(pick Tron).")}
+            </p>
+          </div>
+        ) : null}
+        {error.startsWith("No ") && !error.startsWith("No Tron") && !plain ? (
+          <p className="text-sm">
+            <a className="font-semibold text-cyan" href={evm ? links.metamask : links.phantom}>
+              {tr("Open in the")}{" "}{evm ? tr("MetaMask") : tr("Phantom")}{" "}{tr("app")}
             </a>
-            {tr(", unlock it, then reload this page.")}
           </p>
-          <p>
-            <b>{tr("No TronLink?")}</b>{" "}{tr("Launch from your Ferzan Trade Bot wallet in")}{" "}
-            <a className="font-semibold text-cyan" href="https://t.me/Ferzan_Launch_Bot?start=launch" target="_blank" rel="noopener noreferrer">
-              {tr("@Ferzan_Launch_Bot")}
-            </a>{" "}
-            {tr("(pick Tron).")}
-          </p>
-        </div>
-      ) : null}
-      {error.startsWith("No ") && !error.startsWith("No Tron") && !plain ? (
-        <p className="text-sm">
-          <a className="font-semibold text-cyan" href={evm ? links.metamask : links.phantom}>
-            {tr("Open in the")}{" "}{evm ? tr("MetaMask") : tr("Phantom")}{" "}{tr("app")}
+        ) : null}
+        {busy ? <p className="text-sm text-cyan">{tr(busy)}</p> : null}
+        {hash && busy ? (
+          <a
+            className="text-sm text-cyan"
+            href={txLink(chain, hash)}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {tr("View transaction")}
           </a>
-        </p>
-      ) : null}
-      {busy ? <p className="text-sm text-cyan">{tr(busy)}</p> : null}
-      {hash && busy ? (
-        <a
-          className="text-sm text-cyan"
-          href={txLink(chain, hash)}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {tr("View transaction")}
-        </a>
-      ) : null}
-      <Button type="submit" className="w-full" disabled={Boolean(busy)}>
-        {wallet ? tr("Launch") : tr("Connect wallet and launch")}
-      </Button>
+        ) : null}
+        <div className="flex flex-wrap items-center gap-3">
+          {at > 0 ? (
+            <button type="button" className="btn-line min-h-11" onClick={() => setTab(tabs[at - 1].id)}>
+              {tr("Back")}
+            </button>
+          ) : null}
+          {isLast ? (
+            <Button type="submit" className="min-w-40 flex-1" disabled={Boolean(busy)}>
+              {wallet ? tr("Launch") : tr("Connect wallet and launch")}
+            </Button>
+          ) : (
+            <button type="submit" className="btn-cyan ml-auto min-h-11 px-6">
+              {tr("Continue")} →
+            </button>
+          )}
+        </div>
+      </div>
     </form>
   );
 }
