@@ -1120,6 +1120,7 @@ const dict: Record<string, string> = {
   "Delay the start so you can announce first. 0 opens right away.": "Retrasa el inicio para que puedas anunciarlo primero. 0 abre de inmediato.",
   "Links": "Enlaces",
   "All optional. They show on your coin page and in link previews.": "Todos opcionales. Se muestran en la página de tu moneda y en las vistas previas del enlace.",
+  "Includes a 0.25% Ferzan fee": "Incluye una comisión de Ferzan del 0.25%",
 };
 
 export default dict;

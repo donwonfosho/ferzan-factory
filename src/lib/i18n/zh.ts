@@ -1133,6 +1133,7 @@ const dict: Record<string, string> = {
   "Delay the start so you can announce first. 0 opens right away.": "延迟开始，方便你先发布公告。填 0 则立即开放。",
   "Links": "链接",
   "All optional. They show on your coin page and in link previews.": "全部可选。它们会显示在你的代币页面和链接预览中。",
+  "Includes a 0.25% Ferzan fee": "含 0.25% 的 Ferzan 费用",
 };
 
 export default dict;

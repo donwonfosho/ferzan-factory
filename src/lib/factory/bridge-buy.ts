@@ -21,6 +21,9 @@ export const BRIDGE_META: Record<BridgeChain, { label: string; sym: string; dec:
   tron: { label: "Tron", sym: "TRX", dec: 6, max: 100_000, min: 100 },
 };
 
+/** Ferzan's bridge fee in basis points (25 = 0.25%), taken from the amount sent and paid to the treasury. The quote shows it. */
+export const BRIDGE_FEE_BPS = 25;
+
 export type BridgeQuote = {
   via: "relay" | "debridge";
   /** EVM source: transactions to send in order (usually one). */

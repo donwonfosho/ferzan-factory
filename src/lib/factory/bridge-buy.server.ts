@@ -1,5 +1,8 @@
 /** Server-only: asks Relay / deBridge for a bridge route and checks what comes back before the wallet ever sees it. */
-import { BRIDGE_META, type BridgeChain, type BridgeQuote } from "./bridge-buy";
+import { BRIDGE_FEE_BPS, BRIDGE_META, type BridgeChain, type BridgeQuote } from "./bridge-buy";
+import { TREASURY } from "./catalog";
+
+const FEE_TEXT = `Includes a ${BRIDGE_FEE_BPS / 100}% Ferzan fee`;
 
 const RELAY = "https://api.relay.link/quote/v2";
 const DLN = "https://dln.debridge.finance/v1.0/dln/order/create-tx";
@@ -52,6 +55,7 @@ async function viaRelay(q: { from: BridgeChain; to: BridgeChain; amount: string;
       destinationCurrency: q.to === "solana" ? "So11111111111111111111111111111111111111112" : NATIVE_EVM,
       amount: q.amount,
       tradeType: "EXACT_INPUT",
+      appFees: [{ recipient: TREASURY.evm, fee: String(BRIDGE_FEE_BPS) }],
     }),
     signal: AbortSignal.timeout(20_000),
   });
@@ -77,7 +81,7 @@ async function viaRelay(q: { from: BridgeChain; to: BridgeChain; amount: string;
   return {
     via: "relay", evm, solHex: "", outRaw,
     outText: outRaw !== "0" ? `${fmt(BigInt(outRaw), outDec)} ${BRIDGE_META[q.to].sym}` : "",
-    feeText: "",
+    feeText: FEE_TEXT,
   };
 }
 
@@ -92,6 +96,8 @@ async function viaDln(q: { from: BridgeChain; to: BridgeChain; amount: string; s
     dstChainTokenOutRecipient: q.recipient,
     srcChainOrderAuthorityAddress: q.sender,
     dstChainOrderAuthorityAddress: q.recipient,
+    affiliateFeePercent: String(BRIDGE_FEE_BPS / 100),
+    affiliateFeeRecipient: q.from === "solana" ? TREASURY.sol : TREASURY.evm,
   });
   const res = await fetch(`${DLN}?${params}`, { headers: { accept: "application/json" }, signal: AbortSignal.timeout(20_000) });
   const body = (await res.json().catch(() => ({}))) as Record<string, unknown>;
@@ -104,12 +110,12 @@ async function viaDln(q: { from: BridgeChain; to: BridgeChain; amount: string; s
     const blob = String(tx.data ?? "");
     const hex = blob.startsWith("0x") ? blob.slice(2) : blob;
     if (!/^[0-9a-fA-F]{100,}$/.test(hex)) throw new Error("deBridge sent no usable Solana transaction.");
-    return { via: "debridge", evm: [], solHex: hex, outRaw, outText, feeText: "" };
+    return { via: "debridge", evm: [], solHex: hex, outRaw, outText, feeText: FEE_TEXT };
   }
   if (!isAddr(tx.to) || !isHex(tx.data)) throw new Error("deBridge sent no usable transaction.");
   const value = big(tx.value);
   if (value > BigInt(q.amount) + slack(BRIDGE_META[q.from].dec)) throw new Error("The route asks for more than you entered. Nothing was sent.");
-  return { via: "debridge", evm: [{ to: tx.to, data: tx.data, value: value.toString() }], solHex: "", outRaw, outText, feeText: "" };
+  return { via: "debridge", evm: [{ to: tx.to, data: tx.data, value: value.toString() }], solHex: "", outRaw, outText, feeText: FEE_TEXT };
 }
 
 export async function quoteBridge(q: { from: BridgeChain; to: BridgeChain; amount: string; sender: string; recipient: string }): Promise<BridgeQuote> {

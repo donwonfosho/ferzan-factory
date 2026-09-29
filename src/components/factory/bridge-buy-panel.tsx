@@ -149,6 +149,7 @@ export function BridgeBuy({ dest, onArrived }: { dest: BridgeChain; onArrived?: 
               {quote.q.outText ? tr("You receive about {0} on {1}.", quote.q.outText, dmeta.label) : tr("Route found.")}{" "}
               <span className="text-muted">{quote.q.via === "relay" ? "Relay" : "deBridge"}</span>
             </p>
+            {quote.q.feeText ? <p className="text-xs text-muted">{tr(quote.q.feeText)}</p> : null}
             <Button type="button" className="w-full" disabled={Boolean(busy)} onClick={() => void send()}>
               {tr("Approve in wallet")}
             </Button>
