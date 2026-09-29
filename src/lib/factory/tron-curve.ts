@@ -5,7 +5,7 @@
 import { createServerFn } from "@tanstack/react-start";
 
 /** Ferzan's Tron curve factory. A launch built for any other contract is refused. Update when the factory is redeployed. */
-export const TRON_CURVE_FACTORY = "TF6VBMbSbw5MgauSbbzxq3NqBqX7NNFBMT";
+export const TRON_CURVE_FACTORY = "TPS1aM5TwfmJHjzuA1XMy6wWme2LYqZ1BN";
 export const TRON_ADDRESS = /^T[1-9A-HJ-NP-Za-km-z]{33}$/;
 
 export type TronCurveState = {
