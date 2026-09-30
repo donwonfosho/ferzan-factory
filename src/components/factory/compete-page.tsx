@@ -147,7 +147,7 @@ export function CompetePage() {
     <div className="mx-auto max-w-3xl space-y-5">
       <div>
         <h1 className="text-4xl">{tr("Weekly competition")}</h1>
-        <p className="mt-2 text-muted">{tr("Top traders and top callers on every Ferzan coin, every chain. A new week starts every Friday at 7:00 PM ET.")}</p>
+        <p className="mt-2 text-muted">{tr("Top traders and top callers on every Ferzan coin, every chain. A new week starts every Thursday at 4:00 PM ET.")}</p>
         {status ? <p className="mt-2 text-sm font-semibold text-cyan tabular-nums">{status}</p> : null}
       </div>
 

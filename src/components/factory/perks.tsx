@@ -47,7 +47,7 @@ export function FerzanPerksCard({ sol: wallet }: { sol: string | null }) {
       </ul>
       <p className="mt-3 text-sm text-muted">
         {!p.active
-          ? tr("Switches on when FERZAN launches on Friday, October 9 at 7:00 PM ET. Hold it in the Solana wallet you launch and trade with.")
+          ? tr("Switches on when FERZAN launches on Thursday, October 15 at 4:00 PM ET. Hold it in the Solana wallet you launch and trade with.")
           : !wallet
             ? tr("Sign in to see your status. It is read from your Solana wallet.")
             : p.tier === "none"
@@ -70,7 +70,7 @@ export function LaunchPerksNote() {
       : "";
   return (
     <p className="mt-2 text-xs text-muted">
-      {tr("Your coin gets a Ferzan address ending in")}{" "}<span className="font-semibold text-fg">{tr("…fzn")}</span>{tr(". Launch fee")}{" "}{sol(p.launchFeeSol)}{tr(": FERZAN holders (")}{whole(p.holderMin)}{tr("+) pay half,")}{" "}{whole(p.whaleMin)}{tr("+ launch free")}{p.active ? "." : tr(" (from Oct 9).")}
+      {tr("Your coin gets a Ferzan address ending in")}{" "}<span className="font-semibold text-fg">{tr("…fzn")}</span>{tr(". Launch fee")}{" "}{sol(p.launchFeeSol)}{tr(": FERZAN holders (")}{whole(p.holderMin)}{tr("+) pay half,")}{" "}{whole(p.whaleMin)}{tr("+ launch free")}{p.active ? "." : tr(" (from Oct 15).")}
       {mine ? <span className="text-cyan">{mine}</span> : null}
     </p>
   );

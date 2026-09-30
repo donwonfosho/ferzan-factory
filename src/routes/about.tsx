@@ -39,7 +39,7 @@ function AboutPage() {
             <span className="text-fg">{tr("Telegram bots")}</span>{tr(": a Launch Bot, a Trade Bot, a Buy Bot that posts buys in project chats, and Guardian, which moderates Telegram groups.")}
           </li>
           <li>
-            <span className="text-fg">{tr("FERZAN")}</span>{tr(": the platform's token, launching on Solana on Friday, October 9, 2026 at 7:00 PM ET.")}{" "}
+            <span className="text-fg">{tr("FERZAN")}</span>{tr(": the platform's token, launching on Solana on Thursday, October 15, 2026 at 4:00 PM ET.")}{" "}
             <Link to="/ferzan" className="text-cyan">
               {tr("How it works")}
             </Link>
@@ -90,7 +90,7 @@ function AboutPage() {
         <h2 className="text-xl">{tr("Stay safe")}</h2>
         <ul className="list-disc space-y-1 pl-5 text-sm text-muted">
           <li>{tr("Ferzan admins never DM you first and never ask for a seed phrase, private key or payment.")}</li>
-          <li>{tr("The FERZAN contract address is posted only on this site, by @ferzaneco on X and in the Ferzan Telegram chat, at 7:00 PM ET on October 9. Any address before that is fake.")}</li>
+          <li>{tr("The FERZAN contract address is posted only on this site, by @ferzaneco on X and in the Ferzan Telegram chat, at 4:00 PM ET on October 15. Any address before that is fake.")}</li>
           <li>{tr("Ferzan does not sell listings, guaranteed pumps or \"recovery\" services. Anyone offering them in our name is a scammer.")}</li>
         </ul>
       </section>

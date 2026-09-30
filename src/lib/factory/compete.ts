@@ -1,6 +1,6 @@
 /**
  * Weekly competition (volume and profit), the callers board, and share-link credit.
- * Data comes from the Launch Bot API; weeks start at the FERZAN launch (Fri Oct 9, 7:00 PM ET).
+ * Data comes from the Launch Bot API; weeks start at the FERZAN launch (Thu Oct 15, 4:00 PM ET).
  */
 import { createServerFn } from "@tanstack/react-start";
 

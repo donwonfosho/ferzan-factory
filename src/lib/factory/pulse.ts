@@ -86,7 +86,7 @@ export const getPulse = createServerFn({ method: "GET" }).handler(async (): Prom
       };
     }),
     ferzan: {
-      launchAt: num(f.launch_at) || 1791586800,
+      launchAt: num(f.launch_at) || 1792094400,
       live: f.live === true,
       token: /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(str(f.token)) ? str(f.token) : "",
       url: https(f.url),

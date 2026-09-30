@@ -91,7 +91,7 @@ export function TransparencyPage() {
           <p className="ticket text-sm text-muted">
             {t.ferzanLive
               ? tr("The first daily run has not happened yet. It shows up here with its transactions as soon as it does.")
-              : tr("FERZAN launches Friday, October 9 at 7:00 PM ET. The first buyback and burn runs the day after, and every run shows up here with its transactions.")}
+              : tr("FERZAN launches Thursday, October 15 at 4:00 PM ET. The first buyback and burn runs the day after, and every run shows up here with its transactions.")}
           </p>
         ) : (
           <div className="overflow-x-auto rounded-2xl shadow-border">

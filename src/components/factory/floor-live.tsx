@@ -21,12 +21,12 @@ function useNow(ms = 1000) {
   return now;
 }
 
-/** FERZAN on the floor: a countdown until 7:00 PM ET on Oct 9, then its live numbers and the burn total. */
+/** FERZAN on the floor: a countdown until 4:00 PM ET on Oct 15, then its live numbers and the burn total. */
 export function FerzanHero() {
   const p = usePulse();
   const now = useNow();
   const f = p?.ferzan;
-  const launchAt = (f?.launchAt ?? 1791586800) * 1000;
+  const launchAt = (f?.launchAt ?? 1792094400) * 1000;
   const left = launchAt - now;
 
   if (f?.live) {
@@ -75,7 +75,7 @@ export function FerzanHero() {
   const s = (left % 60_000) / 1000;
   return (
     <section className="hero-count ticket overflow-hidden" data-floor-rev="3">
-      <p className="text-sm font-semibold text-cyan">{tr("FERZAN launches Friday, October 9 · 7:00 PM ET")}</p>
+      <p className="text-sm font-semibold text-cyan">{tr("FERZAN launches Thursday, October 15 · 4:00 PM ET")}</p>
       <div className="mt-4 flex flex-wrap gap-2 sm:gap-3" role="timer" aria-live="off" aria-label={tr("Time until FERZAN launches")}>
         {[
           [d, "days"],
@@ -90,7 +90,7 @@ export function FerzanHero() {
         ))}
       </div>
       <p className="mt-4 max-w-xl text-sm text-muted">
-        {tr("The token behind the Ferzan launchpad and bots. Every day, part of the platform's trading fees buys FERZAN and burns it. The contract is posted here and in @Ferzan_Launches at 7:00 PM. Any address before that is fake.")}
+        {tr("The token behind the Ferzan launchpad and bots. Every day, part of the platform's trading fees buys FERZAN and burns it. The contract is posted here and in @Ferzan_Launches at 4:00 PM ET. Any address before that is fake.")}
       </p>
       <div className="mt-5 flex flex-col gap-3 sm:flex-row">
         <a href="https://t.me/Ferzan_Launches" target="_blank" rel="noopener noreferrer" className="btn-cyan w-full sm:w-auto">

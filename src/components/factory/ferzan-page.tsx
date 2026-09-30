@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { OnlyOnFerzan } from "./floor-live";
 
 import { tr } from "@/lib/i18n";
-/** FERZAN launch: Friday, October 9, 2026, 7:00 PM Eastern (23:00 UTC). */
-const LAUNCH_AT = Date.UTC(2026, 9, 9, 23, 0, 0);
+/** FERZAN launch: Thursday, October 15, 2026, 4:00 PM Eastern (20:00 UTC). */
+const LAUNCH_AT = Date.UTC(2026, 9, 15, 20, 0, 0);
 const SQUADS_VAULT = "2vWqwX72ijo24vgvPQW6yBQh2qXE4jrEd18YDdEbWKLG";
 const FLAGSHIP_CONFIG = "8YoqjUBsyfgQv5s7fWR5nyjeMd43rKvMUEexAuYRCvbo";
 
@@ -89,7 +89,7 @@ export function FerzanPage() {
         <div>
           <p className="text-sm font-medium text-cyan">{tr("Solana · Meteora bonding curve")}</p>
           <h1 className="mt-1 text-4xl sm:text-5xl">{tr("FERZAN")}</h1>
-          <p className="mt-2 text-muted">{tr("Launches Friday, October 9 at 7:00 PM Eastern.")}</p>
+          <p className="mt-2 text-muted">{tr("Launches Thursday, October 15 at 4:00 PM Eastern.")}</p>
           <Countdown />
         </div>
       </section>
