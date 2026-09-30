@@ -10,8 +10,14 @@ const FLAGSHIP_CONFIG = "8YoqjUBsyfgQv5s7fWR5nyjeMd43rKvMUEexAuYRCvbo";
 const SUPPLY = [
   { pct: "28%", amount: "279,991,997", name: "Public curve", detail: "Every one of these is bought on the curve. No presale, no dev buy." },
   { pct: "7%", amount: "69,998,001", name: "Graduation liquidity", detail: "Paired with the SOL raised in the Meteora pool at graduation. The liquidity is locked forever." },
-  { pct: "5%", amount: "50,000,000", name: "Unlocks at graduation", detail: "Airdrop and early rewards, held by the Ferzan multisig." },
+  { pct: "5%", amount: "50,000,000", name: "Unlocks at graduation", detail: "20,000,000 for airdrop and early rewards, held by the Ferzan multisig. 30,000,000 goes into the team lock below." },
   { pct: "60%", amount: "600,000,000", name: "Locked, 24 months", detail: "Meteora releases 25,000,000 a month to the multisig. Nobody can speed it up." },
+] as const;
+
+const TEAM = [
+  { name: "Dre", address: "6EFzuX77oyphe4cg5zFGMHPV6du9fj1LJjDucZNVFpn7" },
+  { name: "Mike", address: "DFC1VDY22xhS8PjFzEisRBXB4SDfQbV2N7Rgzp49Trhk" },
+  { name: "Don", address: "B3JNNu3SRSPpCeGVCK5SAas5Ev5x31uJ9RTMudSArSY" },
 ] as const;
 
 const FEE_STEPS = [
@@ -115,6 +121,21 @@ export function FerzanPage() {
         </ul>
         <p className="mt-3 text-sm text-muted">
           {tr("The locked tokens only start unlocking after FERZAN graduates. They sit in a 2-of-3 Squads multisig, so no single key can move them.")}
+        </p>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-extrabold">{tr("Team allocation: 3%, locked")}</h2>
+        <p className="mt-1 text-sm text-muted">
+          {tr("30,000,000 FERZAN (3% of supply) is split equally between three team wallets, 10,000,000 each. Nothing can be sold or moved for 12 months. After that it is paid out in 12 equal monthly releases, about 833,333 per wallet a month, matching the last 12 of the multisig's 24 monthly unlocks.")}
+        </p>
+        <ul className="mt-2 divide-y divide-line border-y border-line">
+          {TEAM.map((m) => (
+            <Address key={m.name} label={`${m.name} · 10,000,000 FERZAN`} value={m.address} />
+          ))}
+        </ul>
+        <p className="mt-3 text-sm text-muted">
+          {tr("The team tokens come out of the 5% that unlocks at graduation, not out of the public curve. Right after graduation the multisig deposits them into an on-chain lock with the 12-month cliff. The link to that lock is published here and on X the moment it exists, so anyone can check it. Until then these addresses are the intended recipients, not a completed lock.")}
         </p>
       </section>
 
