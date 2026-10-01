@@ -193,7 +193,7 @@ const MARKS = new Set(["solana", "base", "bsc", "ethereum", "robinhood", "arc", 
 const ONLY = [
   { t: "Eight chains, one board", d: "Solana, Base, BNB, Ethereum, Robinhood, Arc, Tron and TON. Launch and trade on any of them from the same page." },
   { t: "Telegram and web together", d: "Launch from @Ferzan_Launch_Bot or here. Every coin lands on the same board, and the Trade Bot trades them all." },
-  { t: "Creators keep half the fees", d: "Ferzan curves charge 1% per trade and send half of it to the coin's creator on every trade. Solana creators get half of the Meteora trading fees." },
+  { t: "Creators keep half the fees", d: "Coins launched here or with the Telegram bot charge 1% per trade and send half of it to the creator on every trade. Solana creators get half of the Meteora trading fees." },
   { t: "A creator score on every coin", d: "Other launches by the same creator, launch sprees, and what the dev bought and sold, shown before you buy." },
   { t: "Rug Guard", d: "Turn it on in the Trade Bot and it sells your bag if the liquidity is pulled or the dev dumps. On Solana it also watches the top holders." },
   { t: "Fake-address guard", d: "In Ferzan's Telegram chats, Guardian deletes any contract address that isn't the official one or a Ferzan launch." },

@@ -14,6 +14,14 @@ const SUPPLY = [
   { pct: "60%", amount: "600,000,000", name: "Locked, 24 months", detail: "Meteora releases 25,000,000 a month to the multisig. Nobody can speed it up." },
 ] as const;
 
+const DAY_STEPS = [
+  { when: "Before 4:00 PM ET", what: "No official FERZAN address exists yet. Anything posted before launch is fake. Guardian deletes unofficial addresses in Ferzan chats." },
+  { when: "4:00 PM ET, Thursday October 15", what: "The curve opens on Solana. The contract address is posted here, on @Ferzan_Launches and on X at the same moment." },
+  { when: "First 30 minutes", what: "The trading fee starts at 99% and falls to 1%, so sniping the open costs almost everything." },
+  { when: "When the curve fills", what: "The Meteora pool opens with the liquidity locked forever. 5% unlocks: 20,000,000 for rewards and 30,000,000 into the team lock." },
+  { when: "Every day after", what: "30% of Ferzan's Solana trading fees buys FERZAN and burns it. Every burn is posted with its transaction." },
+] as const;
+
 const TEAM = [
   { name: "Dre", address: "6EFzuX77oyphe4cg5zFGMHPV6du9fj1LJjDucZNVFpn7" },
   { name: "Mike", address: "DFC1VDY22xhS8PjFzEisRBXB4SDfQbV2N7Rgzp49Trhk" },
@@ -101,6 +109,18 @@ export function FerzanPage() {
         <p className="mt-3 text-sm text-muted">
           {tr("The contract address is published here, on @Ferzan_Launches and on X the moment it goes live. Anything posted before that is not FERZAN.")}
         </p>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-extrabold">{tr("Launch day, step by step")}</h2>
+        <ol className="mt-3 space-y-3 text-sm">
+          {DAY_STEPS.map((st) => (
+            <li key={st.when} className="ticket">
+              <p className="font-semibold text-cyan">{tr(st.when)}</p>
+              <p className="mt-1 text-muted">{tr(st.what)}</p>
+            </li>
+          ))}
+        </ol>
       </section>
 
       <section>

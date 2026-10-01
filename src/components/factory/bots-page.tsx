@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { X_URL } from "@/lib/factory/catalog";
+import { FeeTable } from "./fee-table";
 
 import { tr } from "@/lib/i18n";
 const ROOMS = [
@@ -84,6 +85,7 @@ export function BotsPage() {
           </li>
         ))}
       </ul>
+      <FeeTable />
       <Link to="/launch" search={{ kind: "curve" }} className="btn-cyan mt-8">
         {tr("Launch a coin")}
       </Link>

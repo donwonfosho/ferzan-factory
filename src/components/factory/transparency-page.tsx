@@ -69,7 +69,7 @@ export function TransparencyPage() {
         <Tile label={tr("Coins launched")} value={n0(t.totals.launches)} hint={tr("On all 8 chains")} />
         <Tile label={tr("Graduated")} value={n0(t.totals.graduated)} hint={tr("Filled their curve")} />
         <Tile label={tr("Trading volume")} value={compactUsd(t.totals.volumeUsd)} hint={tr("On Ferzan curves")} />
-        <Tile label={tr("Paid to creators")} value={compactUsd(t.totals.creatorFeesUsd)} hint={tr("Half of every curve fee (Base, BNB, Ethereum, Robinhood, Arc, Tron)")} />
+        <Tile label={tr("Paid to creators")} value={compactUsd(t.totals.creatorFeesUsd)} hint={tr("Half of every bot and Launch page curve fee (Base, BNB, Ethereum, Robinhood, Arc, Tron)")} />
         <Tile label={tr("Trades, last 24 h")} value={n0(t.totals.trades24h + extra)} live={live} hint={tr("{0} different wallets", n0(t.totals.traders24h))} />
         <Tile label={tr("Trades, all time")} value={n0(t.totals.tradesAll + extra)} live={live} />
       </section>
@@ -181,6 +181,7 @@ export function TransparencyPage() {
           <li>{tr("Every trade on a Ferzan curve pays 1%.")}</li>
           <li>{tr("Half goes to the coin's creator on every trade, for as long as it trades.")}</li>
           <li>{tr("The other half goes to Ferzan, or 40% to Ferzan and 10% to whoever referred the buyer.")}</li>
+          <li>{tr("The older curves launched directly on the website split the 1% differently: 60% treasury, 30% creator and 10% to the referrer. The split is also shown on each coin's page.")}</li>
           <li>{tr("On Solana, 30% of Ferzan's share buys FERZAN every day and burns it (above). The rest goes to the Ferzan multisig.")}</li>
         </ul>
         {t.multisig ? (
