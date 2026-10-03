@@ -12,7 +12,7 @@ import {
 import { dexSwapUrl, explorerAddress, explorerTx } from "@/lib/factory/deploy";
 import { evmWallet, useAccountWallets } from "@/lib/factory/wallet-bridge";
 import { getReceipt } from "@/lib/factory/relay";
-import { formatSmart, parseDecimal } from "@/lib/factory/units";
+import { formatPrice, formatSmart, formatUsdPrice, parseDecimal } from "@/lib/factory/units";
 import { cn } from "@/lib/cn";
 import { Button, TextInput } from "./ui";
 import { CandleChart, CurveGraphic } from "./chart-pro";
@@ -285,7 +285,8 @@ export function BotCoinPage({ chain, curve }: { chain: BotCurveChain; curve: str
         </div>
         <div className="ticket">
           <p className="text-xs text-muted">{tr("Price")}</p>
-          <p className="text-base font-extrabold tabular-nums sm:text-lg">{state.price ? state.price.toPrecision(3) : "—"} {state.native}</p>
+          <p className="text-base font-extrabold tabular-nums sm:text-lg">{formatUsdPrice(state.price, state.nativeUsd) || (formatPrice(state.price) + " " + state.native)}</p>
+          {formatUsdPrice(state.price, state.nativeUsd) ? <p className="text-xs text-muted tabular-nums">{formatPrice(state.price)} {state.native}</p> : null}
         </div>
         <div className="ticket">
           <p className="text-xs text-muted">{state.graduated ? tr("Graduated") : tr("To graduation")}</p>

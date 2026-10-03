@@ -87,6 +87,14 @@ export function formatPrice(n: number): string {
   return `0.${frac.slice(0, 6)}`;
 }
 
+/** Dollar price of one token, written like formatPrice (0.0₇28 style for tiny prices), never 2.8e-8. "" when unknown. */
+export function formatUsdPrice(priceNative: number, nativeUsd: number): string {
+  const n = priceNative * nativeUsd;
+  if (!Number.isFinite(n) || n <= 0) return "";
+  const text = formatPrice(n);
+  return text === "—" ? "" : `$${text}`;
+}
+
 /** How many tokens one native unit buys at the spot price. */
 export function formatTokensPerNative(price: number): string {
   if (!Number.isFinite(price) || price <= 0) return "—";

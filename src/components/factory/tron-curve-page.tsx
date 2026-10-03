@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { buildTronTrade, getTronCurve, quoteTronCurve, TRON_ADDRESS, type TronCurveState } from "@/lib/factory/tron-curve";
 import { tronLinkAppLink, tronWallet } from "@/lib/factory/tron-ton-wallets";
-import { formatSmart, parseDecimal } from "@/lib/factory/units";
+import { formatPrice, formatSmart, formatUsdPrice, parseDecimal } from "@/lib/factory/units";
 import { useLive, sameCoin } from "@/lib/factory/live";
 import { cn } from "@/lib/cn";
 import { Button, TextInput } from "./ui";
@@ -247,7 +247,8 @@ export function TronCurvePage({ curve }: { curve: string }) {
         </div>
         <div className="ticket">
           <p className="text-xs text-muted">{tr("Price")}</p>
-          <p className="text-base font-extrabold tabular-nums sm:text-lg">{state.price ? state.price.toPrecision(3) : "—"} TRX</p>
+          <p className="text-base font-extrabold tabular-nums sm:text-lg">{formatUsdPrice(state.price, state.nativeUsd) || (formatPrice(state.price) + " " + "TRX")}</p>
+          {formatUsdPrice(state.price, state.nativeUsd) ? <p className="text-xs text-muted tabular-nums">{formatPrice(state.price)} {"TRX"}</p> : null}
         </div>
         <div className="ticket">
           <p className="text-xs text-muted">{state.graduated ? tr("Graduated") : tr("To graduation")}</p>

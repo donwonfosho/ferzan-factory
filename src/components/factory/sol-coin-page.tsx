@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { buildSolSwap, getSolCoin, type SolCoin } from "@/lib/factory/sol-coin";
 import { solanaExplorerMint, solanaExplorerTx } from "@/lib/factory/solana";
-import { formatSmart, parseDecimal } from "@/lib/factory/units";
+import { formatPrice, formatSmart, formatUsdPrice, parseDecimal } from "@/lib/factory/units";
 import { WalletNeeded, solanaWallet, useAccountWallets } from "@/lib/factory/wallet-bridge";
 import { cn } from "@/lib/cn";
 import { CandleChart } from "./chart-pro";
@@ -208,7 +208,8 @@ export function SolCoinPage({ mint }: { mint: string }) {
         </div>
         <div className="ticket">
           <p className="text-xs text-muted">{tr("Price")}</p>
-          <p className="text-base font-extrabold tabular-nums sm:text-lg">{coin.price ? coin.price.toPrecision(3) : "—"}{" "}{tr("SOL")}</p>
+          <p className="text-base font-extrabold tabular-nums sm:text-lg">{formatUsdPrice(coin.price, coin.nativeUsd) || (formatPrice(coin.price) + " " + tr("SOL"))}</p>
+          {formatUsdPrice(coin.price, coin.nativeUsd) ? <p className="text-xs text-muted tabular-nums">{formatPrice(coin.price)} {tr("SOL")}</p> : null}
         </div>
         <div className="ticket">
           <p className="text-xs text-muted">{coin.graduated ? tr("Graduated") : tr("To graduation")}</p>
