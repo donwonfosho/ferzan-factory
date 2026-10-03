@@ -141,29 +141,72 @@ export function tokenDeployData(name: string, symbol: string, supplyWhole: bigin
   return FERZAN_TOKEN_BYTECODE + encodeTokenConstructor(name, symbol, supplyWhole, owner);
 }
 
+/** Wallets reject with plain objects ({code, message}), sometimes nested; read both whatever the shape. */
+export function walletError(err: unknown): { code: number; message: string } {
+  const e = err as { code?: unknown; message?: unknown; data?: { originalError?: { code?: unknown } }; cause?: { code?: unknown } } | null;
+  const nested = e?.data?.originalError?.code ?? e?.cause?.code;
+  const code = Number(e?.code ?? nested ?? 0) || Number(nested ?? 0) || 0;
+  const message = typeof e?.message === "string" ? e.message : typeof err === "string" ? err : "";
+  return { code, message };
+}
+
+/** True when the wallet is saying "I don't know this network yet", which varies by wallet. */
+export function chainNotAdded(code: number, message: string): boolean {
+  return code === 4902 || /unrecognized chain|unknown chain|not added|try adding|add the chain|no chain with id|does not exist/i.test(message);
+}
+
 export async function switchChain(eth: Provider, chain: EvmChainId) {
   const meta = EVM_CHAIN[chain];
   const hexId = "0x" + meta.chainId.toString(16);
+  const current = async () => {
+    try {
+      return String(await eth.request({ method: "eth_chainId" })).toLowerCase();
+    } catch {
+      return "";
+    }
+  };
+  if ((await current()) === hexId) return;
   try {
     await eth.request({ method: "wallet_switchEthereumChain", params: [{ chainId: hexId }] });
   } catch (err) {
-    const code = typeof err === "object" && err && "code" in err ? Number((err as { code: number }).code) : 0;
-    if (code !== 4902) {
-      throw err instanceof Error ? err : new Error("The wallet did not switch chain.");
+    const { code, message } = walletError(err);
+    if (code === 4001 || /user rejected|user denied|rejected the request|cancel/i.test(message)) {
+      throw new Error(`You cancelled the switch to ${meta.name}. Press Connect wallet and launch again, then approve the network change in your wallet.`);
     }
-    await eth.request({
-      method: "wallet_addEthereumChain",
-      params: [
-        {
-          chainId: hexId,
-          chainName: meta.name,
-          nativeCurrency: { name: meta.symbol, symbol: meta.symbol, decimals: 18 },
-          rpcUrls: [meta.rpc],
-          blockExplorerUrls: [meta.explorer],
-        },
-      ],
-    });
+    if (code === -32002 || /already pending|already processing/i.test(message)) {
+      throw new Error("Your wallet already has a request waiting. Open your wallet, approve or reject it, then press again.");
+    }
+    if (chainNotAdded(code, message) || code === -32603) {
+      try {
+        await eth.request({
+          method: "wallet_addEthereumChain",
+          params: [
+            {
+              chainId: hexId,
+              chainName: meta.name,
+              nativeCurrency: { name: meta.symbol, symbol: meta.symbol, decimals: 18 },
+              rpcUrls: [meta.rpc],
+              blockExplorerUrls: [meta.explorer],
+            },
+          ],
+        });
+      } catch (addErr) {
+        const a = walletError(addErr);
+        if (a.code === 4001 || /user rejected|user denied|cancel/i.test(a.message)) {
+          throw new Error(`You cancelled adding ${meta.name}. Press again and approve it in your wallet.`);
+        }
+        throw new Error(`Your wallet would not add ${meta.name}${a.message ? ": " + a.message.slice(0, 120) : ""}. Switch to ${meta.name} in your wallet by hand, then press again.`);
+      }
+    } else {
+      throw new Error(`Your wallet could not switch to ${meta.name}${message ? " (" + message.slice(0, 120) + ")" : ""}. Switch to ${meta.name} in your wallet by hand, then press again.`);
+    }
   }
+  // Some wallets answer "ok" without moving. Check, so we never sign on the wrong network.
+  for (let i = 0; i < 4; i++) {
+    if ((await current()) === hexId) return;
+    await new Promise((r) => setTimeout(r, 400));
+  }
+  throw new Error(`The wallet is still not on ${meta.name}. Switch to ${meta.name} in your wallet by hand, then press again.`);
 }
 
 async function broadcast(input: {
