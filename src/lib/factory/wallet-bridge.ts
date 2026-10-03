@@ -108,7 +108,13 @@ export async function evmWallet(chain: EvmChainId): Promise<{ address: string; p
   }
   const eth = injectedProvider();
   if (!eth) needSignIn("account");
-  await switchChain(eth, chain);
+  try {
+    await switchChain(eth, chain);
+  } catch (err) {
+    // Not signed in and the browser wallet will not move networks: point at the no-extension way in.
+    const base = err instanceof Error ? err.message : "Your wallet could not switch networks.";
+    throw new Error(`${base} Or sign in with a Ferzan account and launch from its wallet, no extension needed.`);
+  }
   const accounts = (await eth.request({ method: "eth_requestAccounts" })) as string[];
   const address = accounts?.[0]?.toLowerCase();
   if (!address) throw new Error("The wallet returned no account.");
