@@ -808,6 +808,8 @@ const dict: Record<string, string> = {
   "The wallet did not send it.": "钱包没有发送。",
   "The wallet did not send the launch.": "钱包没有发送这次发射。",
   "The wallet did not sign.": "钱包没有签名。",
+  "Sign in to use your Ferzan account wallet, or connect your own wallet.": "登录以使用你的 Ferzan 账户钱包，或连接你自己的钱包。",
+  "Sign in to launch": "登录并发布",
   "The wallet did not switch chain.": "钱包没有切换链。",
   "The wallet on your profile stays in this browser. We cannot recover it. Anyone with the exported key can spend the wallet. Trades cannot be reversed.": "你资料上的钱包保存在这个浏览器中，我们无法找回。任何拿到导出私钥的人都能动用这个钱包。交易无法撤销。",
   "The wallet returned no account.": "钱包没有返回账户。",

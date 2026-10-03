@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { WalletNeeded, evmWallet, solanaWallet } from "@/lib/factory/wallet-bridge";
+import { WalletNeeded, evmWallet, solanaWallet, useAccountWallets } from "@/lib/factory/wallet-bridge";
 import {
   BOT_LAUNCH_CHAINS,
   GRAD_PRESETS,
@@ -99,6 +99,7 @@ export function OwnWalletLaunch() {
   const [launched, setLaunched] = useState<Launched | null>(null);
   const [tab, setTab] = useState<LaunchTab>("info");
   const [advanced, setAdvanced] = useState(false);
+  const account = useAccountWallets();
 
   // The form is a draft: text fields are kept in this browser so a refresh does not lose them (never the picture or wallet).
   const [draftLoaded, setDraftLoaded] = useState(false);
@@ -676,9 +677,26 @@ export function OwnWalletLaunch() {
               {tr("Back")}
             </button>
           ) : null}
-          {isLast ? (
+          {isLast && !wallet && !account?.authenticated && chain !== "ton" && chain !== "tron" ? (
+            <div className="flex w-full flex-col gap-2">
+              <p className="text-xs opacity-80">{tr("Sign in to use your Ferzan account wallet, or connect your own wallet.")}</p>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  className="btn-cyan min-h-11 min-w-40 flex-1 px-6"
+                  disabled={Boolean(busy) || !account?.ready}
+                  onClick={() => account?.login()}
+                >
+                  {tr("Sign in to launch")}
+                </button>
+                <Button type="submit" className="min-w-40 flex-1" disabled={Boolean(busy)}>
+                  {tr("Connect wallet and launch")}
+                </Button>
+              </div>
+            </div>
+          ) : isLast ? (
             <Button type="submit" className="min-w-40 flex-1" disabled={Boolean(busy)}>
-              {wallet ? tr("Launch") : tr("Connect wallet and launch")}
+              {wallet || account?.authenticated ? tr("Launch") : tr("Connect wallet and launch")}
             </Button>
           ) : (
             <button type="submit" className="btn-cyan ml-auto min-h-11 px-6">

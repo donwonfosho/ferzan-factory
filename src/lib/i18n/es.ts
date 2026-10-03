@@ -799,6 +799,8 @@ const dict: Record<string, string> = {
   "The wallet did not send it.": "La billetera no lo envió.",
   "The wallet did not send the launch.": "La billetera no envió el lanzamiento.",
   "The wallet did not sign.": "La billetera no firmó.",
+  "Sign in to use your Ferzan account wallet, or connect your own wallet.": "Inicia sesión para usar la billetera de tu cuenta Ferzan, o conecta tu propia billetera.",
+  "Sign in to launch": "Iniciar sesión para lanzar",
   "The wallet did not switch chain.": "La billetera no cambió de cadena.",
   "The wallet on your profile stays in this browser. We cannot recover it. Anyone with the exported key can spend the wallet. Trades cannot be reversed.": "La billetera de tu perfil queda en este navegador. No podemos recuperarla. Cualquiera con la clave exportada puede gastarla. Las operaciones no se pueden revertir.",
   "The wallet returned no account.": "La billetera no devolvió ninguna cuenta.",
