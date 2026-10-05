@@ -75,10 +75,11 @@ async function visitorKey(bucket: RelayBucket, ip: string): Promise<string> {
 export async function guardRelay(bucket: RelayBucket): Promise<void> {
   assertSameSiteRequest();
   const ip = visitor();
-  // Without the visitor address, counting would lump everyone behind the proxy into
-  // one budget and lock the site. The same-site check and transaction allowlists still apply.
-  if (!ip) return;
-  const key = await visitorKey(bucket, ip);
+  // Without the visitor address everyone unknown shares ONE budget (a generous multiple of a single
+  // visitor's), so a request that hides its address is still limited and can't use the relay without
+  // bounds, while normal traffic is not locked out.
+  const key = await visitorKey(bucket, ip ?? "unknown");
+  const limit = ip ? LIMITS[bucket] : LIMITS[bucket] * 10;
   const minute = Math.floor(Date.now() / 60_000);
   const { getSql } = await import("@/lib/db");
   const sql = await getSql();
@@ -90,7 +91,7 @@ export async function guardRelay(bucket: RelayBucket): Promise<void> {
   if (Math.random() < 0.02) {
     await sql`delete from relay_hits where minute < ${minute - 10}`;
   }
-  if ((rows[0]?.hits ?? 0) > LIMITS[bucket]) throw new Error("Too many requests from here. Wait a minute and try again.");
+  if ((rows[0]?.hits ?? 0) > limit) throw new Error("Too many requests from here. Wait a minute and try again.");
 }
 
 /** EVM: buy/sell/claim on a coin that is on the board, or a plain coin transfer. */

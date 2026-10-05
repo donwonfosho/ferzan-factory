@@ -27,6 +27,7 @@ export const moonpayUrl = createServerFn({ method: "POST" })
     return { chain, address };
   })
   .handler(async ({ data }): Promise<{ ok: true; url: string } | { ok: false; reason: "key" }> => {
+    await (await import("./guard.server")).guardRelay("send");
     const { env } = await import("@/lib/env.server");
     const { createHmac } = await import("node:crypto");
     const publishable = env("MOONPAY_PUBLISHABLE_KEY");

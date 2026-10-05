@@ -10,6 +10,14 @@
 const HEADERS: Record<string, string> = {
   "content-security-policy":
     "frame-ancestors 'self' https://grok.com https://*.grok.com; object-src 'none'; base-uri 'self'; upgrade-insecure-requests",
+  // The strict policy we want, reported but NOT enforced yet. Watch the browser console on each page for
+  // "[Report Only]" lines, add the hosts they name, then move this to content-security-policy.
+  "content-security-policy-report-only":
+    "default-src 'self'; script-src 'self' 'unsafe-inline' https://auth.privy.io https://grok.com https://challenges.cloudflare.com; " +
+    "connect-src 'self' https: wss:; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+    "font-src 'self' data: https://fonts.gstatic.com; frame-src https://auth.privy.io https://verify.walletconnect.com https://buy.moonpay.com https://challenges.cloudflare.com; " +
+    "form-action 'self'; frame-ancestors 'self' https://grok.com https://*.grok.com; object-src 'none'; base-uri 'self'",
+  "cross-origin-opener-policy": "same-origin-allow-popups",
   "x-content-type-options": "nosniff",
   "referrer-policy": "strict-origin-when-cross-origin",
   "strict-transport-security": "max-age=31536000; includeSubDomains",

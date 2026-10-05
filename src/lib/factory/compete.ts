@@ -105,6 +105,7 @@ const creditCallFn = createServerFn({ method: "POST" })
     return { chain, tx, ref };
   })
   .handler(async ({ data }) => {
+    await (await import("./guard.server")).guardRelay("send");
     await fetch(`${API}/call-credit`, {
       method: "POST",
       headers: { "content-type": "application/json" },

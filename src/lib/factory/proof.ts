@@ -45,16 +45,19 @@ export function postBody(raw: string): string {
   return raw.trim().replace(/\s+/g, " ");
 }
 
+/** Only plain raster images: an SVG data URL can carry script if it is ever opened on its own. */
+const SAFE_IMAGE = /^data:image\/(?:png|jpeg|webp|gif);base64,[A-Za-z0-9+/=]+$/;
+
 /** Profile fields exactly as the server stores them. Client signs these same values. */
 export function profileFields(input: { name: string; bio: string; image: string }): { name: string; bio: string; image: string } {
-  const image = input.image.startsWith("data:image/") && input.image.length <= 200_000 ? input.image : "";
+  const image = SAFE_IMAGE.test(input.image) && input.image.length <= 200_000 ? input.image : "";
   return { name: input.name.trim().slice(0, 24), bio: input.bio.trim().slice(0, 80), image };
 }
 
 /** Coin image and blurb exactly as the server stores them. */
 export function coinExtras(row: { image?: unknown; blurb?: unknown }): { image: string; blurb: string } {
   const imageRaw = typeof row.image === "string" ? row.image : "";
-  const image = imageRaw.startsWith("data:image/") && imageRaw.length <= 200_000 ? imageRaw : "";
+  const image = SAFE_IMAGE.test(imageRaw) && imageRaw.length <= 200_000 ? imageRaw : "";
   const blurb = typeof row.blurb === "string" ? row.blurb.trim().slice(0, 160) : "";
   return { image, blurb };
 }

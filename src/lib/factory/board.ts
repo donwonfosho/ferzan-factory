@@ -2,6 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { coinExtras, coinProofFields, postBody, profileFields, readProof, type Proof } from "./proof";
 import type { RelayChain } from "./relay";
 import type { ChainPrint } from "./chain-verify.server";
+import { moderate } from "./moderation";
+import { reservedProblem } from "./reserved";
 
 export type BoardCoin = {
   id: string;
@@ -331,6 +333,8 @@ export const publishCoin = createServerFn({ method: "POST" })
     if (!CHAINS.has(chain)) throw new Error("That chain is not open.");
     if (mode !== "curve" && mode !== "plain") throw new Error("Launch type looks wrong.");
     if (name.length < 2 || !/^[A-Z0-9]{2,8}$/.test(symbol)) throw new Error("Name or ticker looks wrong.");
+    const reserved = reservedProblem(name, symbol);
+    if (reserved) throw new Error(reserved);
     if (!/^\d+$/.test(supply)) throw new Error("Supply looks wrong.");
     if (chain === "solana" && contract.startsWith("0x")) throw new Error("Solana mint looks wrong.");
     if (chain !== "solana" && !contract.startsWith("0x")) throw new Error("Contract looks wrong.");
@@ -487,9 +491,12 @@ export const addPost = createServerFn({ method: "POST" })
     const body = postBody(text(row, "body", 280));
     if (!CHAINS.has(chain)) throw new Error("That chain is not open.");
     if (body.length < 1) throw new Error("Write something.");
+    const why = moderate(body);
+    if (why) throw new Error(why);
     return { contract, chain, author, body, proof: readProof(row.proof) };
   })
   .handler(async ({ data }): Promise<{ ok: true }> => {
+    await (await import("./guard.server")).guardRelay("send");
     const { getSql } = await import("@/lib/db");
     const sql = await getSql();
     const { requireProof } = await import("./proof.server");
@@ -633,6 +640,7 @@ export const loadAccountProfile = createServerFn({ method: "POST" })
     return { id: accountId(text(row, "id", 36)) };
   })
   .handler(async ({ data }): Promise<SavedProfile | null> => {
+    await (await import("./guard.server")).guardRelay("read");
     const { getSql } = await import("@/lib/db");
     const sql = await getSql();
     const rows = await sql<{ name: string; bio: string; image: string }>`
@@ -655,6 +663,7 @@ export const saveAccountProfile = createServerFn({ method: "POST" })
     return { id, ...fields };
   })
   .handler(async ({ data }): Promise<{ ok: true }> => {
+    await (await import("./guard.server")).guardRelay("send");
     const { getSql } = await import("@/lib/db");
     const sql = await getSql();
     await sql`
