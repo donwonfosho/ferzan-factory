@@ -9,13 +9,21 @@ import { TRON_CURVE_FACTORY } from "./tron-curve";
 
 const API = "https://launch.ferzaneco.com/api";
 
-/** The bots' curve factories (from the Launch Bot deploys). A build pointing anywhere else is refused. */
+/** Current (v3) bonding-curve factories, lower-case. Same addresses the Launch API uses (evm-factories.json, *_v3). */
 const FACTORIES: Record<CurveLaunchChain, string> = {
-  bsc: "0xb56b4184dbb5bc5c67168ae3a4960e69392118de",
-  base: "0xb56b4184dbb5bc5c67168ae3a4960e69392118de",
-  ethereum: "0xc774ad391868bdbe7f8a3b8e0edfc3b0c0bfb17a",
-  robinhood: "0xc774ad391868bdbe7f8a3b8e0edfc3b0c0bfb17a",
-  arc: "0xb56b4184dbb5bc5c67168ae3a4960e69392118de",
+  bsc: "0xe8ca8382ab3ab55ffb310fb55da988fb83c922bd",
+  base: "0x10b1c446ff600dfc4dd9218a364bdbaf93a0fea2",
+  ethereum: "0xb56b4184dbb5bc5c67168ae3a4960e69392118de",
+  robinhood: "0xb56b4184dbb5bc5c67168ae3a4960e69392118de",
+  arc: "0xe8ca8382ab3ab55ffb310fb55da988fb83c922bd",
+};
+/** Current (v3) standard-coin factories, lower-case. A standard launch goes here, never to a curve factory. */
+const PLAIN_FACTORIES: Record<CurveLaunchChain, string> = {
+  bsc: "0x10b1c446ff600dfc4dd9218a364bdbaf93a0fea2",
+  base: "0xe8ca8382ab3ab55ffb310fb55da988fb83c922bd",
+  ethereum: "0x05a1290f6cabb1681f2599b2935f8b3ee5981cba",
+  robinhood: "0x05a1290f6cabb1681f2599b2935f8b3ee5981cba",
+  arc: "0x7a7ef0415ac2f118cdf0ce9090b0207d43da1d3c",
 };
 const CHAIN_IDS: Record<CurveLaunchChain, number> = { bsc: 56, base: 8453, ethereum: 1, robinhood: 4663, arc: 5042 };
 /** Ferzan's Tron launch factory (TBcPG1XKutsns1dJtgJeWQDuGRxeESeMXn), as TronGrid writes it. */
@@ -142,9 +150,10 @@ export async function startLaunch(input: BotLaunchInput): Promise<AnyLaunchTx> {
   const to = asString(tx.to).toLowerCase();
   const evmChain = input.chain as CurveLaunchChain;
   if (!to) throw new Error("The launch service did not return a launch transaction. Nothing was sent. Please try again.");
-  if (to !== FACTORIES[evmChain]) {
+  const wantFactory = input.mode === "plain" ? PLAIN_FACTORIES[evmChain] : FACTORIES[evmChain];
+  if (to !== wantFactory) {
     const short = (a: string) => `${a.slice(0, 8)}…${a.slice(-4)}`;
-    throw new Error(`The launch transaction goes to ${short(to)}, not the Ferzan ${evmChain} factory (${short(FACTORIES[evmChain])}). Nothing was sent.`);
+    throw new Error(`The launch transaction goes to ${short(to)}, not the Ferzan ${evmChain} factory (${short(wantFactory)}). Nothing was sent.`);
   }
   if (Number(tx.chainId) !== CHAIN_IDS[evmChain]) throw new Error("The launch was built for another network.");
   const data = asString(tx.data);
