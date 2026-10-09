@@ -142,7 +142,7 @@ export function Shell({ children }: { children: ReactNode }) {
                   </a>
                   <a href={X_URL} className="rounded-xl bg-bg px-3 py-3 shadow-border">
                     <span className="block font-semibold">X</span>
-                    <span className="text-sm text-muted">{tr("@ferzaneco")}</span>
+                    <span className="text-sm text-muted">{tr("@ferzanfactory")}</span>
                   </a>
                 </div>
                 <p className="mt-4 text-sm font-medium text-muted">{tr("Your cuts")}</p>

@@ -729,7 +729,7 @@ const dict: Record<string, string> = {
   "That transaction is not on chain yet. Try again in a moment.": "Esa transacción aún no está en la cadena. Inténtalo en un momento.",
   "That wallet address looks wrong.": "Esa dirección de billetera no es válida.",
   "That's the limit for this hour. Try again later.": "Llegaste al límite de esta hora. Inténtalo más tarde.",
-  "The FERZAN contract address is posted only on this site, by @ferzaneco on X and in the Ferzan Telegram chat, at 4:00 PM ET on October 15. Any address before that is fake.": "La dirección del contrato de FERZAN se publica solo en este sitio, en @ferzaneco en X y en el chat de Telegram de Ferzan, a las 4:00 p. m. (hora del Este) del 15 de octubre. Cualquier dirección antes de eso es falsa.",
+  "The FERZAN contract address is posted only on this site, by @ferzanfactory on X and in the Ferzan Telegram chat, at 4:00 PM ET on October 15. Any address before that is fake.": "La dirección del contrato de FERZAN se publica solo en este sitio, en @ferzanfactory en X y en el chat de Telegram de Ferzan, a las 4:00 p. m. (hora del Este) del 15 de octubre. Cualquier dirección antes de eso es falsa.",
   "The Ferzan API answered {0}.": "La API de Ferzan respondió {0}.",
   "The Ferzan hub.": "El hub de Ferzan.",
   "The Solana transaction failed.": "La transacción de Solana falló.",

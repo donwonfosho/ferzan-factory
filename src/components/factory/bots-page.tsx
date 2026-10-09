@@ -60,7 +60,7 @@ const ROOMS = [
   },
   {
     name: "X",
-    handle: "@ferzaneco",
+    handle: "@ferzanfactory",
     href: X_URL,
     text: "Ferzan Trade on X.",
   },

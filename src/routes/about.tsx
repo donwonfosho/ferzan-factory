@@ -11,7 +11,7 @@ const MULTISIG = "2vWqwX72ijo24vgvPQW6yBQh2qXE4jrEd18YDdEbWKLG";
 
 const OFFICIAL: { label: string; href: string; text: string }[] = [
   { label: "Website", href: "https://ferzan-factory.com", text: "ferzan-factory.com" },
-  { label: "X", href: X_URL, text: "@ferzaneco" },
+  { label: "X", href: X_URL, text: "@ferzanfactory" },
   { label: "Telegram chat", href: COMMUNITY_URL, text: "t.me/Ferzan_Chat" },
   { label: "Telegram hub", href: "https://t.me/Ferzan_Trade_Ecosystem", text: "t.me/Ferzan_Trade_Ecosystem" },
   { label: "New launches channel", href: "https://t.me/Ferzan_Launches", text: "t.me/Ferzan_Launches" },
@@ -90,7 +90,7 @@ function AboutPage() {
         <h2 className="text-xl">{tr("Stay safe")}</h2>
         <ul className="list-disc space-y-1 pl-5 text-sm text-muted">
           <li>{tr("Ferzan admins never DM you first and never ask for a seed phrase, private key or payment.")}</li>
-          <li>{tr("The FERZAN contract address is posted only on this site, by @ferzaneco on X and in the Ferzan Telegram chat, at 4:00 PM ET on October 15. Any address before that is fake.")}</li>
+          <li>{tr("The FERZAN contract address is posted only on this site, by @ferzanfactory on X and in the Ferzan Telegram chat, at 4:00 PM ET on October 15. Any address before that is fake.")}</li>
           <li>{tr("Ferzan does not sell listings, guaranteed pumps or \"recovery\" services. Anyone offering them in our name is a scammer.")}</li>
         </ul>
       </section>

@@ -738,7 +738,7 @@ const dict: Record<string, string> = {
   "That transaction is not on chain yet. Try again in a moment.": "这笔交易还没有上链，请稍后再试。",
   "That wallet address looks wrong.": "钱包地址不对。",
   "That's the limit for this hour. Try again later.": "这一小时已达上限，请稍后再试。",
-  "The FERZAN contract address is posted only on this site, by @ferzaneco on X and in the Ferzan Telegram chat, at 4:00 PM ET on October 15. Any address before that is fake.": "FERZAN 合约地址只会在美东时间 10 月 15 日下午 4:00 发布在本站、X 上的 @ferzaneco 和 Ferzan Telegram 聊天群。在此之前出现的任何地址都是假的。",
+  "The FERZAN contract address is posted only on this site, by @ferzanfactory on X and in the Ferzan Telegram chat, at 4:00 PM ET on October 15. Any address before that is fake.": "FERZAN 合约地址只会在美东时间 10 月 15 日下午 4:00 发布在本站、X 上的 @ferzanfactory 和 Ferzan Telegram 聊天群。在此之前出现的任何地址都是假的。",
   "The Ferzan API answered {0}.": "Ferzan API 返回了 {0}。",
   "The Ferzan hub.": "Ferzan 中心。",
   "The Solana transaction failed.": "Solana 交易失败。",
