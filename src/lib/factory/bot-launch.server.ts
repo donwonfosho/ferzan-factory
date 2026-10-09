@@ -141,7 +141,11 @@ export async function startLaunch(input: BotLaunchInput): Promise<AnyLaunchTx> {
   const tx = (built.unsigned_transaction ?? {}) as Record<string, unknown>;
   const to = asString(tx.to).toLowerCase();
   const evmChain = input.chain as CurveLaunchChain;
-  if (to !== FACTORIES[evmChain]) throw new Error("The launch transaction does not go to the Ferzan factory.");
+  if (!to) throw new Error("The launch service did not return a launch transaction. Nothing was sent. Please try again.");
+  if (to !== FACTORIES[evmChain]) {
+    const short = (a: string) => `${a.slice(0, 8)}…${a.slice(-4)}`;
+    throw new Error(`The launch transaction goes to ${short(to)}, not the Ferzan ${evmChain} factory (${short(FACTORIES[evmChain])}). Nothing was sent.`);
+  }
   if (Number(tx.chainId) !== CHAIN_IDS[evmChain]) throw new Error("The launch was built for another network.");
   const data = asString(tx.data);
   if (!/^0x[0-9a-fA-F]+$/.test(data)) throw new Error("The launch service sent a transaction we cannot use.");

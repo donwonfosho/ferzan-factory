@@ -333,7 +333,18 @@ export function OwnWalletLaunch() {
           >
             {tr("View transaction")}
           </a>
-          <button type="button" className="btn-line" onClick={() => setLaunched(null)}>
+          <button
+            type="button"
+            className="btn-line"
+            onClick={() => {
+              // A fresh form: nothing from the coin just launched (text, picture, buy amounts) is carried over or saved.
+              clearDraft();
+              setError("");
+              setHash("");
+              setTab("info");
+              setLaunched(null);
+            }}
+          >
             {tr("Launch another")}
           </button>
         </div>
