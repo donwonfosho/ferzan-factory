@@ -21,12 +21,12 @@ function useNow(ms = 1000) {
   return now;
 }
 
-/** FERZAN on the floor: a countdown until 4:00 PM ET on Oct 15, then its live numbers and the burn total. */
+/** FERZAN on the floor: a countdown until 4:00 PM ET on Nov 13, then its live numbers and the burn total. */
 export function FerzanHero() {
   const p = usePulse();
   const now = useNow();
   const f = p?.ferzan;
-  const launchAt = (f?.launchAt ?? 1792094400) * 1000;
+  const launchAt = (f?.launchAt ?? 1794603600) * 1000;
   const left = launchAt - now;
 
   if (f?.live) {
@@ -75,7 +75,7 @@ export function FerzanHero() {
   const s = (left % 60_000) / 1000;
   return (
     <section className="hero-count ticket overflow-hidden" data-floor-rev="3">
-      <p className="text-sm font-semibold text-cyan">{tr("FERZAN launches Thursday, October 15 · 4:00 PM ET")}</p>
+      <p className="text-sm font-semibold text-cyan">{tr("FERZAN launches Friday, November 13 · 4:00 PM ET")}</p>
       <div className="mt-4 flex flex-wrap gap-2 sm:gap-3" role="timer" aria-live="off" aria-label={tr("Time until FERZAN launches")}>
         {[
           [d, "days"],

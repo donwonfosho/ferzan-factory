@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { OnlyOnFerzan } from "./floor-live";
 
 import { tr } from "@/lib/i18n";
-/** FERZAN launch: Thursday, October 15, 2026, 4:00 PM Eastern (20:00 UTC). */
-const LAUNCH_AT = Date.UTC(2026, 9, 15, 20, 0, 0);
+/** FERZAN launch: Friday, November 13, 2026, 4:00 PM Eastern (21:00 UTC). */
+const LAUNCH_AT = Date.UTC(2026, 10, 13, 21, 0, 0);
 const SQUADS_VAULT = "2vWqwX72ijo24vgvPQW6yBQh2qXE4jrEd18YDdEbWKLG";
 const FLAGSHIP_CONFIG = "8YoqjUBsyfgQv5s7fWR5nyjeMd43rKvMUEexAuYRCvbo";
 
@@ -16,7 +16,7 @@ const SUPPLY = [
 
 const DAY_STEPS = [
   { when: "Before 4:00 PM ET", what: "No official FERZAN address exists yet. Anything posted before launch is fake. Guardian deletes unofficial addresses in Ferzan chats." },
-  { when: "4:00 PM ET, Thursday October 15", what: "The curve opens on Solana. The contract address is posted here, on @Ferzan_Launches and on X at the same moment." },
+  { when: "4:00 PM ET, Friday November 13", what: "The curve opens on Solana. The contract address is posted here, on @Ferzan_Launches and on X at the same moment." },
   { when: "First 30 minutes", what: "The trading fee starts at 99% and falls to 1%, so sniping the open costs almost everything." },
   { when: "When the curve fills", what: "The Meteora pool opens with the liquidity locked forever. 5% unlocks: 20,000,000 for rewards and 30,000,000 into the team lock." },
   { when: "Every day after", what: "30% of Ferzan's Solana trading fees buys FERZAN and burns it. Every burn is posted with its transaction." },
@@ -97,7 +97,7 @@ export function FerzanPage() {
         <div>
           <p className="text-sm font-medium text-cyan">{tr("Solana · Meteora bonding curve")}</p>
           <h1 className="mt-1 text-4xl sm:text-5xl">{tr("FERZAN")}</h1>
-          <p className="mt-2 text-muted">{tr("Launches Thursday, October 15 at 4:00 PM Eastern.")}</p>
+          <p className="mt-2 text-muted">{tr("Launches Friday, November 13 at 4:00 PM Eastern.")}</p>
           <Countdown />
         </div>
       </section>
