@@ -167,6 +167,7 @@ export function FerzanPage() {
                 </li>
               ))}
             </ul>
+            <p className="mt-3 text-sm text-muted">{tr("These amounts add up to 999,989,998. The other 10,002 is rounding in the pool.")}</p>
             <p className="mt-4 text-sm text-muted">
               {tr("570,000,000 is locked to the Ferzan multisig. Meteora releases it over 24 months, and nobody can speed that up. Those tokens sit in a 2-of-3 Squads multisig, so no single key can move them. Separately, 30,000,000 is the team lock, locked on-chain with Jupiter Lock. Nothing for 12 months, then released monthly over the next 12 months.")}
             </p>

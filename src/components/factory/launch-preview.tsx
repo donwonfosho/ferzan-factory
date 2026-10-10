@@ -47,11 +47,15 @@ export function useLaunchFees(): LaunchFeeTable | null {
   const [fees, setFees] = useState<LaunchFeeTable | null>(feeCache && Date.now() - feeCache.at < 20_000 ? feeCache.value : null);
   useEffect(() => {
     let stop = false;
+    const timer = window.setTimeout(() => {
+      if (!stop) setFees((current) => current ?? emptyLaunchFees());
+    }, 12_000);
     loadFees().then((value) => {
       if (!stop) setFees(value);
     });
     return () => {
       stop = true;
+      window.clearTimeout(timer);
     };
   }, []);
   return fees;

@@ -43,7 +43,11 @@ export function DocsPage() {
           </Link>
         </Item>
         <Item n="4" title={tr("The 1% fee")}>
-          {tr("Every trade on a Ferzan curve pays 1%. Half goes to the coin's creator. The other half goes to Ferzan, or 40% to Ferzan and 10% to a referrer when the buyer came from a referral. Older curves launched on this website split that 1% as 60% treasury, 30% creator and 10% referrer.")}
+          <ul className="list-disc space-y-1 pl-5">
+            <li>{tr("Website curves: 60% treasury, 30% creator, 10% referrer or treasury.")}</li>
+            <li>{tr("Telegram curves: 50% creator, 50% platform.")}</li>
+            <li>{tr("Telegram curves with a referral: 50% creator, 40% platform, 10% referrer.")}</li>
+          </ul>
         </Item>
         <Item n="5" title={tr("Graduation")}>
           {tr("Solana graduates into a Meteora pool. On Base, BNB, Ethereum, Robinhood and Arc, the buy that fills the curve opens a pool in that same transaction. When a TON curve fills, its STON.fi pool opens. When a Tron curve fills, its SunSwap pool opens.")}
@@ -71,7 +75,7 @@ function Item({ n, title, children }: { n: string; title: string; children: Reac
     <li className="bg-surface p-4 shadow-border">
       <p className="text-sm font-extrabold text-cyan">{n}</p>
       <p className="mt-1 font-semibold">{title}</p>
-      <p className="mt-1 text-sm text-muted">{children}</p>
+      <div className="mt-1 text-sm text-muted">{children}</div>
     </li>
   );
 }

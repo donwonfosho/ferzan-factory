@@ -22,6 +22,7 @@ const SHARE_META_KEYS = new Set([
   "twitter:card",
   "twitter:title",
   "twitter:image",
+  "twitter:creator",
   "twitter:description",
   "x:game:image",
   "x:game:image:width",
@@ -111,9 +112,10 @@ export function publicAppHost(hostHeader) {
  * app — Envoy rewrites it to `*.vercel.app`.
  */
 export function resolvePublicHost(hostHeader) {
-  return (
-    publicAppHost(process.env?.VITE_PUBLIC_HOSTNAME) || publicAppHost(hostHeader)
-  );
+  const host =
+    publicAppHost(process.env?.VITE_PUBLIC_HOSTNAME) || publicAppHost(hostHeader);
+  if (host === "ferzan-factory.grok.me" || host === "www.ferzan-factory.com") return "ferzan-factory.com";
+  return host;
 }
 
 export function isInstallQuery(url) {
@@ -370,6 +372,10 @@ export function grokOgHeadTags({
     tags.push(`<meta property="og:image" content="${escapeHtml(image)}">`);
     tags.push(`<meta property="og:image:width" content="1200">`);
     tags.push(`<meta property="og:image:height" content="630">`);
+    tags.push(`<meta name="twitter:image" content="${escapeHtml(image)}">`);
+    if (publicHost === "ferzan-factory.com") {
+      tags.push(`<meta name="twitter:creator" content="@ferzanfactory">`);
+    }
     const banner = String(site.banner ?? "").trim();
     if (banner) {
       const bannerUrl = `https://${publicHost}${banner.startsWith("/") ? banner : `/${banner}`}`;
