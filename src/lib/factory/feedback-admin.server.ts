@@ -36,9 +36,9 @@ async function passwordOk(password: string): Promise<boolean> {
   const env = envSecret();
   if (env) return same(password, env);
   const { scrypt, timingSafeEqual } = await import("node:crypto");
-  const { promisify } = await import("node:util");
-  const run = promisify(scrypt);
-  const got = (await run(password, Buffer.from(SALT, "hex"), 32, { N: 16384, r: 8, p: 1 })) as Buffer;
+  const got = await new Promise<Buffer>((resolve, reject) => {
+    scrypt(password, Buffer.from(SALT, "hex"), 32, { N: 16384, r: 8, p: 1 }, (err, key) => (err ? reject(err) : resolve(key)));
+  });
   return timingSafeEqual(got, Buffer.from(HASH, "hex"));
 }
 

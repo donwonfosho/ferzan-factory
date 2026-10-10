@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
+import { openFeedback } from "@/components/factory/feedback";
 import { tr } from "@/lib/i18n";
 export const Route = createFileRoute("/docs")({
   head: () => ({
@@ -65,6 +66,44 @@ export function DocsPage() {
           </Link>
         </Item>
       </ol>
+      <section className="mt-8 space-y-4">
+        <h2 className="text-2xl">{tr("FAQ")}</h2>
+        <Faq q={tr("How do I buy?")}>
+          {tr("Add funds, bridge if the coin is on another chain, then buy on the coin page. Your wallet signs.")}{" "}
+          <Link to="/how-to-buy" className="text-cyan">
+            {tr("How to buy FERZAN")}
+          </Link>
+        </Faq>
+        <Faq q={tr("How do I add funds?")}>
+          {tr("On Add funds, pay with a card or Apple Pay. MoonPay takes the payment. This site does not.")}{" "}
+          <Link to="/funds" className="text-cyan">
+            {tr("Add funds")}
+          </Link>
+        </Faq>
+        <Faq q={tr("How do I cash out?")}>
+          {tr("Cash out is on the same page, for the chains that have it. You send from your own wallet to the address MoonPay shows. If a chain has no cash out, bridge to Base, Ethereum or Solana first.")}
+        </Faq>
+        <Faq q={tr("How do I bridge to another chain?")}>
+          {tr("The Ferzan Bridge moves funds to your own wallet on the other chain. The quote shows the fee before you sign.")}{" "}
+          <Link to="/bridge" className="text-cyan">
+            {tr("Bridge")}
+          </Link>
+        </Faq>
+        <Faq q={tr("What are the fees?")}>
+          <ul className="list-disc space-y-1 pl-5">
+            <li>{tr("Website curves: 60% treasury, 30% creator, 10% referrer or treasury.")}</li>
+            <li>{tr("Telegram curves: 50% creator, 50% platform.")}</li>
+            <li>{tr("Telegram curves with a referral: 50% creator, 40% platform, 10% referrer.")}</li>
+          </ul>
+        </Faq>
+        <Faq q={tr("When does FERZAN launch?")}>{tr("Friday, November 13, 2026 at 4:00 PM ET.")}</Faq>
+        <Faq q={tr("Is it safe?")}>{tr("This site is in beta. Real funds are at risk. Start small. Nothing here is a promise of buyers or a price.")}</Faq>
+        <Faq q={tr("Where do I report a bug?")}>
+          <button type="button" className="text-cyan" onClick={() => openFeedback()}>
+            {tr("Report a bug / Feedback")}
+          </button>
+        </Faq>
+      </section>
       <p className="mt-6 text-sm text-muted">
         {tr("Nothing here is a promise of buyers or a price. Read the")}{" "}
         <Link to="/terms" className="text-cyan">
@@ -72,6 +111,15 @@ export function DocsPage() {
         </Link>{" "}
         {tr("before you launch or trade.")}
       </p>
+    </div>
+  );
+}
+
+function Faq({ q, children }: { q: string; children: ReactNode }) {
+  return (
+    <div>
+      <h3 className="font-semibold">{q}</h3>
+      <div className="mt-1 text-sm text-muted">{children}</div>
     </div>
   );
 }

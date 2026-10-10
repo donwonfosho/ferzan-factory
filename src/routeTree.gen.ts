@@ -14,6 +14,7 @@ import { Route as SplatRouteImport } from './routes/$'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as BotsRouteImport } from './routes/bots'
 import { Route as BridgeRouteImport } from './routes/bridge'
+import { Route as ChangelogRouteImport } from './routes/changelog'
 import { Route as CompeteRouteImport } from './routes/compete'
 import { Route as DocsRouteImport } from './routes/docs'
 import { Route as FerzanRouteImport } from './routes/ferzan'
@@ -22,6 +23,7 @@ import { Route as HowToBuyRouteImport } from './routes/how-to-buy'
 import { Route as LaunchRouteImport } from './routes/launch'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as PressRouteImport } from './routes/press'
 import { Route as PulseRouteImport } from './routes/pulse'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TransparencyRouteImport } from './routes/transparency'
@@ -58,6 +60,11 @@ const BotsRoute = BotsRouteImport.update({
 const BridgeRoute = BridgeRouteImport.update({
   id: '/bridge',
   path: '/bridge',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChangelogRoute = ChangelogRouteImport.update({
+  id: '/changelog',
+  path: '/changelog',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CompeteRoute = CompeteRouteImport.update({
@@ -98,6 +105,11 @@ const LeaderboardRoute = LeaderboardRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PressRoute = PressRouteImport.update({
+  id: '/press',
+  path: '/press',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PulseRoute = PulseRouteImport.update({
@@ -167,6 +179,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/bots': typeof BotsRoute
   '/bridge': typeof BridgeRoute
+  '/changelog': typeof ChangelogRoute
   '/compete': typeof CompeteRoute
   '/docs': typeof DocsRoute
   '/ferzan': typeof FerzanRoute
@@ -175,6 +188,7 @@ export interface FileRoutesByFullPath {
   '/launch': typeof LaunchRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
+  '/press': typeof PressRoute
   '/pulse': typeof PulseRoute
   '/terms': typeof TermsRoute
   '/transparency': typeof TransparencyRoute
@@ -194,6 +208,7 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/bots': typeof BotsRoute
   '/bridge': typeof BridgeRoute
+  '/changelog': typeof ChangelogRoute
   '/compete': typeof CompeteRoute
   '/docs': typeof DocsRoute
   '/ferzan': typeof FerzanRoute
@@ -202,6 +217,7 @@ export interface FileRoutesByTo {
   '/launch': typeof LaunchRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
+  '/press': typeof PressRoute
   '/pulse': typeof PulseRoute
   '/terms': typeof TermsRoute
   '/transparency': typeof TransparencyRoute
@@ -222,6 +238,7 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/bots': typeof BotsRoute
   '/bridge': typeof BridgeRoute
+  '/changelog': typeof ChangelogRoute
   '/compete': typeof CompeteRoute
   '/docs': typeof DocsRoute
   '/ferzan': typeof FerzanRoute
@@ -230,6 +247,7 @@ export interface FileRoutesById {
   '/launch': typeof LaunchRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
+  '/press': typeof PressRoute
   '/pulse': typeof PulseRoute
   '/terms': typeof TermsRoute
   '/transparency': typeof TransparencyRoute
@@ -251,6 +269,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/bots'
     | '/bridge'
+    | '/changelog'
     | '/compete'
     | '/docs'
     | '/ferzan'
@@ -259,6 +278,7 @@ export interface FileRouteTypes {
     | '/launch'
     | '/leaderboard'
     | '/login'
+    | '/press'
     | '/pulse'
     | '/terms'
     | '/transparency'
@@ -278,6 +298,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/bots'
     | '/bridge'
+    | '/changelog'
     | '/compete'
     | '/docs'
     | '/ferzan'
@@ -286,6 +307,7 @@ export interface FileRouteTypes {
     | '/launch'
     | '/leaderboard'
     | '/login'
+    | '/press'
     | '/pulse'
     | '/terms'
     | '/transparency'
@@ -305,6 +327,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/bots'
     | '/bridge'
+    | '/changelog'
     | '/compete'
     | '/docs'
     | '/ferzan'
@@ -313,6 +336,7 @@ export interface FileRouteTypes {
     | '/launch'
     | '/leaderboard'
     | '/login'
+    | '/press'
     | '/pulse'
     | '/terms'
     | '/transparency'
@@ -333,6 +357,7 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   BotsRoute: typeof BotsRoute
   BridgeRoute: typeof BridgeRoute
+  ChangelogRoute: typeof ChangelogRoute
   CompeteRoute: typeof CompeteRoute
   DocsRoute: typeof DocsRoute
   FerzanRoute: typeof FerzanRoute
@@ -341,6 +366,7 @@ export interface RootRouteChildren {
   LaunchRoute: typeof LaunchRoute
   LeaderboardRoute: typeof LeaderboardRoute
   LoginRoute: typeof LoginRoute
+  PressRoute: typeof PressRoute
   PulseRoute: typeof PulseRoute
   TermsRoute: typeof TermsRoute
   TransparencyRoute: typeof TransparencyRoute
@@ -390,6 +416,13 @@ declare module '@tanstack/react-router' {
       path: '/bridge'
       fullPath: '/bridge'
       preLoaderRoute: typeof BridgeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/changelog': {
+      id: '/changelog'
+      path: '/changelog'
+      fullPath: '/changelog'
+      preLoaderRoute: typeof ChangelogRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/compete': {
@@ -446,6 +479,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/press': {
+      id: '/press'
+      path: '/press'
+      fullPath: '/press'
+      preLoaderRoute: typeof PressRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pulse': {
@@ -541,6 +581,7 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   BotsRoute: BotsRoute,
   BridgeRoute: BridgeRoute,
+  ChangelogRoute: ChangelogRoute,
   CompeteRoute: CompeteRoute,
   DocsRoute: DocsRoute,
   FerzanRoute: FerzanRoute,
@@ -549,6 +590,7 @@ const rootRouteChildren: RootRouteChildren = {
   LaunchRoute: LaunchRoute,
   LeaderboardRoute: LeaderboardRoute,
   LoginRoute: LoginRoute,
+  PressRoute: PressRoute,
   PulseRoute: PulseRoute,
   TermsRoute: TermsRoute,
   TransparencyRoute: TransparencyRoute,

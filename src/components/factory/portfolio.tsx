@@ -43,7 +43,7 @@ function merge(a: WalletPortfolio, b: WalletPortfolio): WalletPortfolio {
 }
 
 /** The account's EVM + Solana portfolio from the Launch Bot index (live balances, launches, fees). */
-function usePortfolio(evm: string | null, sol: string | null): { data: WalletPortfolio | null; failed: boolean } {
+export function usePortfolio(evm: string | null, sol: string | null): { data: WalletPortfolio | null; failed: boolean } {
   const [data, setData] = useState<WalletPortfolio | null>(null);
   const [failed, setFailed] = useState(false);
   useEffect(() => {

@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { useAccountWallets } from "@/lib/factory/wallet-bridge";
 import { getPerks, PERK_DEFAULTS, type Perks } from "@/lib/factory/perks";
 import { cn } from "@/lib/cn";
 
 import { track } from "@/lib/factory/analytics";
 import { tr } from "@/lib/i18n";
+import { usePortfolio } from "./portfolio";
+import { compactUsd } from "./market-line";
 const whole = (n: number) => (n >= 1e6 ? `${+(n / 1e6).toFixed(2)}M` : n >= 1e3 ? `${+(n / 1e3).toFixed(1)}K` : n.toFixed(0));
 const sol = (n: number) => `${+n.toFixed(4)} SOL`;
 
@@ -22,42 +25,120 @@ function usePerks(wallet: string | null | undefined): Perks | null {
   return p;
 }
 
-/** Profile card: what holding FERZAN gets you, and where this account stands. */
+/** Profile card: current FERZAN tier, the next one, and what each tier gives. Numbers come from the perks API. */
 export function FerzanPerksCard({ sol: wallet }: { sol: string | null }) {
   const p = usePerks(wallet) ?? PERK_DEFAULTS;
-  const rows =
-    p.launchFeeSol > 0
-      ? [
-          { tier: "holder", need: p.holderMin, badge: "🔷 FERZAN holder", perk: tr("Half-price Solana launch fee ({0})", sol(p.launchFeeSol / 2)) },
-          { tier: "whale", need: p.whaleMin, badge: "🐋 FERZAN whale", perk: "Free Solana launches" },
-        ]
-      : [];
+  const next = p.tiers.find((row) => row.tier === p.nextTier);
+  const more = p.nextMin > p.balance ? p.nextMin - p.balance : 0;
   return (
-    <section className="ticket mt-4">
+    <section className="ticket">
       <div className="flex items-baseline justify-between gap-3">
-        <p className="text-sm font-medium text-cyan">{tr("FERZAN holder perks")}</p>
-        {p.badge ? <span className="chip-on rounded-full px-3 py-1 text-xs font-semibold">{tr(p.badge)}</span> : null}
+        <p className="text-sm font-medium text-cyan">{tr("FERZAN holder tier")}</p>
+        {p.active && p.badge ? <span className="chip-on rounded-full px-3 py-1 text-xs font-semibold">{tr(p.badge)}</span> : null}
       </div>
+      {!p.active ? <p className="mt-2 text-sm text-muted">{tr("Opens at launch · Fri Nov 13, 4:00 PM ET")}</p> : null}
+      {p.active && !wallet ? <p className="mt-2 text-sm text-muted">{tr("Sign in to see your status. It is read from your Solana wallet.")}</p> : null}
+      {p.active && wallet && p.balance <= 0 ? (
+        <p className="mt-2 text-sm text-muted">
+          {tr("This wallet holds none.")}{" "}
+          <Link to="/how-to-buy" className="font-semibold text-cyan">
+            {tr("How to buy FERZAN")}
+          </Link>
+        </p>
+      ) : null}
+      {p.active && wallet && p.balance > 0 ? (
+        <p className="mt-2 text-sm">
+          <span className="text-muted">{tr("Current tier")}: </span>
+          {p.badge ? tr(p.badge) : tr("No FERZAN tier yet")}
+          {next && more > 0 ? (
+            <>
+              {" · "}
+              <span className="text-muted">{tr("Next tier")}: </span>
+              {tr(next.badge)}
+              {" · "}
+              {tr("{0} more FERZAN", whole(more))}
+            </>
+          ) : p.badge ? (
+            <>
+              {" · "}
+              {tr("Top tier")}
+            </>
+          ) : null}
+        </p>
+      ) : null}
       <ul className="mt-3 space-y-2 text-sm">
-        {rows.map((r) => (
-          <li key={r.tier} className={cn("flex items-start justify-between gap-3", p.tier === r.tier && "text-cyan")}>
+        {p.tiers.map((row) => (
+          <li key={row.tier} className={cn("flex items-start justify-between gap-3", p.active && p.tierName === row.tier && "text-cyan")}>
             <span>
-              <span className="font-semibold">{tr(r.badge)}</span>
-              <span className="block text-muted">{tr(r.perk)}{tr(", plus the badge on your coins' creator score and on your Solana buys in Buy Bot alerts.")}</span>
+              <span className="font-semibold">{tr(row.badge)}</span>
+              <span className="block text-muted">{tierGives(row.launchFeeOffPct, p.launchFeeSol)}</span>
             </span>
-            <span className="shrink-0 tabular-nums text-muted">{whole(r.need)}+</span>
+            <span className="shrink-0 tabular-nums text-muted">{whole(row.min)}+</span>
           </li>
         ))}
       </ul>
-      <p className="mt-3 text-sm text-muted">
-        {!p.active
-          ? tr("Switches on when FERZAN launches on Friday, November 13 at 4:00 PM ET. Hold it in the Solana wallet you launch and trade with.")
-          : !wallet
-            ? tr("Sign in to see your status. It is read from your Solana wallet.")
-            : p.tier === "none"
-              ? tr("This wallet holds {0} FERZAN. {1} more unlocks the holder perks.", whole(p.balance), whole(Math.max(0, p.holderMin - p.balance)))
-              : tr("This wallet holds {0} FERZAN. Your Solana launch fee: {1}.", whole(p.balance), p.yourLaunchFeeSol === 0 ? tr("free") : sol(p.yourLaunchFeeSol))}
-      </p>
+    </section>
+  );
+}
+
+function tierGives(offPct: number, launchFeeSol: number): string {
+  const badge = tr("Badge on your coins' creator score and on your Solana buys in Buy Bot alerts.");
+  if (launchFeeSol <= 0 || offPct <= 0) return badge;
+  if (offPct >= 100) return tr("Free Solana launches. {0}", badge);
+  if (offPct === 50) return tr("Half-price Solana launch fee ({0}). {1}", sol(launchFeeSol / 2), badge);
+  return tr("Solana launch fee {0}% off. {1}", offPct, badge);
+}
+
+/** The signed-in wallet's referral link. Earnings show only when the wallet API returns some. */
+export function ReferralCard({ evm, sol: solWallet }: { evm: string | null; sol: string | null }) {
+  const wallet = evm || solWallet || "";
+  const { data, failed } = usePortfolio(evm, solWallet);
+  const [copied, setCopied] = useState(false);
+  if (!wallet) {
+    return (
+      <section className="ticket">
+        <p className="text-sm font-medium text-cyan">{tr("Your referral link")}</p>
+        <p className="mt-2 text-sm text-muted">{tr("Sign in to get your referral link.")}</p>
+      </section>
+    );
+  }
+  const url = `https://ferzan-factory.com/?ref=${encodeURIComponent(wallet)}`;
+  const earned = !failed && data && data.referralUsd > 0 ? data.referralUsd : 0;
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopied(false);
+    }
+  }
+  async function share() {
+    if (typeof navigator.share === "function") {
+      try {
+        await navigator.share({ url });
+        return;
+      } catch {
+        return;
+      }
+    }
+    window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}`, "_blank", "noopener,noreferrer");
+  }
+  return (
+    <section className="ticket">
+      <p className="text-sm font-medium text-cyan">{tr("Your referral link")}</p>
+      <p className="mt-2 break-all text-sm">{url}</p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <button type="button" className="btn-line" onClick={() => void copy()}>
+          {copied ? tr("Link copied") : tr("Copy")}
+        </button>
+        <button type="button" className="btn-line" onClick={() => void share()}>
+          {tr("Share")}
+        </button>
+      </div>
+      {earned > 0 ? <p className="mt-3 text-sm">{tr("{0} from referrals", compactUsd(earned))}</p> : null}
+      <p className="mt-3 text-sm text-muted">{tr("Website curves: 60% treasury, 30% creator, 10% referrer or treasury.")}</p>
+      <p className="mt-1 text-sm text-muted">{tr("Telegram curves with a referral: 50% creator, 40% platform, 10% referrer.")}</p>
     </section>
   );
 }
@@ -69,7 +150,7 @@ export function LaunchPerksNote() {
   const p = usePerks(wallet);
   if (!p) return null;
   const mine =
-    p.active && p.tier !== "none"
+    p.active && p.tierName !== "none" && p.badge
       ? " " + tr("{0}: you pay {1}.", tr(p.badge), p.yourLaunchFeeSol === 0 ? tr("no launch fee") : sol(p.yourLaunchFeeSol))
       : "";
   return (

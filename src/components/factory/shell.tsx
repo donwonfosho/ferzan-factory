@@ -26,7 +26,7 @@ import { tr } from "@/lib/i18n";
 import { LangPicker } from "./lang";
 import { captureRef } from "@/lib/factory/compete";
 /** Reading pages stay a narrow column; every other page uses the wide container. */
-const NARROW_PATHS = ["/docs", "/terms", "/about", "/transparency", "/how-to-buy"];
+const NARROW_PATHS = ["/docs", "/terms", "/about", "/transparency", "/how-to-buy", "/press", "/changelog"];
 const LINKS = [
   { to: "/", label: "Floor" },
   { to: "/pulse", label: "Pulse" },
@@ -219,6 +219,8 @@ export function Shell({ children }: { children: ReactNode }) {
             <ul className="mt-2 space-y-1">
               <li><Link to="/docs" className="text-cyan">{tr("Docs")}</Link></li>
               <li><Link to="/how-to-buy" className="text-cyan">{tr("How to buy FERZAN")}</Link></li>
+              <li><Link to="/press" className="text-cyan">{tr("Press")}</Link></li>
+              <li><Link to="/changelog" className="text-cyan">{tr("Changelog")}</Link></li>
               <li><Link to="/about" className="text-cyan">{tr("About")}</Link></li>
               <li><Link to="/transparency" className="text-cyan">{tr("Transparency")}</Link></li>
               <li><Link to="/terms" className="text-cyan">{tr("Terms")}</Link></li>

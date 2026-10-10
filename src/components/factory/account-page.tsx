@@ -27,7 +27,7 @@ import { formatSmart, parseDecimal } from "@/lib/factory/units";
 import { readPrefs, writePrefs, type ChartPlot, type LaunchAlerts } from "@/lib/factory/prefs";
 import { FundButton } from "./fund-wallet";
 import type { EvmChainId } from "@/lib/factory/deploy";
-import { FerzanPerksCard, InstallApp } from "./perks";
+import { FerzanPerksCard, InstallApp, ReferralCard } from "./perks";
 import { PortfolioPnl } from "./portfolio-pnl";
 
 import { tr } from "@/lib/i18n";
@@ -183,6 +183,7 @@ export function AccountPage() {
             </div>
             <div className="flex min-w-0 flex-col gap-4 [&>*]:mt-0!">
               <FerzanPerksCard sol={mineSol} />
+              <ReferralCard evm={mineEvm} sol={mineSol} />
               <MenuGroup label={tr("Account")}>
                 <MenuRow title={tr("Edit profile")} onClick={() => open("profile")} />
                 <MenuRow title={tr("Portfolio")} detail={tr("Balances, holdings, and launches")} onClick={() => open("portfolio")} />
