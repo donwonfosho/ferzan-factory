@@ -37,15 +37,15 @@ function PressPage() {
 
       <h2 className="mt-8 text-2xl">{tr("Logos")}</h2>
       <div className="mt-3 space-y-4">
-        <File src="/brand/seal.jpg" label={tr("Logo")} />
-        <File src="/brand/lockup.jpg" label={tr("Lockup")} />
-        <File src="/brand/ferzan-token.jpg" label={tr("FERZAN mark")} />
+        <File src="/brand/seal.jpg" label={tr("Logo")} width={512} height={512} />
+        <File src="/brand/lockup.jpg" label={tr("Lockup")} width={1500} height={750} />
+        <File src="/brand/ferzan-token.jpg" label={tr("FERZAN mark")} width={800} height={800} />
       </div>
 
       <h2 className="mt-8 text-2xl">{tr("Banner")}</h2>
       <div className="mt-3 space-y-4">
-        <File src="/og.jpg" label={tr("Share card")} />
-        <File src="/x-banner.jpg" label={tr("X banner")} />
+        <File src="/og.jpg" label={tr("Share card")} width={1200} height={630} />
+        <File src="/x-banner.jpg" label={tr("X banner")} width={1200} height={264} />
       </div>
 
       <h2 className="mt-8 text-2xl">{tr("Colours")}</h2>
@@ -81,12 +81,12 @@ function PressPage() {
   );
 }
 
-function File({ src, label }: { src: string; label: string }) {
+function File({ src, label, width, height }: { src: string; label: string; width: number; height: number }) {
   return (
     <figure>
-      <img src={src} alt={label} className="w-full max-w-full bg-surface" />
+      <img src={src} alt={label} width={width} height={height} loading="lazy" decoding="async" className="h-auto w-full max-w-full bg-surface" />
       <figcaption className="mt-1 text-sm">
-        <a className="text-cyan" href={src} download>
+        <a className="inline-flex min-h-12 items-center text-cyan" href={src} download>
           {label}
         </a>
       </figcaption>

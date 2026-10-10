@@ -1,0 +1,6 @@
+Contact: mailto:Ferzantrade@gmail.com
+Contact: https://ferzan-factory.com
+Expires: 2027-11-13T21:00:00.000Z
+Preferred-Languages: en, es, zh
+Canonical: https://ferzan-factory.com/.well-known/security.txt
+Policy: https://ferzan-factory.com/verify

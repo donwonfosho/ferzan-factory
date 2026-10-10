@@ -44,6 +44,29 @@
     outline-offset: 2px;
   }
 
+  button,
+  [role="button"],
+  summary,
+  input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="range"]),
+  select,
+  textarea {
+    min-height: 3rem;
+  }
+
+  footer a,
+  footer button {
+    display: inline-flex;
+    align-items: center;
+    min-height: 3rem;
+    min-width: 3rem;
+  }
+
+  p a,
+  li a {
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+  }
+
   h1,
   h2,
   h3 {
@@ -108,7 +131,7 @@ select {
 .btn-line,
 .btn-sell {
   display: inline-flex;
-  min-height: 2.75rem;
+  min-height: 3rem;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;

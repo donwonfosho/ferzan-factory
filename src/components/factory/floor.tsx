@@ -41,6 +41,8 @@ export function Floor() {
             <img
               src="/brand/lockup.jpg"
               alt={tr("Ferzan Factory. See it. Ape it. Send it.")}
+              width={1500}
+              height={750}
               className="block h-auto w-full"
             />
           </div>

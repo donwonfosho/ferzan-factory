@@ -22,6 +22,7 @@ const HEADERS: Record<string, string> = {
   "referrer-policy": "strict-origin-when-cross-origin",
   "strict-transport-security": "max-age=31536000; includeSubDomains",
   "permissions-policy": "camera=(), microphone=(), geolocation=()",
+  "x-permitted-cross-domain-policies": "none",
 };
 
 export default async function securityHeadersMiddleware(

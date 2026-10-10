@@ -27,7 +27,7 @@ import { tr } from "@/lib/i18n";
 import { LangPicker } from "./lang";
 import { captureEvmRef, captureRef } from "@/lib/factory/compete";
 /** Reading pages stay a narrow column; every other page uses the wide container. */
-const NARROW_PATHS = ["/docs", "/terms", "/about", "/transparency", "/how-to-buy", "/press", "/changelog"];
+const NARROW_PATHS = ["/docs", "/terms", "/about", "/transparency", "/how-to-buy", "/press", "/changelog", "/verify"];
 const LINKS = [
   { to: "/", label: "Floor" },
   { to: "/pulse", label: "Pulse" },
@@ -64,6 +64,16 @@ export function Shell({ children }: { children: ReactNode }) {
     captureEvmRef();
   }, [href]);
 
+  useEffect(() => {
+    const dsn = import.meta.env.VITE_SENTRY_DSN as string | undefined;
+    if (!dsn) return;
+    void import("@/lib/factory/sentry").then((mod) => mod.startBrowserSentry(dsn));
+  }, []);
+
+  useEffect(() => {
+    labelUnnamedControls();
+  }, [path]);
+
   const creatorCut = launches
     .filter((item) => item.kind === "primary" && owns(item.creator, wallet))
     .reduce<Record<string, bigint>>((acc, item) => {
@@ -85,7 +95,7 @@ export function Shell({ children }: { children: ReactNode }) {
         <header className="border-b border-line bg-bg/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-2 px-4 py-3 sm:gap-3">
           <Link to="/" className="mr-auto flex items-center gap-2">
-            <img src="/brand/seal.jpg" alt="" className="h-11 w-11 object-contain" />
+            <img src="/brand/seal.jpg" alt="" width={512} height={512} className="h-11 w-11 object-contain" />
             <span className="hidden text-base font-semibold text-fg min-[420px]:inline">{tr("Ferzan")}</span>
             <span className="rounded-full bg-cyan/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-cyan">{tr("Beta")}</span>
           </Link>
@@ -226,6 +236,7 @@ export function Shell({ children }: { children: ReactNode }) {
             <p className="font-semibold text-fg">{tr("Learn")}</p>
             <ul className="mt-2 space-y-1">
               <li><Link to="/docs" className="text-cyan">{tr("Docs")}</Link></li>
+              <li><Link to="/verify" className="text-cyan">{tr("Verify")}</Link></li>
               <li><Link to="/how-to-buy" className="text-cyan">{tr("How to buy FERZAN")}</Link></li>
               <li><Link to="/press" className="text-cyan">{tr("Press")}</Link></li>
               <li><Link to="/changelog" className="text-cyan">{tr("Changelog")}</Link></li>
@@ -256,6 +267,18 @@ export function Shell({ children }: { children: ReactNode }) {
       <TxDock />
     </div>
   );
+}
+
+function labelUnnamedControls() {
+  const nodes = document.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>("input, textarea, select");
+  for (const node of nodes) {
+    if (node.type === "hidden") continue;
+    if (node.closest("label")) continue;
+    if (node.getAttribute("aria-label") || node.getAttribute("aria-labelledby")) continue;
+    if (node.id && document.querySelector(`label[for="${CSS.escape(node.id)}"]`)) continue;
+    const text = node.getAttribute("placeholder") || node.getAttribute("name") || node.getAttribute("aria-describedby");
+    if (text) node.setAttribute("aria-label", text);
+  }
 }
 
 function LaunchBar() {

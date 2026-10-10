@@ -26,7 +26,7 @@ export function SafetyBadges({ launches, score, note = true }: { launches?: numb
 function Badge({ label, tip }: { label: string; tip: string }) {
   return (
     <details className="relative" onClick={(e) => e.stopPropagation()}>
-      <summary className="cursor-pointer list-none rounded-full bg-cyan/15 px-2 py-0.5 text-xs font-semibold text-cyan [&::-webkit-details-marker]:hidden">
+      <summary className="inline-flex min-h-12 cursor-pointer list-none items-center rounded-full bg-cyan/15 px-3 text-xs font-semibold text-cyan [&::-webkit-details-marker]:hidden">
         {label}
       </summary>
       <p className="absolute left-0 top-full z-20 mt-1 w-56 rounded-lg bg-bg p-2 text-xs font-normal text-fg shadow-border">{tip}</p>

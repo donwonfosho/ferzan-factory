@@ -31,6 +31,7 @@ export const Route = createRootRoute({
       {
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&display=swap",
+        media: "print",
       },
       { rel: "manifest", href: "/__grok/manifest.webmanifest" },
       { rel: "apple-touch-icon", href: "/__grok/icon-180.png" },
@@ -42,6 +43,11 @@ export const Route = createRootRoute({
         <HeadContent />
       </head>
       <body>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: "document.querySelectorAll('link[rel=stylesheet][media=print]').forEach(function(l){l.media='all'})",
+          }}
+        />
         <PreviewHostBridge />
         <AuthProvider>
           <PrivyRoot>

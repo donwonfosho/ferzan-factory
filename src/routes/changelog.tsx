@@ -22,6 +22,7 @@ const ENTRIES = [
       "Launch date locked: Friday, November 13, 2026 at 4:00 PM ET.",
       "System status",
       "Launch countdown on the home page, and a preview before you sign a buy, sell, or bridge.",
+      "A verify page for the contracts this site uses, and a health check for uptime monitors.",
     ],
   },
 ];

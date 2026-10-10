@@ -19,6 +19,7 @@ import { Route as CompeteRouteImport } from './routes/compete'
 import { Route as DocsRouteImport } from './routes/docs'
 import { Route as FerzanRouteImport } from './routes/ferzan'
 import { Route as FundsRouteImport } from './routes/funds'
+import { Route as HealthzRouteImport } from './routes/healthz'
 import { Route as HowToBuyRouteImport } from './routes/how-to-buy'
 import { Route as LaunchRouteImport } from './routes/launch'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
@@ -27,6 +28,7 @@ import { Route as PressRouteImport } from './routes/press'
 import { Route as PulseRouteImport } from './routes/pulse'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TransparencyRouteImport } from './routes/transparency'
+import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as AdminFeedbackRouteImport } from './routes/admin/feedback'
 import { Route as ApiLaunchesRouteImport } from './routes/api/launches'
 import { Route as ApiRelayStatusRouteImport } from './routes/api/relay-status'
@@ -87,6 +89,11 @@ const FundsRoute = FundsRouteImport.update({
   path: '/funds',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HealthzRoute = HealthzRouteImport.update({
+  id: '/healthz',
+  path: '/healthz',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HowToBuyRoute = HowToBuyRouteImport.update({
   id: '/how-to-buy',
   path: '/how-to-buy',
@@ -125,6 +132,11 @@ const TermsRoute = TermsRouteImport.update({
 const TransparencyRoute = TransparencyRouteImport.update({
   id: '/transparency',
   path: '/transparency',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VerifyRoute = VerifyRouteImport.update({
+  id: '/verify',
+  path: '/verify',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminFeedbackRoute = AdminFeedbackRouteImport.update({
@@ -184,6 +196,7 @@ export interface FileRoutesByFullPath {
   '/docs': typeof DocsRoute
   '/ferzan': typeof FerzanRoute
   '/funds': typeof FundsRoute
+  '/healthz': typeof HealthzRoute
   '/how-to-buy': typeof HowToBuyRoute
   '/launch': typeof LaunchRoute
   '/leaderboard': typeof LeaderboardRoute
@@ -192,6 +205,7 @@ export interface FileRoutesByFullPath {
   '/pulse': typeof PulseRoute
   '/terms': typeof TermsRoute
   '/transparency': typeof TransparencyRoute
+  '/verify': typeof VerifyRoute
   '/admin/feedback': typeof AdminFeedbackRoute
   '/api/launches': typeof ApiLaunchesRoute
   '/api/relay-status': typeof ApiRelayStatusRoute
@@ -213,6 +227,7 @@ export interface FileRoutesByTo {
   '/docs': typeof DocsRoute
   '/ferzan': typeof FerzanRoute
   '/funds': typeof FundsRoute
+  '/healthz': typeof HealthzRoute
   '/how-to-buy': typeof HowToBuyRoute
   '/launch': typeof LaunchRoute
   '/leaderboard': typeof LeaderboardRoute
@@ -221,6 +236,7 @@ export interface FileRoutesByTo {
   '/pulse': typeof PulseRoute
   '/terms': typeof TermsRoute
   '/transparency': typeof TransparencyRoute
+  '/verify': typeof VerifyRoute
   '/admin/feedback': typeof AdminFeedbackRoute
   '/api/launches': typeof ApiLaunchesRoute
   '/api/relay-status': typeof ApiRelayStatusRoute
@@ -243,6 +259,7 @@ export interface FileRoutesById {
   '/docs': typeof DocsRoute
   '/ferzan': typeof FerzanRoute
   '/funds': typeof FundsRoute
+  '/healthz': typeof HealthzRoute
   '/how-to-buy': typeof HowToBuyRoute
   '/launch': typeof LaunchRoute
   '/leaderboard': typeof LeaderboardRoute
@@ -251,6 +268,7 @@ export interface FileRoutesById {
   '/pulse': typeof PulseRoute
   '/terms': typeof TermsRoute
   '/transparency': typeof TransparencyRoute
+  '/verify': typeof VerifyRoute
   '/admin/feedback': typeof AdminFeedbackRoute
   '/api/launches': typeof ApiLaunchesRoute
   '/api/relay-status': typeof ApiRelayStatusRoute
@@ -274,6 +292,7 @@ export interface FileRouteTypes {
     | '/docs'
     | '/ferzan'
     | '/funds'
+    | '/healthz'
     | '/how-to-buy'
     | '/launch'
     | '/leaderboard'
@@ -282,6 +301,7 @@ export interface FileRouteTypes {
     | '/pulse'
     | '/terms'
     | '/transparency'
+    | '/verify'
     | '/admin/feedback'
     | '/api/launches'
     | '/api/relay-status'
@@ -303,6 +323,7 @@ export interface FileRouteTypes {
     | '/docs'
     | '/ferzan'
     | '/funds'
+    | '/healthz'
     | '/how-to-buy'
     | '/launch'
     | '/leaderboard'
@@ -311,6 +332,7 @@ export interface FileRouteTypes {
     | '/pulse'
     | '/terms'
     | '/transparency'
+    | '/verify'
     | '/admin/feedback'
     | '/api/launches'
     | '/api/relay-status'
@@ -332,6 +354,7 @@ export interface FileRouteTypes {
     | '/docs'
     | '/ferzan'
     | '/funds'
+    | '/healthz'
     | '/how-to-buy'
     | '/launch'
     | '/leaderboard'
@@ -340,6 +363,7 @@ export interface FileRouteTypes {
     | '/pulse'
     | '/terms'
     | '/transparency'
+    | '/verify'
     | '/admin/feedback'
     | '/api/launches'
     | '/api/relay-status'
@@ -362,6 +386,7 @@ export interface RootRouteChildren {
   DocsRoute: typeof DocsRoute
   FerzanRoute: typeof FerzanRoute
   FundsRoute: typeof FundsRoute
+  HealthzRoute: typeof HealthzRoute
   HowToBuyRoute: typeof HowToBuyRoute
   LaunchRoute: typeof LaunchRoute
   LeaderboardRoute: typeof LeaderboardRoute
@@ -370,6 +395,7 @@ export interface RootRouteChildren {
   PulseRoute: typeof PulseRoute
   TermsRoute: typeof TermsRoute
   TransparencyRoute: typeof TransparencyRoute
+  VerifyRoute: typeof VerifyRoute
   AdminFeedbackRoute: typeof AdminFeedbackRoute
   ApiLaunchesRoute: typeof ApiLaunchesRoute
   ApiRelayStatusRoute: typeof ApiRelayStatusRoute
@@ -453,6 +479,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FundsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/healthz': {
+      id: '/healthz'
+      path: '/healthz'
+      fullPath: '/healthz'
+      preLoaderRoute: typeof HealthzRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/how-to-buy': {
       id: '/how-to-buy'
       path: '/how-to-buy'
@@ -507,6 +540,13 @@ declare module '@tanstack/react-router' {
       path: '/transparency'
       fullPath: '/transparency'
       preLoaderRoute: typeof TransparencyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/verify': {
+      id: '/verify'
+      path: '/verify'
+      fullPath: '/verify'
+      preLoaderRoute: typeof VerifyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/feedback': {
@@ -586,6 +626,7 @@ const rootRouteChildren: RootRouteChildren = {
   DocsRoute: DocsRoute,
   FerzanRoute: FerzanRoute,
   FundsRoute: FundsRoute,
+  HealthzRoute: HealthzRoute,
   HowToBuyRoute: HowToBuyRoute,
   LaunchRoute: LaunchRoute,
   LeaderboardRoute: LeaderboardRoute,
@@ -594,6 +635,7 @@ const rootRouteChildren: RootRouteChildren = {
   PulseRoute: PulseRoute,
   TermsRoute: TermsRoute,
   TransparencyRoute: TransparencyRoute,
+  VerifyRoute: VerifyRoute,
   AdminFeedbackRoute: AdminFeedbackRoute,
   ApiLaunchesRoute: ApiLaunchesRoute,
   ApiRelayStatusRoute: ApiRelayStatusRoute,

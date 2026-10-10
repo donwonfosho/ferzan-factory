@@ -23,7 +23,7 @@ export function Button({
 
 export function Mark({ symbol, image, className }: { symbol: string; image?: string; className?: string }) {
   if (image) {
-    return <img src={image} alt="" className={cn("h-12 w-12 shrink-0 rounded-xl object-cover", className)} />;
+    return <img src={image} alt="" width={48} height={48} loading="lazy" decoding="async" className={cn("h-12 w-12 shrink-0 rounded-xl object-cover", className)} />;
   }
   return (
     <span className={cn("grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-cyan text-sm font-semibold text-cyan-ink", className)}>
@@ -35,13 +35,15 @@ export function Label({ children }: { children: ReactNode }) {
   return <div className="mb-1.5 text-sm font-medium text-muted">{children}</div>;
 }
 
-export function TextInput(props: InputHTMLAttributes<HTMLInputElement>) {
+export function TextInput({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
+  const named = props["aria-label"] ?? (typeof props.placeholder === "string" ? props.placeholder : undefined);
   return (
     <input
       {...props}
+      aria-label={named}
       className={cn(
-        "min-h-11 w-full rounded-lg bg-bg px-3 text-fg shadow-border outline-none placeholder:text-muted",
-        props.className,
+        "min-h-12 w-full rounded-lg bg-bg px-3 text-fg shadow-border outline-none placeholder:text-muted",
+        className,
       )}
     />
   );
