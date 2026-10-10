@@ -36,6 +36,58 @@ function requestHost(event: GrokPwaEvent): string {
   );
 }
 
+function rewriteShareHost(html: string): string {
+  let next = html.replace(
+    /(<meta\b[^>]*\bcontent=["'])https:\/\/ferzan-factory\.grok\.me\//gi,
+    "$1https://ferzan-factory.com/",
+  );
+  if (!/name=["']twitter:image["']/i.test(next)) {
+    const og = next.match(/property=["']og:image["'][^>]*content=["']([^"']+)["']/i);
+    if (og) next = next.replace(/<\/head>/i, `<meta name="twitter:image" content="${og[1]}"></head>`);
+  }
+  if (!/name=["']twitter:creator["']/i.test(next)) {
+    next = next.replace(/<\/head>/i, `<meta name="twitter:creator" content="@ferzanfactory"></head>`);
+  }
+  return next;
+}
+
+/** The platform writes og:image with the grok.me host. Point the share tags at the real site after that. */
+function rewriteShareStream(response: Response): Response {
+  const decoder = new TextDecoder();
+  const encoder = new TextEncoder();
+  let pending = "";
+  let passed = false;
+  const transformed = response.body!.pipeThrough(
+    new TransformStream<Uint8Array, Uint8Array>({
+      transform(chunk, controller) {
+        if (passed) {
+          controller.enqueue(chunk);
+          return;
+        }
+        pending += decoder.decode(chunk, { stream: true });
+        const close = pending.match(/<\/head>/i);
+        if (!close || close.index === undefined) return;
+        const end = close.index + close[0].length;
+        controller.enqueue(encoder.encode(rewriteShareHost(pending.slice(0, end)) + pending.slice(end)));
+        pending = "";
+        passed = true;
+      },
+      flush(controller) {
+        const tail = pending + decoder.decode();
+        if (!tail) return;
+        controller.enqueue(encoder.encode(passed ? tail : rewriteShareHost(tail)));
+      },
+    }),
+  );
+  const headers = new Headers(response.headers);
+  headers.delete("content-length");
+  return new Response(transformed, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
 function injectHeadStreaming(response: Response, host: string): Response {
   const injector = createHeadInjector({
     host,
@@ -88,7 +140,7 @@ export default async function grokPwaMiddleware(
       host: requestHost(event),
       url: urlWithQuery,
     });
-    return new Response(html, {
+    return new Response(rewriteShareHost(html), {
       headers: {
         "content-type": "text/html; charset=utf-8",
         "cache-control": "no-cache",
@@ -105,7 +157,7 @@ export default async function grokPwaMiddleware(
     String(result.headers.get("content-type") ?? "").includes("text/html") &&
     !result.headers.get("content-encoding")
   ) {
-    return injectHeadStreaming(result, requestHost(event));
+    return rewriteShareStream(injectHeadStreaming(result, requestHost(event)));
   }
   return result;
 }
