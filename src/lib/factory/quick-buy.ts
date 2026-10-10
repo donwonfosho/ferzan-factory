@@ -9,7 +9,7 @@ import { buildSolSwap } from "@/lib/factory/sol-coin";
 import { evmWallet, solanaWallet } from "@/lib/factory/wallet-bridge";
 import { getReceipt } from "@/lib/factory/relay";
 import { parseDecimal } from "@/lib/factory/units";
-import { creditCall } from "./compete";
+import { creditCall, evmReferrer } from "./compete";
 
 export type QuickUnit = "SOL" | "ETH" | "BNB" | "USDC";
 const DEFAULTS: Record<QuickUnit, string> = { SOL: "0.1", ETH: "0.005", BNB: "0.02", USDC: "5" };
@@ -83,12 +83,7 @@ function fromB64(b64: string): Uint8Array {
 }
 
 function referrer(me: string): string {
-  try {
-    const ref = window.sessionStorage.getItem("ferzan-ref") ?? "";
-    return /^0x[0-9a-f]{40}$/.test(ref) && ref !== me.toLowerCase() ? ref : ZERO;
-  } catch {
-    return ZERO;
-  }
+  return evmReferrer(me) || ZERO;
 }
 
 /** Buys `amount` (whole units of the chain's coin). Resolves with the transaction id once sent (Solana) or confirmed (EVM). */

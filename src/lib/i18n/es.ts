@@ -227,6 +227,8 @@ const dict: Record<string, string> = {
   "Pick a category.": "Elige una categoría.",
   "Press": "Prensa",
   "Press kit": "Kit de prensa",
+  "Referral links are for EVM coins; use your Telegram referral link for Telegram coins": "Los enlaces de referido son para monedas EVM; usa tu enlace de referido de Telegram para las monedas de Telegram",
+  "Referrer {0}": "Referido {0}",
   "Report a bug / Feedback": "Reportar un error / Comentarios",
   "Report this coin": "Reportar esta moneda",
   "Scam": "Estafa",

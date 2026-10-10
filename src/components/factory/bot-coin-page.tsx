@@ -29,7 +29,7 @@ import { CopyAddress } from "./copy-address";
 import { OpenInTelegram } from "./open-telegram";
 
 import { tr } from "@/lib/i18n";
-import { sharedBy } from "@/lib/factory/compete";
+import { evmReferrer, sharedBy } from "@/lib/factory/compete";
 const ZERO = "0x0000000000000000000000000000000000000000";
 const TIMEFRAMES = [
   { tf: 60, label: "1m" },
@@ -64,17 +64,34 @@ function plain(v: bigint): string {
 
 const short = (a: string) => (a.length > 12 ? `${a.slice(0, 6)}…${a.slice(-4)}` : a);
 
-/** Referrer from ?ref=0x… (kept for this visit), never the trader's own wallet. */
+/** Referrer saved from ?ref=0x… on any page this visit, never the trader's own wallet. */
 function referrerFor(account: string): string {
   if (typeof window === "undefined") return ZERO;
-  let ref = new URLSearchParams(window.location.search).get("ref")?.toLowerCase() ?? "";
-  try {
-    if (/^0x[0-9a-f]{40}$/.test(ref)) window.sessionStorage.setItem("ferzan-ref", ref);
-    else ref = window.sessionStorage.getItem("ferzan-ref") ?? sharedBy(account).toLowerCase();
-  } catch {
-    /* private mode: the URL value still works */
+  const fromUrl = new URLSearchParams(window.location.search).get("ref") ?? "";
+  if (/^0x[0-9a-fA-F]{40}$/.test(fromUrl)) {
+    try {
+      window.sessionStorage.setItem("ferzan-ref", fromUrl.toLowerCase());
+    } catch {
+      /* private mode: the URL value still works below */
+    }
   }
-  return /^0x[0-9a-f]{40}$/.test(ref) && ref !== account.toLowerCase() ? ref : ZERO;
+  const saved = evmReferrer(account);
+  if (saved) return saved;
+  const older = sharedBy(account).toLowerCase();
+  return /^0x[0-9a-f]{40}$/.test(older) ? older : ZERO;
+}
+
+function StoredReferrer() {
+  const [ref, setRef] = useState("");
+  useEffect(() => {
+    setRef(evmReferrer(""));
+  }, []);
+  if (!ref) return null;
+  return (
+    <p className="break-all text-xs text-muted" data-referrer={ref}>
+      {tr("Referrer {0}", ref)}
+    </p>
+  );
 }
 
 export function Chart({ candles }: { candles: BotCurveState["candles"] }) {
@@ -438,6 +455,7 @@ export function BotCoinPage({ chain, curve }: { chain: BotCurveChain; curve: str
             {!account ? tr("Connect wallet") : side === "buy" ? tr("Buy {0}", state.symbol) : tr("Sell {0}", state.symbol)}
           </Button>
           <p className="text-xs text-muted">{tr("1% fee on every trade: half to the creator, half to Ferzan. A referrer gets 10% of the fee.")}</p>
+          <StoredReferrer />
         </form>
       )}
 

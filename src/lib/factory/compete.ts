@@ -119,7 +119,32 @@ const creditCallFn = createServerFn({ method: "POST" })
 const KEY = "ferzan-call";
 const KEEP_MS = 7 * 86_400_000;
 
-/** Call once per page load: remembers who shared the link this visitor came in on. */
+const EVM_REF = /^0x[0-9a-fA-F]{40}$/;
+
+/** Remember an EVM referrer from ?ref= on any page. Anything else is ignored. Kept for this tab. */
+export function captureEvmRef() {
+  if (typeof window === "undefined") return;
+  const ref = new URLSearchParams(window.location.search).get("ref") ?? "";
+  if (!EVM_REF.test(ref)) return;
+  try {
+    window.sessionStorage.setItem("ferzan-ref", ref.toLowerCase());
+  } catch {
+    /* private mode: a ?ref= on the coin page itself still works */
+  }
+}
+
+/** The saved EVM referrer, or "" when it is missing, invalid, or the buyer's own wallet. */
+export function evmReferrer(buyer: string): string {
+  if (typeof window === "undefined") return "";
+  try {
+    const ref = window.sessionStorage.getItem("ferzan-ref") ?? "";
+    if (!/^0x[0-9a-f]{40}$/.test(ref)) return "";
+    if (buyer && ref === buyer.toLowerCase()) return "";
+    return ref;
+  } catch {
+    return "";
+  }
+}
 export function captureRef() {
   if (typeof window === "undefined") return;
   const ref = new URLSearchParams(window.location.search).get("ref") ?? "";

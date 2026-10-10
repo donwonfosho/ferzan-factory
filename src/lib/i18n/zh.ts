@@ -229,6 +229,8 @@ const dict: Record<string, string> = {
   "Pick a category.": "请选择类别。",
   "Press": "媒体",
   "Press kit": "媒体资料",
+  "Referral links are for EVM coins; use your Telegram referral link for Telegram coins": "推荐链接只用于 EVM 的币；Telegram 上的币请用你的 Telegram 推荐链接",
+  "Referrer {0}": "推荐人 {0}",
   "Report a bug / Feedback": "报告问题 / 反馈",
   "Report this coin": "举报这个币",
   "Scam": "诈骗",

@@ -89,12 +89,11 @@ function tierGives(offPct: number, launchFeeSol: number): string {
   return tr("Solana launch fee {0}% off. {1}", offPct, badge);
 }
 
-/** The signed-in wallet's referral link. Earnings show only when the wallet API returns some. */
+/** The signed-in wallet's referral link. EVM only: a Solana address cannot be paid by these buys. */
 export function ReferralCard({ evm, sol: solWallet }: { evm: string | null; sol: string | null }) {
-  const wallet = evm || solWallet || "";
   const { data, failed } = usePortfolio(evm, solWallet);
   const [copied, setCopied] = useState(false);
-  if (!wallet) {
+  if (!evm && !solWallet) {
     return (
       <section className="ticket">
         <p className="text-sm font-medium text-cyan">{tr("Your referral link")}</p>
@@ -102,7 +101,15 @@ export function ReferralCard({ evm, sol: solWallet }: { evm: string | null; sol:
       </section>
     );
   }
-  const url = `https://ferzan-factory.com/?ref=${encodeURIComponent(wallet)}`;
+  if (!evm || !/^0x[0-9a-fA-F]{40}$/.test(evm)) {
+    return (
+      <section className="ticket">
+        <p className="text-sm font-medium text-cyan">{tr("Your referral link")}</p>
+        <p className="mt-2 text-sm text-muted">{tr("Referral links are for EVM coins; use your Telegram referral link for Telegram coins")}</p>
+      </section>
+    );
+  }
+  const url = `https://ferzan-factory.com/?ref=${evm.toLowerCase()}`;
   const earned = !failed && data && data.referralUsd > 0 ? data.referralUsd : 0;
   async function copy() {
     try {

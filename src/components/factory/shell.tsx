@@ -24,7 +24,7 @@ import { SearchButton, SearchOverlay } from "./search";
 
 import { tr } from "@/lib/i18n";
 import { LangPicker } from "./lang";
-import { captureRef } from "@/lib/factory/compete";
+import { captureEvmRef, captureRef } from "@/lib/factory/compete";
 /** Reading pages stay a narrow column; every other page uses the wide container. */
 const NARROW_PATHS = ["/docs", "/terms", "/about", "/transparency", "/how-to-buy", "/press", "/changelog"];
 const LINKS = [
@@ -39,6 +39,7 @@ const LINKS = [
 
 export function Shell({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: (s) => s.location.pathname });
+  const href = useRouterState({ select: (s) => s.location.href });
   const launches = useFactory((s) => s.launches);
   const reset = useFactory((s) => s.reset);
   const wallet = useFactory((s) => s.wallet);
@@ -57,6 +58,10 @@ export function Shell({ children }: { children: ReactNode }) {
       setSol(solanaAddress());
     });
   }, []);
+
+  useEffect(() => {
+    captureEvmRef();
+  }, [href]);
 
   const creatorCut = launches
     .filter((item) => item.kind === "primary" && owns(item.creator, wallet))

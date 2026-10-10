@@ -16,6 +16,7 @@ import { TermsGate } from "./terms";
 import { KeyLock } from "./key-gate";
 
 import { tr } from "@/lib/i18n";
+import { evmReferrer } from "@/lib/factory/compete";
 export function ChainPanel({ chain, address, symbol }: { chain: EvmChainId; address: string; symbol: string }) {
   const wallet = useFactory((s) => s.wallet);
   const [state, setState] = useState<ChainCurve | null>(null);
@@ -37,6 +38,11 @@ export function ChainPanel({ chain, address, symbol }: { chain: EvmChainId; addr
   const [guards, setGuards] = useState(false);
   const meta = CHAINS[chain];
   const onSite = Boolean(wallet && siteMatches(wallet));
+
+  useEffect(() => {
+    const saved = evmReferrer(wallet ?? "");
+    if (saved) setReferrer((cur) => cur || saved);
+  }, [wallet]);
 
   useEffect(() => {
     let stop = false;
@@ -175,6 +181,7 @@ export function ChainPanel({ chain, address, symbol }: { chain: EvmChainId; addr
       setError(tr("Referrer has to be a wallet address, or leave it blank."));
       return;
     }
+    const payRef = wallet && referrer.toLowerCase() === wallet.toLowerCase() ? "" : referrer;
     setBusy(side === "buy" ? tr("Approve the buy.") : tr("Approve the sell."));
     const sent =
       side === "buy"
@@ -189,10 +196,10 @@ export function ChainPanel({ chain, address, symbol }: { chain: EvmChainId; addr
             }
             const moved = await guardSlip("buy", value);
             if (moved) return moved;
-            if (!guards) return sendCurve({ chain, address, data: buyData(referrer), value, from: wallet });
+            if (!guards) return sendCurve({ chain, address, data: buyData(payRef), value, from: wallet });
             const priced = minReceived("buy", value, curve);
             if (!priced.ok) return priced;
-            return sendCurve({ chain, address, data: buyData(referrer, priced.floor), value, from: wallet });
+            return sendCurve({ chain, address, data: buyData(payRef, priced.floor), value, from: wallet });
           })()
         : await (async () => {
             const parsed = parseDecimal(amount, meta.tokenDecimals);
