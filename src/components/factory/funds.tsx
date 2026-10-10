@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAccountWallets } from "@/lib/factory/wallet-bridge";
 import { tonWalletAddress } from "@/lib/factory/ton-address";
 import { FUND_CODES, moonpayUrl } from "@/lib/factory/moonpay";
@@ -11,6 +11,7 @@ import {
   type FundChain,
   type FundKind,
 } from "@/lib/factory/onramp";
+import { track } from "@/lib/factory/analytics";
 import { cn } from "@/lib/cn";
 import { tr } from "@/lib/i18n";
 
@@ -22,6 +23,22 @@ const OFF = "Not available yet";
 /** Card chains MoonPay can actually fund from this site, plus bridge-only and off chains. */
 const SHOWN = FUND_CHAINS.filter((row) => row.mode !== "card" || Boolean(FUND_CODES[row.id]));
 
+const EVM_CHAIN_ID: Record<number, string> = {
+  1: "ethereum",
+  56: "bsc",
+  8453: "base",
+  42161: "arbitrum",
+  10: "optimism",
+  137: "polygon",
+  43114: "avalanche",
+  4663: "robinhood",
+  5042: "arc",
+  59144: "linea",
+  146: "sonic",
+  999: "hyperevm",
+  369: "pulsechain",
+};
+
 function connectedAddress(kind: FundKind, evm: string | null, sol: string | null, tron: string | null, ton: string | null): string {
   if (kind === "evm") return evm ?? "";
   if (kind === "solana") return sol ?? "";
@@ -31,13 +48,36 @@ function connectedAddress(kind: FundKind, evm: string | null, sol: string | null
   return uq.startsWith("UQ") ? uq : "";
 }
 
+/** Chain of a wallet that is already connected. Does not open a wallet prompt. Solana if none is. */
+async function connectedChain(): Promise<string> {
+  const eth = (window as unknown as { ethereum?: { request?: (args: { method: string }) => Promise<unknown> } }).ethereum;
+  if (eth?.request) {
+    try {
+      const accounts = await eth.request({ method: "eth_accounts" });
+      if (Array.isArray(accounts) && accounts.length > 0) {
+        const hex = await eth.request({ method: "eth_chainId" });
+        const id = typeof hex === "string" ? Number.parseInt(hex, 16) : 0;
+        const match = EVM_CHAIN_ID[id];
+        if (match && SHOWN.some((row) => row.id === match)) return match;
+        return "ethereum";
+      }
+    } catch {
+      /* No extension, or it refused a silent read. Stay on Solana. */
+    }
+  }
+  return "solana";
+}
+
 function Chip({ on, children, onClick }: { on: boolean; children: string; onClick: () => void }) {
   return (
     <button
       type="button"
       aria-pressed={on}
       onClick={onClick}
-      className={cn("min-h-11 shrink-0 rounded-lg px-3 text-sm font-semibold", on ? "bg-cyan text-cyan-ink" : "bg-bg text-fg shadow-border")}
+      className={cn(
+        "min-h-11 shrink-0 rounded-lg border-2 px-3 text-sm font-semibold",
+        on ? "border-cyan bg-cyan text-cyan-ink" : "border-transparent bg-bg text-fg shadow-border",
+      )}
     >
       {children}
     </button>
@@ -47,22 +87,51 @@ function Chip({ on, children, onClick }: { on: boolean; children: string; onClic
 /** Add funds and cash out. Buy links come from the server (signed when a MoonPay key is set, otherwise keyless). */
 export function FundsDesk() {
   const account = useAccountWallets();
-  const [chainId, setChainId] = useState(SHOWN[0].id);
+  const [chainId, setChainId] = useState("solana");
   const chain = SHOWN.find((row) => row.id === chainId) ?? SHOWN[0];
   const [address, setAddress] = useState("");
   const [kind, setKind] = useState<FundKind>(chain.kind);
   const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState("");
   const [note, setNote] = useState("");
+  const edited = useRef(false);
+  const chose = useRef(false);
+  const chips = useRef<HTMLDivElement>(null);
 
   const evm = account?.evmAddress ?? null;
   const sol = account?.solAddress ?? null;
   const tron = account?.tronAddress ?? null;
   const ton = account?.tonAddress ?? null;
+  const signedIn = account?.authenticated === true;
 
   useEffect(() => {
-    setAddress((current) => (current.trim() ? current : connectedAddress(kind, evm, sol, tron, ton)));
-  }, [kind, evm, sol, tron, ton]);
+    if (!signedIn || edited.current) return;
+    const next = connectedAddress(kind, evm, sol, tron, ton);
+    if (next) setAddress(next);
+  }, [signedIn, kind, evm, sol, tron, ton]);
+
+  useEffect(() => {
+    if (chose.current || !account?.ready) return;
+    let cancel = false;
+    void connectedChain().then((id) => {
+      if (cancel || chose.current) return;
+      chose.current = true;
+      const row = SHOWN.find((item) => item.id === id) ?? SHOWN[0];
+      setChainId(row.id);
+      setKind(row.kind);
+      if (signedIn && !edited.current) setAddress(connectedAddress(row.kind, evm, sol, tron, ton));
+    });
+    return () => {
+      cancel = true;
+    };
+  }, [account?.ready, signedIn, evm, sol, tron, ton]);
+
+  useEffect(() => {
+    const root = chips.current;
+    const el = root?.querySelector<HTMLElement>("[aria-pressed=true]");
+    if (!root || !el) return;
+    root.scrollTo({ left: Math.max(0, el.offsetLeft - root.clientWidth / 2 + el.clientWidth / 2) });
+  }, [chain.id]);
 
   useEffect(() => {
     if (kind !== "ton") return;
@@ -77,12 +146,14 @@ export function FundsDesk() {
   }, [kind, address]);
 
   function pick(next: FundChain) {
+    chose.current = true;
     setChainId(next.id);
     setNote("");
     setBusy("");
     if (next.kind !== kind) {
       setKind(next.kind);
-      setAddress(connectedAddress(next.kind, evm, sol, tron, ton));
+      edited.current = false;
+      setAddress(signedIn ? connectedAddress(next.kind, evm, sol, tron, ton) : "");
     }
   }
 
@@ -92,6 +163,7 @@ export function FundsDesk() {
 
   async function openBuy(code: string) {
     if (!ok || !FUND_CODES[payChain]?.includes(code)) return;
+    track("add_funds_clicked");
     setBusy(code);
     setNote("");
     try {
@@ -123,7 +195,7 @@ export function FundsDesk() {
         <p className="mt-2 text-sm text-muted">
           {tr("Card, Apple Pay, or Google Pay. MoonPay takes the payment. This site never sees your card details.")}
         </p>
-        <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
+        <div ref={chips} className="mt-4 flex gap-2 overflow-x-auto pb-1">
           {SHOWN.map((row) => (
             <Chip key={row.id} on={row.id === chain.id} onClick={() => pick(row)}>
               {tr(row.label)}
@@ -139,7 +211,10 @@ export function FundsDesk() {
             <p className="mt-1 text-xs text-muted">{tr("Paste the address that should receive the crypto")}</p>
             <textarea
               value={address}
-              onChange={(e) => setAddress(e.target.value)}
+              onChange={(e) => {
+                edited.current = true;
+                setAddress(e.target.value);
+              }}
               rows={2}
               spellCheck={false}
               className="fz-ca mt-2 font-mono text-sm"
@@ -154,17 +229,21 @@ export function FundsDesk() {
         ) : null}
 
         {chain.mode === "card" && chain.buy.length > 0 ? (
-          <div className="mt-4 flex flex-wrap gap-2">
-            {chain.buy.map((code) => (
-              <button key={code} type="button" className="btn-cyan" disabled={!ok || Boolean(busy)} onClick={() => void openBuy(code)}>
-                {busy === code ? tr("Opening") : tr("Buy {0}", fundTicker(code))}
-              </button>
-            ))}
+          <div className="mt-4">
+            <p className="text-sm font-semibold text-cyan">{tr("Buying on {0}", tr(chain.label))}</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {chain.buy.map((code) => (
+                <button key={code} type="button" className="btn-cyan" disabled={!ok || Boolean(busy)} onClick={() => void openBuy(code)}>
+                  {busy === code ? tr("Opening") : tr("Buy {0}", fundTicker(code))}
+                </button>
+              ))}
+            </div>
           </div>
         ) : null}
 
         {chain.mode === "base" ? (
           <div className="mt-4 space-y-3">
+            <p className="text-sm font-semibold text-cyan">{tr("Buying on {0}", tr(chain.label))}</p>
             <p className="text-sm text-muted">{tr(BASE_NOTE)}</p>
             <button type="button" className="btn-cyan" disabled={!ok || Boolean(busy)} onClick={() => void openBuy("eth_base")}>
               {busy === "eth_base" ? tr("Opening") : tr("Buy {0}", "ETH")}
@@ -187,7 +266,7 @@ export function FundsDesk() {
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               {chain.sell.map((code) => (
-                <a key={code} className="btn-line" href={moonpaySellLink(code)} target="_blank" rel="noopener noreferrer">
+                <a key={code} className="btn-line" href={moonpaySellLink(code)} target="_blank" rel="noopener noreferrer" onClick={() => track("cash_out_clicked")}>
                   {tr("Cash out {0}", fundTicker(code))}
                 </a>
               ))}

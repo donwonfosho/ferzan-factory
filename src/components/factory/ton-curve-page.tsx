@@ -8,6 +8,8 @@ import { cn } from "@/lib/cn";
 import { Button, TextInput } from "./ui";
 import { CandleChart, CurveGraphic } from "./chart-pro";
 import { CreatorScoreBox } from "./creator-score";
+import { SafetyBadges } from "./safety-badges";
+import { ReportCoin } from "./feedback";
 import { ShareCoin } from "./perks";
 import { HoldersPanel } from "./coin-extras";
 import { AlertsButton, WatchButton } from "./watch";
@@ -289,6 +291,8 @@ export function TonCurvePage({ curve }: { curve: string }) {
       </div>
       <HoldersPanel chain="ton" token={state.token} />
       <CoinComments chain="ton" token={state.token} creator={state.creator} />
+      <SafetyBadges launches={state.creatorLaunches} />
+      <ReportCoin coin={state.token} />
       <CreatorScoreBox token={state.token} />
 
         </div>

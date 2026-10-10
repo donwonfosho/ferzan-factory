@@ -9,6 +9,7 @@ import { ChainPanel } from "./chain-panel";
 import { SolanaPanel } from "./solana-panel";
 import { ContractLine } from "./token-view";
 import { OpenInTelegram } from "./open-telegram";
+import { ReportCoin } from "./feedback";
 import { CoinPush } from "./coin-push";
 import { CoinTape, CoinThread } from "./coin-board";
 import { Holders } from "./holders";
@@ -100,6 +101,9 @@ export function TradePage({ chain, address }: { chain: string; address: string }
         <ContractLine chain={listed} address={coin?.contract || address} />
         <div className="mt-4">
           <OpenInTelegram token={coin?.contract || address} />
+          <div className="mt-3">
+            <ReportCoin coin={coin?.contract || address} />
+          </div>
         </div>
         <CoinPush chain={listed} address={coin?.contract || address} symbol={coin?.symbol || onChain?.symbol || "Coin"} />
         </div>

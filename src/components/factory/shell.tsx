@@ -14,6 +14,9 @@ import { WalletBalances } from "./gas-step";
 import { LaunchWatch } from "./launch-watch";
 import { GraduationBanner, TradeTape, usePulse } from "./pulse-live";
 import { LAUNCH_AT_MS, LAUNCH_LABEL } from "@/lib/factory/launch";
+import { FeedbackButton } from "./feedback";
+import { Analytics } from "./analytics";
+import { StatusBanner, StatusLine } from "./status-line";
 import { InstallApp } from "./perks";
 import { MobileNav } from "./mobile-nav";
 import { QuickBuyToast } from "./quick-buy";
@@ -76,6 +79,7 @@ export function Shell({ children }: { children: ReactNode }) {
           <Link to="/" className="mr-auto flex items-center gap-2">
             <img src="/brand/seal.jpg" alt="" className="h-11 w-11 object-contain" />
             <span className="hidden text-base font-semibold text-fg min-[420px]:inline">{tr("Ferzan")}</span>
+            <span className="rounded-full bg-cyan/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-cyan">{tr("Beta")}</span>
           </Link>
           <nav className="order-last hidden w-full gap-1 overflow-x-auto sm:order-none sm:flex sm:w-auto">
             {LINKS.filter((link) => wallet || link.to !== "/login").map((link) => {
@@ -175,6 +179,7 @@ export function Shell({ children }: { children: ReactNode }) {
         ) : null}
         <TradeTape />
       </header>
+      <StatusBanner />
       <LaunchBar />
       <main className={cn("mx-auto px-4 pt-10 pb-28 sm:px-6 sm:py-14", NARROW_PATHS.some((p) => path.startsWith(p)) ? "max-w-5xl" : "max-w-7xl")}>{children}</main>
       <LaunchWatch />
@@ -224,10 +229,13 @@ export function Shell({ children }: { children: ReactNode }) {
             <p className="mt-2">
               <a className="text-cyan" href="mailto:Ferzantrade@gmail.com">{tr("Ferzantrade@gmail.com")}</a>
             </p>
+            <StatusLine />
           </div>
         </div>
       </footer>
       <MobileNav />
+      <FeedbackButton />
+      <Analytics />
       <SearchOverlay />
       <QuickBuyToast />
     </div>
@@ -248,18 +256,18 @@ function LaunchBar() {
   const h = Math.floor((left % 86_400_000) / 3_600_000);
   const m = Math.floor((left % 3_600_000) / 60_000);
   return (
-    <div className="border-b border-line bg-surface px-4 py-2 text-sm">
-      <span className="mx-auto flex max-w-7xl items-center justify-between gap-3">
-        <Link to="/ferzan" className="min-w-0 font-semibold text-fg">
+    <div className="relative z-30 isolate border-b border-line bg-surface px-4 py-2 text-sm text-fg [transform:translateZ(0)]">
+      <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-x-3 gap-y-1">
+        <Link to="/ferzan" className="min-w-[12rem] flex-1 font-semibold leading-5 text-fg">
           {left === 0 ? tr("Launching soon") : tr(`FERZAN launches ${LAUNCH_LABEL}`)}
         </Link>
         <span className="flex shrink-0 items-center gap-3">
-          {left === 0 ? null : <span className="tabular-nums text-cyan">{d}d {h}h {m}m</span>}
+          {left === 0 ? null : <span className="tabular-nums font-semibold text-cyan">{d}d {h}h {m}m</span>}
           <Link to="/how-to-buy" className="font-semibold text-cyan">
             {tr("How to buy")}
           </Link>
         </span>
-      </span>
+      </div>
     </div>
   );
 }

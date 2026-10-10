@@ -22,6 +22,7 @@ import { getReceipt } from "@/lib/factory/relay";
 import { solanaExplorerTx } from "@/lib/factory/solana";
 import { formatSmart } from "@/lib/factory/units";
 import { termsAccepted } from "@/lib/factory/terms";
+import { track } from "@/lib/factory/analytics";
 import { cn } from "@/lib/cn";
 import { ChainMark } from "./chain-mark";
 import { SignerChoice } from "./signer-choice";
@@ -220,6 +221,7 @@ export function OwnWalletLaunch() {
       return setError(tr("A first buy needs trading to open right away. Clear the delay or the first buy."));
     }
     try {
+      track("launch_started");
       setBusy(tr("Connect your wallet."));
       const account = await connect();
       setBusy(tr("Preparing the launch."));
@@ -301,6 +303,7 @@ export function OwnWalletLaunch() {
         }
       }
       if (!done) throw new Error(tr("The launch was sent, but it is not confirmed yet. Check your wallet before trying again."));
+      track("launch_completed");
       setLaunched({ chain, name: cleanName, symbol: cleanSymbol, token: done.token, curve: done.curve, url: done.url, hash: txHash });
     } catch (err) {
       const msg = err instanceof Error ? err.message : "The launch did not go through.";

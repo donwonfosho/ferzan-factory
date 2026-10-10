@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getCreatorScore, type CreatorScore } from "@/lib/factory/creator-score";
 
+import { SafetyBadges } from "./safety-badges";
 import { tr } from "@/lib/i18n";
 const TONE: Record<CreatorScore["label"], string> = { Good: "text-cyan", Caution: "text-fg", Risky: "text-sell" };
 
@@ -33,6 +34,7 @@ export function CreatorScoreBox({ token }: { token: string }) {
           <span className="text-sm text-muted">/100 · {tr(cs.label)}</span>
         </p>
       </div>
+      <SafetyBadges score={cs.score} note={false} />
       {cs.lines.length ? (
         <ul className="space-y-1 text-sm">
           {cs.lines.map((l) => (

@@ -3,6 +3,7 @@ import { useAccountWallets } from "@/lib/factory/wallet-bridge";
 import { getPerks, PERK_DEFAULTS, type Perks } from "@/lib/factory/perks";
 import { cn } from "@/lib/cn";
 
+import { track } from "@/lib/factory/analytics";
 import { tr } from "@/lib/i18n";
 const whole = (n: number) => (n >= 1e6 ? `${+(n / 1e6).toFixed(2)}M` : n >= 1e3 ? `${+(n / 1e3).toFixed(1)}K` : n.toFixed(0));
 const sol = (n: number) => `${+n.toFixed(4)} SOL`;
@@ -95,6 +96,7 @@ export function ShareCoin({ chain, token, symbol }: { chain: string; token: stri
   const url = `https://launch.ferzaneco.com/api/share/${chain}/${token}${me ? `?r=${encodeURIComponent(me)}` : ""}`;
   const text = symbol ? `$${symbol} on Ferzan` : "On Ferzan";
   async function copy() {
+    track("share_clicked");
     try {
       await navigator.clipboard.writeText(url);
       setDone(tr("Link copied"));
@@ -109,10 +111,10 @@ export function ShareCoin({ chain, token, symbol }: { chain: string; token: stri
         {tr("Share")}
         {me ? <span className="block text-xs font-normal">{tr("Buys through your link count for you on the callers board.")}</span> : null}
       </p>
-      <a className="btn-line" href={`https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`} target="_blank" rel="noopener noreferrer">
+      <a className="btn-line" href={`https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`} target="_blank" rel="noopener noreferrer" onClick={() => track("share_clicked")}>
         {tr("Post on X")}
       </a>
-      <a className="btn-line" href={`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`} target="_blank" rel="noopener noreferrer">
+      <a className="btn-line" href={`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`} target="_blank" rel="noopener noreferrer" onClick={() => track("share_clicked")}>
         {tr("Telegram")}
       </a>
       <button type="button" className="btn-line" onClick={() => void copy()}>

@@ -19,6 +19,12 @@ export function DocsPage() {
       <p className="mt-3 text-muted">
         {tr("Ferzan Factory launches and trades coins on Solana, Base, BNB, Ethereum, Robinhood, Arc, Tron and TON. Launch from this site or from Telegram.")}
       </p>
+      <section className="mt-6 bg-surface p-4 shadow-border">
+        <p className="text-sm font-extrabold text-cyan">{tr("Known issues")}</p>
+        <p className="mt-1 text-sm text-muted">
+          {tr("This site is in beta. Real funds are at risk. Start small.")}
+        </p>
+      </section>
       <ol className="mt-6 space-y-4">
         <Item n="1" title={tr("One account")}>
           {tr("One account wallet covers the EVM chains and Solana. Tron and TON addresses are shown on Profile.")}

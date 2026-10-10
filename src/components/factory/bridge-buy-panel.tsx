@@ -9,6 +9,7 @@ import type { EvmChainId } from "@/lib/factory/deploy";
 import { cn } from "@/lib/cn";
 import { Button, TextInput } from "./ui";
 
+import { track } from "@/lib/factory/analytics";
 import { tr } from "@/lib/i18n";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -59,6 +60,7 @@ export function useBridgeFlow(src: BridgeChain, dest: BridgeChain, onArrived?: (
       const raw = parseDecimal(amount, meta.dec);
       if (!raw || raw <= 0n) throw new Error(tr("Type how much {0} to send.", meta.sym));
       if (Number(amount) < meta.min) throw new Error(tr("The smallest bridge from here is {0} {1}.", String(meta.min), meta.sym));
+      track("bridge_started");
       setBusy(tr("Connect your wallet."));
       const sender = await sourceWallet(src);
       const recipient = await destWallet(dest, sender, src);

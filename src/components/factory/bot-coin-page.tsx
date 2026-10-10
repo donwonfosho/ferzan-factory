@@ -17,6 +17,8 @@ import { cn } from "@/lib/cn";
 import { Button, TextInput } from "./ui";
 import { CandleChart, CurveGraphic } from "./chart-pro";
 import { CreatorScoreBox } from "./creator-score";
+import { SafetyBadges } from "./safety-badges";
+import { ReportCoin } from "./feedback";
 import { ShareCoin } from "./perks";
 import { useLive, sameCoin } from "@/lib/factory/live";
 import { HoldersPanel, PnlShare } from "./coin-extras";
@@ -351,6 +353,8 @@ export function BotCoinPage({ chain, curve }: { chain: BotCurveChain; curve: str
       <PnlShare chain={state.chain} token={state.token} wallet={pnlWallet} />
       <HoldersPanel chain={state.chain} token={state.token} />
       <CoinComments chain={state.chain} token={state.token} creator={state.creator} />
+      <SafetyBadges launches={state.creatorLaunches} />
+      <ReportCoin coin={state.token} />
       <CreatorScoreBox token={state.token} />
 
         </div>

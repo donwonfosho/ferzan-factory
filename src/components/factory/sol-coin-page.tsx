@@ -7,6 +7,8 @@ import { cn } from "@/lib/cn";
 import { CandleChart } from "./chart-pro";
 import { Button, TextInput } from "./ui";
 import { CreatorScoreBox } from "./creator-score";
+import { SafetyBadges } from "./safety-badges";
+import { ReportCoin } from "./feedback";
 import { ShareCoin } from "./perks";
 import { useLive } from "@/lib/factory/live";
 import { HoldersPanel, PnlShare } from "./coin-extras";
@@ -243,6 +245,8 @@ export function SolCoinPage({ mint }: { mint: string }) {
       <PnlShare chain="solana" token={coin.mint} wallet={knownWallet} />
       <HoldersPanel chain="solana" token={coin.mint} />
       <CoinComments chain="solana" token={coin.mint} creator={coin.creator} />
+      <SafetyBadges launches={coin.creatorLaunches} />
+      <ReportCoin coin={coin.mint} />
       <CreatorScoreBox token={coin.mint} />
 
         </div>

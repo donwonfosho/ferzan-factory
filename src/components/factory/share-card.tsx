@@ -4,6 +4,7 @@ import { CHAINS } from "@/lib/factory/catalog";
 import type { ChainId } from "@/lib/factory/types";
 import { Button, Mark } from "./ui";
 
+import { track } from "@/lib/factory/analytics";
 import { tr } from "@/lib/i18n";
 export function ShareCard({
   chain,
@@ -25,6 +26,7 @@ export function ShareCard({
   const path = `/c/${chain}/${contract}`;
 
   async function copy(kind: "link" | "telegram" | "x") {
+    track("share_clicked");
     const origin = window.location.origin;
     const url = `${origin}${path}`;
     const text =

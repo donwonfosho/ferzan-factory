@@ -6,6 +6,7 @@ import { Mark } from "./ui";
 import { ChainMark, type MarkChain } from "./chain-mark";
 import { compactUsd } from "./market-line";
 import { useLive, useLiveConnected } from "@/lib/factory/live";
+import { SafetyBadges } from "./safety-badges";
 import { QuickBuyBar, QuickBuyButton } from "./quick-buy";
 
 import { tr } from "@/lib/i18n";
@@ -222,6 +223,7 @@ export function LaunchCard({ coin, flash = false }: { coin: TelegramCoin; flash?
             {coin.safe ? <span className="text-xs font-semibold text-cyan" title={tr("Safe launch: small or no dev buy, no dev selling, no launch spree")}>{tr("🛡️ Safe")}</span> : null}
           </span>
           <span className="block truncate text-sm text-muted">{coin.name}</span>
+          <SafetyBadges launches={coin.creatorLaunches} />
         </span>
         <span className="shrink-0 text-right text-sm tabular-nums">
           <span className="block font-semibold">{compactUsd(coin.mcapUsd)}</span>

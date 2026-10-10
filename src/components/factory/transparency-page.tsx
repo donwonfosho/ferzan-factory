@@ -63,6 +63,9 @@ export function TransparencyPage() {
         <p className="mt-3 max-w-2xl text-lg text-muted">
           {tr("Every number behind Ferzan, from our own records and the chains themselves. Each FERZAN buyback and burn links to its transactions so you can check it.")}
         </p>
+        <p className="mt-3 max-w-2xl text-sm text-muted">
+          {tr("Page views and these events are counted in Plausible when it is turned on: visit, wallet connected, add funds, cash out, bridge, launch started, launch completed, share, and feedback. No cookies, no wallet addresses, and no user ids. The counts stay in Plausible, not on this page.")}
+        </p>
       </header>
 
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">

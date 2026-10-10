@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { getPlainCoin, type PlainChain, type PlainCoin } from "@/lib/factory/plain-coin";
 import { ChainMark } from "./chain-mark";
 import { CreatorScoreBox } from "./creator-score";
+import { ReportCoin } from "./feedback";
 import { ShareCoin } from "./perks";
 import { WatchButton } from "./watch";
 import { CoinComments } from "./coin-comments";
@@ -103,6 +104,7 @@ export function PlainCoinPage({ chain, token }: { chain: PlainChain; token: stri
         <WatchButton chain={coin.chain} token={coin.token} symbol={coin.symbol} path={`/token/${coin.chain}/${coin.token}`} />
       </div>
       <CoinComments chain={coin.chain} token={coin.token} creator={coin.creator} />
+      <ReportCoin coin={coin.token} />
       <CreatorScoreBox token={coin.token} />
 
         </div>
