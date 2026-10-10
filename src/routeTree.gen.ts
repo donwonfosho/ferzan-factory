@@ -25,6 +25,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as PulseRouteImport } from './routes/pulse'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TransparencyRouteImport } from './routes/transparency'
+import { Route as AdminFeedbackRouteImport } from './routes/admin/feedback'
 import { Route as ApiLaunchesRouteImport } from './routes/api/launches'
 import { Route as ApiRelayStatusRouteImport } from './routes/api/relay-status'
 import { Route as CreatorWalletRouteImport } from './routes/creator/$wallet'
@@ -114,6 +115,11 @@ const TransparencyRoute = TransparencyRouteImport.update({
   path: '/transparency',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminFeedbackRoute = AdminFeedbackRouteImport.update({
+  id: '/admin/feedback',
+  path: '/admin/feedback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiLaunchesRoute = ApiLaunchesRouteImport.update({
   id: '/api/launches',
   path: '/api/launches',
@@ -172,6 +178,7 @@ export interface FileRoutesByFullPath {
   '/pulse': typeof PulseRoute
   '/terms': typeof TermsRoute
   '/transparency': typeof TransparencyRoute
+  '/admin/feedback': typeof AdminFeedbackRoute
   '/api/launches': typeof ApiLaunchesRoute
   '/api/relay-status': typeof ApiRelayStatusRoute
   '/creator/$wallet': typeof CreatorWalletRoute
@@ -198,6 +205,7 @@ export interface FileRoutesByTo {
   '/pulse': typeof PulseRoute
   '/terms': typeof TermsRoute
   '/transparency': typeof TransparencyRoute
+  '/admin/feedback': typeof AdminFeedbackRoute
   '/api/launches': typeof ApiLaunchesRoute
   '/api/relay-status': typeof ApiRelayStatusRoute
   '/creator/$wallet': typeof CreatorWalletRoute
@@ -225,6 +233,7 @@ export interface FileRoutesById {
   '/pulse': typeof PulseRoute
   '/terms': typeof TermsRoute
   '/transparency': typeof TransparencyRoute
+  '/admin/feedback': typeof AdminFeedbackRoute
   '/api/launches': typeof ApiLaunchesRoute
   '/api/relay-status': typeof ApiRelayStatusRoute
   '/creator/$wallet': typeof CreatorWalletRoute
@@ -253,6 +262,7 @@ export interface FileRouteTypes {
     | '/pulse'
     | '/terms'
     | '/transparency'
+    | '/admin/feedback'
     | '/api/launches'
     | '/api/relay-status'
     | '/creator/$wallet'
@@ -279,6 +289,7 @@ export interface FileRouteTypes {
     | '/pulse'
     | '/terms'
     | '/transparency'
+    | '/admin/feedback'
     | '/api/launches'
     | '/api/relay-status'
     | '/creator/$wallet'
@@ -305,6 +316,7 @@ export interface FileRouteTypes {
     | '/pulse'
     | '/terms'
     | '/transparency'
+    | '/admin/feedback'
     | '/api/launches'
     | '/api/relay-status'
     | '/creator/$wallet'
@@ -332,6 +344,7 @@ export interface RootRouteChildren {
   PulseRoute: typeof PulseRoute
   TermsRoute: typeof TermsRoute
   TransparencyRoute: typeof TransparencyRoute
+  AdminFeedbackRoute: typeof AdminFeedbackRoute
   ApiLaunchesRoute: typeof ApiLaunchesRoute
   ApiRelayStatusRoute: typeof ApiRelayStatusRoute
   CreatorWalletRoute: typeof CreatorWalletRoute
@@ -456,6 +469,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TransparencyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/feedback': {
+      id: '/admin/feedback'
+      path: '/admin/feedback'
+      fullPath: '/admin/feedback'
+      preLoaderRoute: typeof AdminFeedbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/launches': {
       id: '/api/launches'
       path: '/api/launches'
@@ -532,6 +552,7 @@ const rootRouteChildren: RootRouteChildren = {
   PulseRoute: PulseRoute,
   TermsRoute: TermsRoute,
   TransparencyRoute: TransparencyRoute,
+  AdminFeedbackRoute: AdminFeedbackRoute,
   ApiLaunchesRoute: ApiLaunchesRoute,
   ApiRelayStatusRoute: ApiRelayStatusRoute,
   CreatorWalletRoute: CreatorWalletRoute,

@@ -16,8 +16,7 @@ function clean(value: unknown, max: number): string {
 function looksLikeSecret(text: string): boolean {
   if (/0x[a-fA-F0-9]{64}/.test(text)) return true;
   if (/\b[1-9A-HJ-NP-Za-km-z]{80,}\b/.test(text)) return true;
-  const words = text.trim().toLowerCase().split(/\s+/);
-  return words.length >= 12 && words.length <= 24 && words.every((word) => /^[a-z]{2,8}$/.test(word));
+  return false;
 }
 
 /** Drop wallet-shaped strings from free text. The coin field is stored separately. */

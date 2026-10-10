@@ -15,7 +15,7 @@ export const Route = createFileRoute("/$")({
   component: NotFoundPage,
 });
 
-function NotFoundPage() {
+export function NotFoundPage() {
   return (
     <div className="mx-auto max-w-lg">
       <h1 className="text-4xl">{tr("Page not found")}</h1>
