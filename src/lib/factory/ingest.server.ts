@@ -36,6 +36,7 @@ export async function ingestLaunch(body: unknown): Promise<{ ok: true; id: strin
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getAccountInfo", params: [contract, { encoding: "base64" }] }),
+      signal: AbortSignal.timeout(8000),
     });
     const info = (await live.json()) as { result?: { value?: { owner?: string } | null } };
     if (!info.result?.value) return { ok: false, error: "That mint is not on Solana." };

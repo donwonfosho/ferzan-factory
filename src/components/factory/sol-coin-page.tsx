@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { buildSolSwap, getSolCoin, type SolCoin } from "@/lib/factory/sol-coin";
 import { solanaExplorerMint, solanaExplorerTx } from "@/lib/factory/solana";
-import { formatSmart, parseDecimal } from "@/lib/factory/units";
+import { formatPrice, formatSmart, formatUsdPrice, parseDecimal } from "@/lib/factory/units";
 import { WalletNeeded, solanaWallet, useAccountWallets } from "@/lib/factory/wallet-bridge";
 import { cn } from "@/lib/cn";
 import { CandleChart } from "./chart-pro";
@@ -14,6 +14,8 @@ import { AlertsButton, WatchButton } from "./watch";
 import { CoinComments } from "./coin-comments";
 
 import { BridgeBuy } from "./bridge-buy-panel";
+import { CopyAddress } from "./copy-address";
+import { OpenInTelegram } from "./open-telegram";
 import { tr } from "@/lib/i18n";
 import { creditCall } from "@/lib/factory/compete";
 const TIMEFRAMES = [
@@ -163,8 +165,8 @@ export function SolCoinPage({ mint }: { mint: string }) {
   const tokenBal = coin.mine ? BigInt(coin.mine.tokenRaw) : 0n;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4">
-      <div className="ticket flex items-start gap-4">
+    <div className="mx-auto max-w-6xl space-y-4">
+      <div className="ticket fz-glow fz-rise flex items-start gap-4">
         {coin.image ? <img src={coin.image} alt="" className="h-16 w-16 shrink-0 object-cover" /> : null}
         <div className="min-w-0 flex-1">
           <h1 className="text-3xl">
@@ -188,7 +190,49 @@ export function SolCoinPage({ mint }: { mint: string }) {
             {coin.links.x ? <a className="text-cyan" href={coin.links.x} target="_blank" rel="noopener noreferrer">X</a> : null}
             {coin.links.telegram ? <a className="text-cyan" href={coin.links.telegram} target="_blank" rel="noopener noreferrer">{tr("Telegram")}</a> : null}
           </p>
+          <div className="mt-3">
+            <OpenInTelegram token={coin.mint} />
+          </div>
+          <CopyAddress address={coin.mint} />
         </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
+        <div className="ticket fz-stat fz-stat-key">
+          <p className="fz-eyebrow">{tr("Market cap")}</p>
+          <p className="mt-1 text-xl fz-num sm:text-3xl">{usd(coin.mcapUsd)}</p>
+        </div>
+        <div className="ticket fz-stat">
+          <p className="text-xs text-muted">{tr("Price")}</p>
+          <p className="text-base font-extrabold tabular-nums sm:text-lg">{formatUsdPrice(coin.price, coin.nativeUsd) || (formatPrice(coin.price) + " " + "SOL")}</p>
+          {formatUsdPrice(coin.price, coin.nativeUsd) ? <p className="text-xs text-muted tabular-nums">{formatPrice(coin.price)} SOL</p> : null}
+        </div>
+        <div className="ticket fz-stat">
+          <p className="text-xs text-muted">{coin.graduated ? tr("Graduated") : tr("To graduation")}</p>
+          <p className="mt-1 text-base fz-num sm:text-xl">{coin.progress.toFixed(1)}%</p>
+        </div>
+      </div>
+      <div className="h-2 w-full overflow-hidden rounded-full bg-surface shadow-border">
+        <div className="h-2 rounded-full bg-cyan shadow-[0_0_14px_rgba(62,224,230,0.7)]" style={{ width: `${Math.min(100, coin.progress)}%` }} />
+      </div>
+      <p className="text-xs text-muted">
+        {coin.graduated
+          ? tr("This curve is full. Its liquidity moved to a locked Meteora pool.")
+          : tr("{0} of {1} SOL raised · {2} trades · {3} SOL volume", coin.raisedSol.toFixed(2), coin.gradSol.toFixed(0), coin.trades, coin.volumeSol.toFixed(2))}
+      </p>
+
+
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-start">
+        <div className="min-w-0 space-y-4">
+      <div className="ticket fz-panel">
+        <div className="mb-2 flex gap-2 overflow-x-auto">
+          {TIMEFRAMES.map((t) => (
+            <button key={t.tf} type="button" onClick={() => setTf(t.tf)} className={cn("min-h-9 px-3 text-sm", tf === t.tf ? "btn-cyan" : "btn-line")}>
+              {tr(t.label)}
+            </button>
+          ))}
+        </div>
+        <CandleChart candles={coin.candles} tf={tf} native="SOL" toCap={coin.price > 0 ? coin.mcapUsd / coin.price : 0} />
       </div>
 
       <ShareCoin chain="solana" token={coin.mint} symbol={coin.symbol} />
@@ -201,49 +245,17 @@ export function SolCoinPage({ mint }: { mint: string }) {
       <CoinComments chain="solana" token={coin.mint} creator={coin.creator} />
       <CreatorScoreBox token={coin.mint} />
 
-      <div className="grid grid-cols-3 gap-2 sm:gap-3">
-        <div className="ticket">
-          <p className="text-xs text-muted">{tr("Market cap")}</p>
-          <p className="text-base font-extrabold tabular-nums sm:text-lg">{usd(coin.mcapUsd)}</p>
         </div>
-        <div className="ticket">
-          <p className="text-xs text-muted">{tr("Price")}</p>
-          <p className="text-base font-extrabold tabular-nums sm:text-lg">{coin.price ? coin.price.toPrecision(3) : "—"}{" "}{tr("SOL")}</p>
-        </div>
-        <div className="ticket">
-          <p className="text-xs text-muted">{coin.graduated ? tr("Graduated") : tr("To graduation")}</p>
-          <p className="text-base font-extrabold tabular-nums sm:text-lg">{coin.progress.toFixed(1)}%</p>
-        </div>
-      </div>
-      <div className="h-2 w-full bg-surface shadow-border">
-        <div className="h-2 bg-cyan" style={{ width: `${Math.min(100, coin.progress)}%` }} />
-      </div>
-      <p className="text-xs text-muted">
-        {coin.graduated
-          ? tr("This curve is full. Its liquidity moved to a locked Meteora pool.")
-          : tr("{0} of {1} SOL raised · {2} trades · {3} SOL volume", coin.raisedSol.toFixed(2), coin.gradSol.toFixed(0), coin.trades, coin.volumeSol.toFixed(2))}
-      </p>
-
-      <div className="ticket">
-        <div className="mb-2 flex gap-2 overflow-x-auto">
-          {TIMEFRAMES.map((t) => (
-            <button key={t.tf} type="button" onClick={() => setTf(t.tf)} className={cn("min-h-9 px-3 text-sm", tf === t.tf ? "btn-cyan" : "btn-line")}>
-              {tr(t.label)}
-            </button>
-          ))}
-        </div>
-        <CandleChart candles={coin.candles} tf={tf} native="SOL" toCap={coin.price > 0 ? coin.mcapUsd / coin.price : 0} />
-      </div>
-
+        <div className="order-first min-w-0 space-y-4 lg:sticky lg:top-24 lg:order-none">
       {coin.graduated ? (
-        <div className="ticket">
+        <div className="ticket fz-panel">
           <p className="text-sm">{tr("Trading moved to the Meteora pool.")}</p>
           <a className="btn-cyan mt-3 inline-flex" href={`https://jup.ag/tokens/${coin.mint}`} target="_blank" rel="noopener noreferrer">
             {tr("Trade the pool")}
           </a>
         </div>
       ) : (
-        <form onSubmit={(e) => void trade(e)} className="ticket space-y-3">
+        <form onSubmit={(e) => void trade(e)} className="ticket fz-panel space-y-3">
           <div className="grid grid-cols-2 gap-2">
             <button type="button" className={cn("w-full", side === "buy" ? "btn-cyan" : "btn-line")} onClick={() => { setSide("buy"); setAmount(""); }}>
               {tr("Buy")}
@@ -281,9 +293,9 @@ export function SolCoinPage({ mint }: { mint: string }) {
               </button>
             ))}
           </div>
-          {coin.mine ? (
-            <p className="text-xs text-muted">
-              {tr("You hold")}{" "}{formatSmart(tokenBal, TOKEN_DECIMALS)} {coin.symbol} · {formatSmart(BigInt(coin.mine.lamports), SOL_DECIMALS)}{" "}{tr("SOL")}
+          {coin.mine && BigInt(coin.mine.lamports) === 0n ? (
+            <p className="text-sm">
+              <a className="font-semibold text-cyan" href="/funds">{tr("Add funds")}</a>
             </p>
           ) : null}
           {error ? <p className="text-sm text-sell">{tr(error)}</p> : null}
@@ -300,6 +312,8 @@ export function SolCoinPage({ mint }: { mint: string }) {
       )}
 
       {coin.graduated ? null : <BridgeBuy dest="solana" />}
+        </div>
+      </div>
     </div>
   );
 }

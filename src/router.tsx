@@ -1,3 +1,4 @@
+import "@/lib/factory/buffer-polyfill";
 import { createRouter } from "@tanstack/react-router";
 import { AppErrorComponent } from "@/lib/error-component";
 import { routeTree } from "./routeTree.gen";

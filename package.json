@@ -1,7 +1,9 @@
 {
   "name": "app-builder-workspace",
   "private": true,
-  "sideEffects": false,
+  "sideEffects": [
+    "src/lib/factory/buffer-polyfill.ts"
+  ],
   "type": "module",
   "overrides": {
     "nf3": "0.3.17"
@@ -55,9 +57,12 @@
     "@tailwindcss/vite": "^4.3.0",
     "@tanstack/react-query": "^5.101.0",
     "@tanstack/react-router": "^1.170.0",
-    "@tanstack/react-start": "^1.168.0",
+    "@tanstack/react-start": "~1.168.60",
     "@tanstack/react-table": "^8.21.0",
     "@tanstack/router-plugin": "^1.168.0",
+    "@ton/core": ">=0.60.0",
+    "@ton/crypto": "^3.3.0",
+    "@ton/ton": ">=15.3.0",
     "@tonconnect/ui": "^2.4.4",
     "better-auth": "~1.6.30",
     "class-variance-authority": "^0.7.1",

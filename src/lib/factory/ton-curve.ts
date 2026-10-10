@@ -1,3 +1,4 @@
+import "@/lib/factory/buffer-polyfill";
 /**
  * On-site trading for Ferzan bonding curves on TON. Reads come from the Launch Bot API (which reads the chain);
  * the visitor's own TON Connect wallet signs. Amounts are in nanoTON / coin units (9 decimals for both TON and

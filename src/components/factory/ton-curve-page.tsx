@@ -1,7 +1,8 @@
+import "@/lib/factory/buffer-polyfill";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { buildTonTrade, getTonCurve, quoteTonCurve, type TonCurveState } from "@/lib/factory/ton-curve";
 import { tonWallet } from "@/lib/factory/tron-ton-wallets";
-import { formatSmart, parseDecimal } from "@/lib/factory/units";
+import { formatPrice, formatSmart, formatUsdPrice, parseDecimal } from "@/lib/factory/units";
 import { useLive, sameCoin } from "@/lib/factory/live";
 import { cn } from "@/lib/cn";
 import { Button, TextInput } from "./ui";
@@ -12,6 +13,8 @@ import { HoldersPanel } from "./coin-extras";
 import { AlertsButton, WatchButton } from "./watch";
 import { CoinComments } from "./coin-comments";
 import { ChainMark } from "./chain-mark";
+import { CopyAddress } from "./copy-address";
+import { OpenInTelegram } from "./open-telegram";
 
 import { tr } from "@/lib/i18n";
 const TIMEFRAMES = [
@@ -177,11 +180,10 @@ export function TonCurvePage({ curve }: { curve: string }) {
   if (!state) return <p className="ticket text-sm text-muted">{tr("Loading the curve…")}</p>;
 
   const opensAt = state.start > Date.now() / 1000 ? new Date(state.start * 1000) : null;
-  const tradeBot = `https://t.me/Ferzan_Trade_Bot?start=buy_${state.token}`;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4">
-      <div className="ticket flex items-start gap-4">
+    <div className="mx-auto max-w-6xl space-y-4">
+      <div className="ticket fz-glow fz-rise flex items-start gap-4">
         {state.image ? <img src={state.image} alt="" className="h-16 w-16 shrink-0 object-cover" /> : null}
         <div className="min-w-0 flex-1">
           <h1 className="text-3xl">
@@ -204,36 +206,31 @@ export function TonCurvePage({ curve }: { curve: string }) {
             {state.links.website ? <a className="text-cyan" href={state.links.website} target="_blank" rel="noopener noreferrer">{tr("Website")}</a> : null}
             {state.links.x ? <a className="text-cyan" href={state.links.x} target="_blank" rel="noopener noreferrer">X</a> : null}
             {state.links.telegram ? <a className="text-cyan" href={state.links.telegram} target="_blank" rel="noopener noreferrer">{tr("Telegram")}</a> : null}
-            <a className="text-cyan" href={tradeBot} target="_blank" rel="noopener noreferrer">{tr("Trade in Telegram")}</a>
           </p>
+          <div className="mt-3">
+            <OpenInTelegram token={state.token} />
+          </div>
+          <CopyAddress address={state.token} />
         </div>
       </div>
 
-      <ShareCoin chain="ton" token={state.token} symbol={state.symbol} />
-      <div className="flex flex-wrap gap-2">
-        <WatchButton chain="ton" token={state.token} symbol={state.symbol} path={`/coin/ton/${curve}`} />
-        <AlertsButton chain="ton" token={state.token} />
-      </div>
-      <HoldersPanel chain="ton" token={state.token} />
-      <CoinComments chain="ton" token={state.token} creator={state.creator} />
-      <CreatorScoreBox token={state.token} />
-
-      <div className="grid grid-cols-3 gap-2 sm:gap-3">
-        <div className="ticket">
-          <p className="text-xs text-muted">{tr("Market cap")}</p>
-          <p className="text-base font-extrabold tabular-nums sm:text-lg">{usd(state.mcapUsd)}</p>
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
+        <div className="ticket fz-stat fz-stat-key">
+          <p className="fz-eyebrow">{tr("Market cap")}</p>
+          <p className="mt-1 text-xl fz-num sm:text-3xl">{usd(state.mcapUsd)}</p>
         </div>
-        <div className="ticket">
+        <div className="ticket fz-stat">
           <p className="text-xs text-muted">{tr("Price")}</p>
-          <p className="text-base font-extrabold tabular-nums sm:text-lg">{state.price ? state.price.toPrecision(3) : "—"} TON</p>
+          <p className="text-base font-extrabold tabular-nums sm:text-lg">{formatUsdPrice(state.price, state.nativeUsd) || (formatPrice(state.price) + " " + "TON")}</p>
+          {formatUsdPrice(state.price, state.nativeUsd) ? <p className="text-xs text-muted tabular-nums">{formatPrice(state.price)} TON</p> : null}
         </div>
-        <div className="ticket">
+        <div className="ticket fz-stat">
           <p className="text-xs text-muted">{state.graduated ? tr("Graduated") : tr("To graduation")}</p>
-          <p className="text-base font-extrabold tabular-nums sm:text-lg">{state.progress.toFixed(1)}%</p>
+          <p className="mt-1 text-base fz-num text-cyan sm:text-xl">{state.progress.toFixed(1)}%</p>
         </div>
       </div>
-      <div className="h-2 w-full bg-surface shadow-border">
-        <div className="h-2 bg-cyan" style={{ width: `${Math.min(100, state.progress)}%` }} />
+      <div className="h-2 w-full overflow-hidden rounded-full bg-surface shadow-border">
+        <div className="h-2 rounded-full bg-cyan shadow-[0_0_14px_rgba(62,224,230,0.7)]" style={{ width: `${Math.min(100, state.progress)}%` }} />
       </div>
       <p className="text-xs text-muted">
         {state.graduated
@@ -243,7 +240,10 @@ export function TonCurvePage({ curve }: { curve: string }) {
             : tr("{0} of {1} {2} raised.", formatSmart(BigInt(state.real), DEC), formatSmart(BigInt(state.gradTarget), DEC), "TON")}
       </p>
 
-      <div className="ticket">
+
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-start">
+        <div className="min-w-0 space-y-4">
+      <div className="ticket fz-panel">
         <div className="mb-2 flex gap-2 overflow-x-auto">
           {TIMEFRAMES.map((t) => (
             <button key={t.tf} type="button" onClick={() => setTf(t.tf)} className={cn("min-h-9 px-3 text-sm", tf === t.tf ? "btn-cyan" : "btn-line")}>
@@ -264,15 +264,44 @@ export function TonCurvePage({ curve }: { curve: string }) {
         graduated={state.graduated}
       />
 
+      <div className="ticket fz-panel">
+        <p className="font-semibold">{tr("Recent trades")}</p>
+        {state.trades.length ? (
+          <ul className="mt-2 divide-y divide-line text-sm">
+            {state.trades.map((t) => (
+              <li key={t.tx + t.ts} className="flex items-center justify-between gap-2 py-2">
+                <span className={t.buy ? "text-cyan" : "text-sell"}>{t.buy ? tr("Buy") : tr("Sell")}</span>
+                <span>{t.native.toPrecision(3)} TON</span>
+                <a className="text-muted" href={`https://tonviewer.com/${curve}`} target="_blank" rel="noopener noreferrer">
+                  {short(t.trader)} · {ago(t.ts)}
+                </a>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-2 text-sm text-muted">{tr("No trades yet.")}</p>
+        )}
+      </div>
+      <ShareCoin chain="ton" token={state.token} symbol={state.symbol} />
+      <div className="flex flex-wrap gap-2">
+        <WatchButton chain="ton" token={state.token} symbol={state.symbol} path={`/coin/ton/${curve}`} />
+        <AlertsButton chain="ton" token={state.token} />
+      </div>
+      <HoldersPanel chain="ton" token={state.token} />
+      <CoinComments chain="ton" token={state.token} creator={state.creator} />
+      <CreatorScoreBox token={state.token} />
+
+        </div>
+        <div className="order-first min-w-0 space-y-4 lg:sticky lg:top-24 lg:order-none">
       {state.graduated || state.complete ? (
-        <div className="ticket">
+        <div className="ticket fz-panel">
           <p className="text-sm">{state.graduated ? tr("Trading moved to the DEX pool.") : tr("Trading on the curve is closed. The STON.fi pool opens in a moment.")}</p>
-          <a className="btn-cyan mt-3 inline-flex" href={tradeBot} target="_blank" rel="noopener noreferrer">
-            {tr("Trade in Telegram")}
-          </a>
+          <div className="mt-3">
+            <OpenInTelegram token={state.token} />
+          </div>
         </div>
       ) : (
-        <form onSubmit={(e) => void trade(e)} className="ticket space-y-3">
+        <form onSubmit={(e) => void trade(e)} className="ticket fz-panel space-y-3">
           <div className="grid grid-cols-2 gap-2">
             <button type="button" className={cn("w-full", side === "buy" ? "btn-cyan" : "btn-line")} onClick={() => { setSide("buy"); setAmount(""); }}>
               {tr("Buy")}
@@ -316,6 +345,9 @@ export function TonCurvePage({ curve }: { curve: string }) {
               {tr("You hold")}{" "}{formatSmart(BigInt(state.mine.balance), DEC)} {state.symbol}
             </p>
           ) : null}
+          <p className="text-sm">
+            <a className="font-semibold text-cyan" href="/funds">{tr("Add funds")}</a>
+          </p>
           {error ? <p className="text-sm text-sell">{tr(error)}</p> : null}
           {busy ? <p className="text-sm text-cyan">{tr(busy)}</p> : null}
           {sentOnce ? (
@@ -331,7 +363,7 @@ export function TonCurvePage({ curve }: { curve: string }) {
         </form>
       )}
 
-      <div className="ticket">
+      <div className="ticket fz-panel">
         <div className="flex items-center justify-between gap-3">
           <p className="font-semibold">{tr("Share and earn")}</p>
           <button type="button" className="btn-line" onClick={() => void copyShare()}>
@@ -341,23 +373,7 @@ export function TonCurvePage({ curve }: { curve: string }) {
         <p className="mt-2 text-xs text-muted">{tr("Anyone who trades through your link pays you 10% of the trading fee, straight to your wallet.")}</p>
       </div>
 
-      <div className="ticket">
-        <p className="font-semibold">{tr("Recent trades")}</p>
-        {state.trades.length ? (
-          <ul className="mt-2 divide-y divide-line text-sm">
-            {state.trades.map((t) => (
-              <li key={t.tx + t.ts} className="flex items-center justify-between gap-2 py-2">
-                <span className={t.buy ? "text-cyan" : "text-sell"}>{t.buy ? tr("Buy") : tr("Sell")}</span>
-                <span>{t.native.toPrecision(3)} TON</span>
-                <a className="text-muted" href={`https://tonviewer.com/${curve}`} target="_blank" rel="noopener noreferrer">
-                  {short(t.trader)} · {ago(t.ts)}
-                </a>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="mt-2 text-sm text-muted">{tr("No trades yet.")}</p>
-        )}
+        </div>
       </div>
     </div>
   );

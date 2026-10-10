@@ -11,6 +11,10 @@ export const Route = createFileRoute("/api/relay-status")({
   server: {
     handlers: {
       GET: async ({ request }) => {
+        // Diagnostics for the owner only: the same secret as /api/launches.
+        const secret = process.env.FERZAN_INGEST_SECRET ?? "";
+        const given = request.headers.get("x-ferzan-ingest") ?? "";
+        if (secret.length < 24 || given !== secret) return new Response("Not found", { status: 404 });
         const seen: Record<string, boolean> = {};
         for (const name of HEADERS) seen[name] = Boolean(request.headers.get(name));
         const { visitorTag } = await import("@/lib/factory/guard.server");

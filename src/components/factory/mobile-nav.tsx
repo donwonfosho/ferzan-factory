@@ -1,16 +1,15 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
-import { openSearch } from "./search";
 
 import { tr } from "@/lib/i18n";
 const I = {
   floor: <path d="M3 11.5 12 4l9 7.5M5.5 9.5V20h13V9.5" />,
   pulse: <path d="M3 12h4l2.5-6 5 12L17 12h4" />,
-  search: (
+  ferzan: (
     <>
-      <circle cx="11" cy="11" r="6.5" />
-      <path d="m20 20-4-4" />
+      <circle cx="12" cy="12" r="8" />
+      <path d="M9 16V8h3.4a2.3 2.3 0 0 1 0 4.6H9" />
     </>
   ),
   launch: <path d="M12 3c3 2.5 4.5 6 4.5 10l-2 3h-5l-2-3C7.5 9 9 5.5 12 3Zm-2.5 16.5L12 21l2.5-1.5M12 9.5v.01" />,
@@ -48,10 +47,10 @@ export function MobileNav() {
         <Icon d={I.pulse} />
         {tr("Pulse")}
       </Link>
-      <button type="button" onClick={() => openSearch()} className={cls(false)}>
-        <Icon d={I.search} />
-        {tr("Search")}
-      </button>
+      <Link to="/ferzan" className={cls(path.startsWith("/ferzan"))}>
+        <Icon d={I.ferzan} />
+        {tr("FERZAN")}
+      </Link>
       <Link to="/launch" search={{ kind: "curve" }} className={cls(path.startsWith("/launch"))}>
         <Icon d={I.launch} />
         {tr("Launch")}

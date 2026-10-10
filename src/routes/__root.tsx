@@ -1,3 +1,5 @@
+import "@/lib/factory/buffer-polyfill";
+import "@/lib/zod-config";
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { PrivyRoot } from "@/components/factory/privy-root";
 import { AuthProvider } from "@/lib/auth/provider";

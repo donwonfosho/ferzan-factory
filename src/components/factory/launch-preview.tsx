@@ -1,22 +1,74 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { LAUNCH_CHAIN_META, type BotLaunchChain } from "@/lib/factory/bot-launch";
+import { emptyLaunchFees, getLaunchFees, type LaunchFeeTable } from "@/lib/factory/launch-fees";
+import { formatSmart } from "@/lib/factory/units";
 import { ChainMark, type MarkChain } from "./chain-mark";
 import { ShareCoin } from "./perks";
 import { confetti } from "./pulse-live";
 import { Mark } from "./ui";
 
 import { tr } from "@/lib/i18n";
-/** Launch fees fixed in the Ferzan factories (the wallet always shows the exact amount before you sign). */
-export const FEE: Record<BotLaunchChain, { fee: string; extra: string }> = {
-  solana: { fee: "0.05 SOL (half for FERZAN holders, free for 10M+)", extra: "about 0.03 SOL of Solana rent and fees" },
-  base: { fee: "0.003 ETH", extra: "Base gas (usually cents)" },
-  bsc: { fee: "0.015 BNB", extra: "BNB Chain gas (usually cents)" },
-  ethereum: { fee: "0.003 ETH", extra: "Ethereum gas (can be a few dollars)" },
-  robinhood: { fee: "0.003 ETH", extra: "Robinhood Chain gas (usually cents)" },
-  arc: { fee: "1 USDC", extra: "Arc gas, paid in USDC" },
-  tron: { fee: "5 TRX", extra: "about 16 TRX of Tron energy" },
-  ton: { fee: "0.3 TON", extra: "about 0.3 TON for the coin contract, most of it comes back" },
+/** Network gas or rent. This is not the Ferzan launch fee. */
+export const NETWORK: Record<BotLaunchChain, string> = {
+  solana: "about 0.03 SOL of Solana rent and network fees (paid to Solana, not to Ferzan)",
+  base: "Base gas (usually cents)",
+  bsc: "BNB Chain gas (usually cents)",
+  ethereum: "Ethereum gas (can be a few dollars)",
+  robinhood: "Robinhood Chain gas (usually cents)",
+  arc: "Arc gas, paid in USDC",
+  tron: "about 16 TRX of Tron energy (paid to the Tron network, not to Ferzan)",
+  ton: "about 0.3 TON for the coin contract, most of it comes back",
 };
+
+let feeCache: { at: number; value: LaunchFeeTable } | null = null;
+let feeInflight: Promise<LaunchFeeTable> | null = null;
+
+function loadFees(): Promise<LaunchFeeTable> {
+  if (feeCache && Date.now() - feeCache.at < 20_000) return Promise.resolve(feeCache.value);
+  if (!feeInflight) {
+    feeInflight = getLaunchFees()
+      .then((value) => {
+        feeCache = { at: Date.now(), value };
+        return value;
+      })
+      .catch((err) => {
+        console.error(err);
+        return emptyLaunchFees();
+      })
+      .finally(() => {
+        feeInflight = null;
+      });
+  }
+  return feeInflight;
+}
+
+/** One read of every chain's factory fee, shared by the preview and the fee table. */
+export function useLaunchFees(): LaunchFeeTable | null {
+  const [fees, setFees] = useState<LaunchFeeTable | null>(feeCache && Date.now() - feeCache.at < 20_000 ? feeCache.value : null);
+  useEffect(() => {
+    let stop = false;
+    loadFees().then((value) => {
+      if (!stop) setFees(value);
+    });
+    return () => {
+      stop = true;
+    };
+  }, []);
+  return fees;
+}
+
+/** English label: "Free", "5 TRX", "Loading…", or the wallet fallback. Pass it through tr(). */
+export function launchFeeText(table: LaunchFeeTable | null, chain: BotLaunchChain, plain: boolean): string {
+  if (!table) return "Loading…";
+  const q = plain ? table[chain].plain : table[chain].curve;
+  if (!q.ok || !/^\d+$/.test(q.raw)) return "Shown in your wallet before you sign";
+  if (q.raw === "0") return "Free";
+  try {
+    return `${formatSmart(BigInt(q.raw), q.decimals)} ${q.symbol}`;
+  } catch {
+    return "Shown in your wallet before you sign";
+  }
+}
 
 export function LaunchPreview({
   chain,
@@ -37,11 +89,13 @@ export function LaunchPreview({
   startMinutes: string;
   plain: boolean;
 }) {
+  const fees = useLaunchFees();
   const meta = LAUNCH_CHAIN_META[chain];
   const sym = (symbol || "TICKER").slice(0, 12);
   const nm = (name || "Your coin").slice(0, 32);
   const buy = Number(devBuy) > 0 ? `${devBuy} ${meta.native}` : "none";
   const later = Number(startMinutes) > 0 ? `Trading opens ${startMinutes} minute${startMinutes === "1" ? "" : "s"} after launch` : "Trading opens right away";
+  const network = chain === "tron" && !plain ? "about 50 TRX of Tron energy" : chain === "ton" && !plain ? "about 0.35 TON for the contracts (most comes back)" : NETWORK[chain];
   return (
     <section className="space-y-3 rounded-2xl bg-bg p-4 shadow-border" aria-label={tr("Preview")}>
       <p className="text-sm font-medium text-cyan">{tr("Preview")}</p>
@@ -86,7 +140,7 @@ export function LaunchPreview({
       </div>
       <dl className="grid gap-x-4 gap-y-1 text-sm sm:grid-cols-[auto_1fr]">
         <dt className="text-muted">{tr("Launch fee")}</dt>
-        <dd>{FEE[chain].fee}</dd>
+        <dd>{tr(launchFeeText(fees, chain, plain))}</dd>
         {!plain && chain !== "ton" ? (
           <>
             <dt className="text-muted">{tr("Your first buy")}</dt>
@@ -94,7 +148,7 @@ export function LaunchPreview({
           </>
         ) : null}
         <dt className="text-muted">{tr("Network")}</dt>
-        <dd>{chain === "tron" && !plain ? "about 50 TRX of Tron energy" : chain === "ton" && !plain ? "about 0.35 TON for the contracts (most comes back)" : FEE[chain].extra}</dd>
+        <dd>{tr(network)}</dd>
         {!plain && chain !== "solana" ? (
           <>
             <dt className="text-muted">{tr("Trading")}</dt>

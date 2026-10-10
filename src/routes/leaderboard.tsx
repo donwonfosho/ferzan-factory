@@ -7,6 +7,12 @@ import { compactUsd } from "@/components/factory/market-line";
 
 import { tr } from "@/lib/i18n";
 export const Route = createFileRoute("/leaderboard")({
+  head: () => ({
+    meta: [
+      { title: "Leaderboard · Ferzan Factory" },
+      { name: "description", content: "Top Ferzan creators, ranked by coins that graduated and by trading volume." },
+    ],
+  }),
   component: LeaderboardPage,
 });
 

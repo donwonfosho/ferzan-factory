@@ -15,7 +15,7 @@ async function apiJson(path: string, ttlMs: number): Promise<Record<string, unkn
   } catch {
     value = null;
   }
-  cache.set(path, { at: Date.now(), value });
+  if (value) cache.set(path, { at: Date.now(), value }); // a failed lookup is not remembered, so an outage can't stick
   return value;
 }
 
@@ -64,6 +64,11 @@ export async function loadCurve(input: { chain: BotCurveChain; curve: string; wa
     apiJson(`/curve-chart/${c}?tf=${input.tf}`, 10_000),
     apiJson(`/curve-info/${c}`, 300_000),
   ]);
+  // Only curves the Ferzan backend itself launched are shown as Ferzan coins: anyone can deploy a contract with a
+  // token() function, and its page would otherwise carry our brand while its buy() keeps the money.
+  if (!info || !(str(info.name, 40) || str(info.symbol, 12) || str(info.token, 66))) {
+    throw new Error("That is not a Ferzan curve on this chain.");
+  }
   let name = str(info?.name, 40);
   let symbol = str(info?.symbol, 12);
   if (!name || !symbol) {

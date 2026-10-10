@@ -10,11 +10,15 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SplatRouteImport } from './routes/$'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as BotsRouteImport } from './routes/bots'
+import { Route as BridgeRouteImport } from './routes/bridge'
 import { Route as CompeteRouteImport } from './routes/compete'
 import { Route as DocsRouteImport } from './routes/docs'
 import { Route as FerzanRouteImport } from './routes/ferzan'
+import { Route as FundsRouteImport } from './routes/funds'
+import { Route as HowToBuyRouteImport } from './routes/how-to-buy'
 import { Route as LaunchRouteImport } from './routes/launch'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as LoginRouteImport } from './routes/login'
@@ -35,6 +39,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SplatRoute = SplatRouteImport.update({
+  id: '/$',
+  path: '/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
@@ -43,6 +52,11 @@ const AboutRoute = AboutRouteImport.update({
 const BotsRoute = BotsRouteImport.update({
   id: '/bots',
   path: '/bots',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BridgeRoute = BridgeRouteImport.update({
+  id: '/bridge',
+  path: '/bridge',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CompeteRoute = CompeteRouteImport.update({
@@ -58,6 +72,16 @@ const DocsRoute = DocsRouteImport.update({
 const FerzanRoute = FerzanRouteImport.update({
   id: '/ferzan',
   path: '/ferzan',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FundsRoute = FundsRouteImport.update({
+  id: '/funds',
+  path: '/funds',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HowToBuyRoute = HowToBuyRouteImport.update({
+  id: '/how-to-buy',
+  path: '/how-to-buy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LaunchRoute = LaunchRouteImport.update({
@@ -133,11 +157,15 @@ const TokenChainAddressRoute = TokenChainAddressRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/$': typeof SplatRoute
   '/about': typeof AboutRoute
   '/bots': typeof BotsRoute
+  '/bridge': typeof BridgeRoute
   '/compete': typeof CompeteRoute
   '/docs': typeof DocsRoute
   '/ferzan': typeof FerzanRoute
+  '/funds': typeof FundsRoute
+  '/how-to-buy': typeof HowToBuyRoute
   '/launch': typeof LaunchRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
@@ -155,11 +183,15 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/$': typeof SplatRoute
   '/about': typeof AboutRoute
   '/bots': typeof BotsRoute
+  '/bridge': typeof BridgeRoute
   '/compete': typeof CompeteRoute
   '/docs': typeof DocsRoute
   '/ferzan': typeof FerzanRoute
+  '/funds': typeof FundsRoute
+  '/how-to-buy': typeof HowToBuyRoute
   '/launch': typeof LaunchRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
@@ -178,11 +210,15 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/$': typeof SplatRoute
   '/about': typeof AboutRoute
   '/bots': typeof BotsRoute
+  '/bridge': typeof BridgeRoute
   '/compete': typeof CompeteRoute
   '/docs': typeof DocsRoute
   '/ferzan': typeof FerzanRoute
+  '/funds': typeof FundsRoute
+  '/how-to-buy': typeof HowToBuyRoute
   '/launch': typeof LaunchRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
@@ -202,11 +238,15 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/$'
     | '/about'
     | '/bots'
+    | '/bridge'
     | '/compete'
     | '/docs'
     | '/ferzan'
+    | '/funds'
+    | '/how-to-buy'
     | '/launch'
     | '/leaderboard'
     | '/login'
@@ -224,11 +264,15 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/$'
     | '/about'
     | '/bots'
+    | '/bridge'
     | '/compete'
     | '/docs'
     | '/ferzan'
+    | '/funds'
+    | '/how-to-buy'
     | '/launch'
     | '/leaderboard'
     | '/login'
@@ -246,11 +290,15 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/$'
     | '/about'
     | '/bots'
+    | '/bridge'
     | '/compete'
     | '/docs'
     | '/ferzan'
+    | '/funds'
+    | '/how-to-buy'
     | '/launch'
     | '/leaderboard'
     | '/login'
@@ -269,11 +317,15 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  SplatRoute: typeof SplatRoute
   AboutRoute: typeof AboutRoute
   BotsRoute: typeof BotsRoute
+  BridgeRoute: typeof BridgeRoute
   CompeteRoute: typeof CompeteRoute
   DocsRoute: typeof DocsRoute
   FerzanRoute: typeof FerzanRoute
+  FundsRoute: typeof FundsRoute
+  HowToBuyRoute: typeof HowToBuyRoute
   LaunchRoute: typeof LaunchRoute
   LeaderboardRoute: typeof LeaderboardRoute
   LoginRoute: typeof LoginRoute
@@ -299,6 +351,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/$': {
+      id: '/$'
+      path: '/$'
+      fullPath: '/$'
+      preLoaderRoute: typeof SplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/about': {
       id: '/about'
       path: '/about'
@@ -311,6 +370,13 @@ declare module '@tanstack/react-router' {
       path: '/bots'
       fullPath: '/bots'
       preLoaderRoute: typeof BotsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bridge': {
+      id: '/bridge'
+      path: '/bridge'
+      fullPath: '/bridge'
+      preLoaderRoute: typeof BridgeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/compete': {
@@ -332,6 +398,20 @@ declare module '@tanstack/react-router' {
       path: '/ferzan'
       fullPath: '/ferzan'
       preLoaderRoute: typeof FerzanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/funds': {
+      id: '/funds'
+      path: '/funds'
+      fullPath: '/funds'
+      preLoaderRoute: typeof FundsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/how-to-buy': {
+      id: '/how-to-buy'
+      path: '/how-to-buy'
+      fullPath: '/how-to-buy'
+      preLoaderRoute: typeof HowToBuyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/launch': {
@@ -437,11 +517,15 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  SplatRoute: SplatRoute,
   AboutRoute: AboutRoute,
   BotsRoute: BotsRoute,
+  BridgeRoute: BridgeRoute,
   CompeteRoute: CompeteRoute,
   DocsRoute: DocsRoute,
   FerzanRoute: FerzanRoute,
+  FundsRoute: FundsRoute,
+  HowToBuyRoute: HowToBuyRoute,
   LaunchRoute: LaunchRoute,
   LeaderboardRoute: LeaderboardRoute,
   LoginRoute: LoginRoute,

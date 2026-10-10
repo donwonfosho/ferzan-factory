@@ -10,61 +10,125 @@ import { Mark } from "./ui";
 import { ChainMark, type MarkChain } from "./chain-mark";
 import { CapChange, Spark } from "./market-line";
 import { FerzanHero, KingOfTheHill, OnlyOnFerzan } from "./floor-live";
+import { usePulse } from "./pulse-live";
 
 import { tr } from "@/lib/i18n";
 const OPEN_CHAINS = ["solana", "base", "bsc", "ethereum", "robinhood", "arc", "tron", "ton"] as const;
 
+const CHAIN_TILES: { id: MarkChain; name: string; color: string }[] = [
+  { id: "solana", name: "Solana", color: "#9945ff" },
+  { id: "base", name: "Base", color: "#2d6bff" },
+  { id: "bsc", name: "BNB", color: "#f3ba2f" },
+  { id: "ethereum", name: "Ethereum", color: "#627eea" },
+  { id: "robinhood", name: "Robinhood", color: "#b6f23c" },
+  { id: "arc", name: "Arc", color: "#7c9cff" },
+  { id: "tron", name: "Tron", color: "#ff3b3f" },
+  { id: "ton", name: "TON", color: "#1aa6f0" },
+];
+
 export function Floor() {
   const [chain, setChain] = useState<"all" | MarkChain>("all");
+  const pulse = usePulse();
+  const st = pulse?.stats;
 
   return (
-    <div className="space-y-14">
-      <section>
-        <img
-          src="/brand/lockup.jpg"
-          alt={tr("Ferzan Factory. See it. Ape it. Send it.")}
-          className="h-auto w-full max-w-sm"
-        />
-        <h1 className="mt-8 max-w-xl text-4xl leading-tight sm:text-5xl">
-          {tr("Launch a coin. Trade it here.")}
-        </h1>
-        <p className="mt-4 max-w-xl text-lg text-muted">
-          {tr("Solana, Base, BNB, Ethereum, Robinhood, Arc, Tron and TON. Sign in, launch, and trade with your own account wallet.")}
-        </p>
-        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-          <Link to="/launch" search={{ kind: "curve" }} className="btn-cyan w-full sm:w-auto">
-            {tr("Launch a coin")}
-          </Link>
-          <a href="#launches" className="btn-line w-full sm:w-auto">
-            {tr("See launches")}
-          </a>
+    <div className="space-y-10 lg:space-y-14">
+      <section className="relative grid items-center gap-8 lg:grid-cols-[1.15fr_1fr] lg:gap-12">
+        <div className="fz-orb -top-10 left-0 h-56 w-56" aria-hidden />
+        <div className="relative fz-rise">
+          <div className="fz-banner fz-border w-full max-w-[14rem] sm:max-w-2xl">
+            <img
+              src="/brand/lockup.jpg"
+              alt={tr("Ferzan Factory. See it. Ape it. Send it.")}
+              className="block h-auto w-full"
+            />
+          </div>
+          <h1 className="mt-4 max-w-2xl text-4xl leading-tight sm:mt-8 sm:text-5xl lg:text-6xl">
+            <span className="fz-grad-text">{tr("Launch a coin. Trade it here.")}</span>
+          </h1>
+          <p className="mt-4 max-w-xl text-lg text-muted">
+            {tr("Solana, Base, BNB, Ethereum, Robinhood, Arc, Tron and TON. Sign in, launch, and trade with your own account wallet.")}
+          </p>
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+            <Link to="/launch" search={{ kind: "curve" }} className="btn-cyan w-full sm:w-auto">
+              {tr("Launch a coin")}
+            </Link>
+            <a href="#launches" className="btn-line w-full sm:w-auto">
+              {tr("See launches")}
+            </a>
+          </div>
+        </div>
+        <div className="relative space-y-3 fz-rise">
+          <div className="fz-glow fz-border fz-shimmer ticket overflow-hidden">
+            <div className="flex items-center gap-2">
+              <span className="live-dot" aria-hidden />
+              <span className="fz-eyebrow">{tr("Live on Ferzan")}</span>
+            </div>
+            <div className="mt-4 grid grid-cols-3 gap-3">
+              <div className="min-w-0">
+                <p className="text-xs text-muted">{tr("Coins launched")}</p>
+                <p className="truncate text-2xl font-extrabold tabular-nums sm:text-3xl">{st && st.launches > 0 ? st.launches.toLocaleString() : "—"}</p>
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs text-muted">{tr("Graduated")}</p>
+                <p className="truncate text-2xl font-extrabold tabular-nums sm:text-3xl">{st && st.launches > 0 ? st.graduated.toLocaleString() : "—"}</p>
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs text-muted">{tr("Chains live")}</p>
+                <p className="truncate text-2xl font-extrabold tabular-nums text-cyan sm:text-3xl">{st ? st.chains : 8}</p>
+              </div>
+            </div>
+            <div className="mt-5 flex flex-wrap gap-2">
+              {CHAIN_TILES.map((c) => (
+                <span key={c.id} className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-bg shadow-border">
+                  <ChainMark id={c.id} className="h-5 w-5" />
+                </span>
+              ))}
+            </div>
+          </div>
+          <KingOfTheHill />
         </div>
       </section>
 
       <FerzanHero />
 
-      <KingOfTheHill />
+      <section aria-label={tr("Chains")}>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3 lg:grid-cols-8">
+          {CHAIN_TILES.map((c) => (
+            <a
+              key={c.id}
+              href="#launches"
+              onClick={() => setChain(c.id)}
+              className="fz-chip"
+              style={{ "--fz-c": c.color } as React.CSSProperties}
+            >
+              <ChainMark id={c.id} className="mx-auto h-8 w-8" />
+              <span className="mt-2 block text-sm font-semibold">{c.name}</span>
+            </a>
+          ))}
+        </div>
+      </section>
 
       <LaunchBoard chain={chain} onChain={setChain} />
 
       <OnlyOnFerzan />
 
-      <OpenContract />
+      <section className="grid gap-4 lg:grid-cols-[1.5fr_1fr]">
+        <OpenContract />
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+          <Link to="/ferzan" className="ticket fz-card block">
+            <p className="text-sm font-medium text-cyan">{tr("the platform's token")}</p>
+            <p className="mt-2 text-2xl font-extrabold">{tr("FERZAN")}</p>
+          </Link>
+          <Link to="/bots" className="ticket fz-card block">
+            <p className="text-sm font-medium text-cyan">{tr("Telegram")}</p>
+            <p className="mt-2 text-2xl font-extrabold">{tr("Bots")}</p>
+            <p className="mt-1 text-sm text-muted">{PLACES.map((place) => place.name.replace("Ferzan ", "")).slice(0, 3).join(" · ")}</p>
+          </Link>
+        </div>
+      </section>
 
       <EarlierCoins />
-
-      <section className="grid gap-3 sm:grid-cols-2">
-        <Link to="/ferzan" className="ticket block">
-          <p className="text-sm font-medium text-cyan">{tr("Desk token")}</p>
-          <p className="mt-2 text-2xl font-extrabold">{tr("FERZAN")}</p>
-          <p className="mt-1 text-sm text-muted">{tr("Fee claim for the tools. Not another coin on the floor.")}</p>
-        </Link>
-        <Link to="/bots" className="ticket block">
-          <p className="text-sm font-medium text-cyan">{tr("Telegram")}</p>
-          <p className="mt-2 text-2xl font-extrabold">{tr("Bots")}</p>
-          <p className="mt-1 text-sm text-muted">{PLACES.map((place) => place.name.replace("Ferzan ", "")).slice(0, 3).join(" · ")}</p>
-        </Link>
-      </section>
     </div>
   );
 }

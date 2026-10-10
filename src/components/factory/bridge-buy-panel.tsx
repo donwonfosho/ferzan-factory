@@ -32,13 +32,8 @@ async function destWallet(dest: BridgeChain, srcAddress: string, src: BridgeChai
   return (await evmWallet(dest as EvmChainId)).address;
 }
 
-/**
- * Pay for a coin with the coin you hold on another chain. Step 1 bridges to your own wallet on this coin's chain,
- * step 2 is the normal Buy box on this page. Nothing is held by Ferzan; your wallet signs the bridge.
- */
-export function BridgeBuy({ dest, onArrived }: { dest: BridgeChain; onArrived?: () => void }) {
-  const sources = BRIDGE_SOURCES.filter((s) => s !== dest);
-  const [src, setSrc] = useState<BridgeChain>(sources[0]);
+/** The quote, sign and wait-for-arrival flow, shared by the coin-page box and the Bridge page. */
+export function useBridgeFlow(src: BridgeChain, dest: BridgeChain, onArrived?: () => void, standalone = false) {
   const [amount, setAmount] = useState("");
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
@@ -104,7 +99,12 @@ export function BridgeBuy({ dest, onArrived }: { dest: BridgeChain; onArrived?: 
         await sleep(6000);
         const now = await balanceOf(dest, quote.recipient).catch(() => before);
         if (now - before >= want) {
-          setNote(tr("Arrived: +{0} {1} on {2}. Now use the Buy box on this page.", formatSmart(now - before, dmeta.dec), dmeta.sym, dmeta.label));
+          const got = formatSmart(now - before, dmeta.dec);
+          setNote(
+            standalone
+              ? tr("Arrived: +{0} {1} on {2}.", got, dmeta.sym, dmeta.label)
+              : tr("Arrived: +{0} {1} on {2}. Now use the Buy box on this page.", got, dmeta.sym, dmeta.label),
+          );
           onArrived?.();
           return;
         }
@@ -117,6 +117,23 @@ export function BridgeBuy({ dest, onArrived }: { dest: BridgeChain; onArrived?: 
       setBusy("");
     }
   }
+
+  function reset() {
+    setQuote(null);
+    setError("");
+  }
+
+  return { amount, setAmount, busy, error, note, quote, getQuote, send, reset, meta, dmeta };
+}
+
+/**
+ * Pay for a coin with the coin you hold on another chain. Step 1 bridges to your own wallet on this coin's chain,
+ * step 2 is the normal Buy box on this page. Nothing is held by Ferzan; your wallet signs the bridge.
+ */
+export function BridgeBuy({ dest, onArrived }: { dest: BridgeChain; onArrived?: () => void }) {
+  const sources = BRIDGE_SOURCES.filter((s) => s !== dest);
+  const [src, setSrc] = useState<BridgeChain>(sources[0]);
+  const { amount, setAmount, busy, error, note, quote, getQuote, send, reset, meta, dmeta } = useBridgeFlow(src, dest, onArrived);
 
   return (
     <details className="ticket">
@@ -133,8 +150,7 @@ export function BridgeBuy({ dest, onArrived }: { dest: BridgeChain; onArrived?: 
               className={cn("min-h-9 px-3 text-sm", src === s ? "btn-cyan" : "btn-line")}
               onClick={() => {
                 setSrc(s);
-                setQuote(null);
-                setError("");
+                reset();
               }}
             >
               {BRIDGE_META[s].label}

@@ -5,6 +5,7 @@ import { CHAINS } from "@/lib/factory/catalog";
 import { creatorVerdict } from "./creator-health";
 import type { ChainId } from "@/lib/factory/types";
 import { Mark } from "./ui";
+import { ProfilePnl } from "./profile-pnl";
 
 import { tr } from "@/lib/i18n";
 function RecordLine({ coins }: { coins: BoardCoin[] }) {
@@ -22,7 +23,12 @@ export function PublicProfile({ address }: { address: string }) {
   const [name, setName] = useState("");
   const [bio, setBio] = useState("");
   const [image, setImage] = useState("");
+  const [showPnl, setShowPnl] = useState(false);
   const valid = /^0x[a-fA-F0-9]{40}$/.test(address) || /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address);
+
+  useEffect(() => {
+    setShowPnl(new URLSearchParams(window.location.search).get("pnl") === "1");
+  }, [address]);
 
   useEffect(() => {
     if (!valid) return;
@@ -63,6 +69,7 @@ export function PublicProfile({ address }: { address: string }) {
       </div>
       <p className="mt-3 break-all text-sm text-muted">{address}</p>
       {coins ? <RecordLine coins={coins} /> : null}
+      {valid && showPnl ? <ProfilePnl address={address} /> : null}
       {!valid ? <p className="mt-6 text-sm text-sell">{tr("That wallet address looks wrong.")}</p> : null}
       {valid && coins === null ? <p className="mt-6 text-sm text-muted">{tr("Loading launches.")}</p> : null}
       {coins && coins.length === 0 ? <p className="mt-6 text-sm text-muted">{tr("No coins from this wallet are on the board yet.")}</p> : null}

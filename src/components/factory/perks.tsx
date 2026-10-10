@@ -24,10 +24,13 @@ function usePerks(wallet: string | null | undefined): Perks | null {
 /** Profile card: what holding FERZAN gets you, and where this account stands. */
 export function FerzanPerksCard({ sol: wallet }: { sol: string | null }) {
   const p = usePerks(wallet) ?? PERK_DEFAULTS;
-  const rows = [
-    { tier: "holder", need: p.holderMin, badge: "🔷 FERZAN holder", perk: tr("Half-price Solana launch fee ({0})", sol(p.launchFeeSol / 2)) },
-    { tier: "whale", need: p.whaleMin, badge: "🐋 FERZAN whale", perk: "Free Solana launches" },
-  ];
+  const rows =
+    p.launchFeeSol > 0
+      ? [
+          { tier: "holder", need: p.holderMin, badge: "🔷 FERZAN holder", perk: tr("Half-price Solana launch fee ({0})", sol(p.launchFeeSol / 2)) },
+          { tier: "whale", need: p.whaleMin, badge: "🐋 FERZAN whale", perk: "Free Solana launches" },
+        ]
+      : [];
   return (
     <section className="ticket mt-4">
       <div className="flex items-baseline justify-between gap-3">
@@ -47,7 +50,7 @@ export function FerzanPerksCard({ sol: wallet }: { sol: string | null }) {
       </ul>
       <p className="mt-3 text-sm text-muted">
         {!p.active
-          ? tr("Switches on when FERZAN launches on Friday, October 9 at 7:00 PM ET. Hold it in the Solana wallet you launch and trade with.")
+          ? tr("Switches on when FERZAN launches on Friday, November 13 at 4:00 PM ET. Hold it in the Solana wallet you launch and trade with.")
           : !wallet
             ? tr("Sign in to see your status. It is read from your Solana wallet.")
             : p.tier === "none"
@@ -70,7 +73,14 @@ export function LaunchPerksNote() {
       : "";
   return (
     <p className="mt-2 text-xs text-muted">
-      {tr("Your coin gets a Ferzan address ending in")}{" "}<span className="font-semibold text-fg">{tr("…fzn")}</span>{tr(". Launch fee")}{" "}{sol(p.launchFeeSol)}{tr(": FERZAN holders (")}{whole(p.holderMin)}{tr("+) pay half,")}{" "}{whole(p.whaleMin)}{tr("+ launch free")}{p.active ? "." : tr(" (from Oct 9).")}
+      {tr("Your coin gets a Ferzan address ending in")}{" "}<span className="font-semibold text-fg">{tr("…fzn")}</span>
+      {p.launchFeeSol > 0 ? (
+        <>
+          {tr(". Launch fee")}{" "}{sol(p.launchFeeSol)}{tr(": FERZAN holders (")}{whole(p.holderMin)}{tr("+) pay half,")}{" "}{whole(p.whaleMin)}{tr("+ launch free")}{p.active ? "." : tr(" (from Nov 13).")}
+        </>
+      ) : (
+        "."
+      )}
       {mine ? <span className="text-cyan">{mine}</span> : null}
     </p>
   );

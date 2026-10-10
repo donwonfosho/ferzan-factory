@@ -2,7 +2,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import { toHex } from "viem/utils";
 import { readSiteWallet } from "./site-wallet";
 import { solanaAddress } from "./solana";
-import { signWithAccount } from "./wallet-bridge";
+import { signSolanaWithAccount, signWithAccount } from "./wallet-bridge";
 import { proofAddress, proofDigest, proofMessage, type Proof, type ProofAction } from "./proof";
 
 type EthProvider = { request: (args: { method: string; params?: unknown[] }) => Promise<unknown> };
@@ -59,6 +59,9 @@ export async function signProof(action: ProofAction, address: string, fields: Re
     if (typeof signature !== "string") throw new Error("The wallet did not sign.");
     return { ts, signature };
   }
+
+  const viaSol = await signSolanaWithAccount(address, message);
+  if (viaSol) return { ts, signature: viaSol };
 
   if (site && solanaAddress() === address) {
     return { ts, signature: await signWithSiteSolana(site.privateKey, message) };

@@ -25,8 +25,8 @@ export const PERK_DEFAULTS: Perks = {
   balance: 0,
   badge: "",
   launchFeeOffPct: 0,
-  launchFeeSol: 0.05,
-  yourLaunchFeeSol: 0.05,
+  launchFeeSol: 0,
+  yourLaunchFeeSol: 0,
   holderMin: 1_000_000,
   whaleMin: 10_000_000,
 };
@@ -58,8 +58,8 @@ export const getPerks = createServerFn({ method: "GET" })
       balance: mine ? num(it.balance, 0) : 0,
       badge: mine && typeof it.badge === "string" ? it.badge.slice(0, 40) : "",
       launchFeeOffPct: mine ? Math.min(100, num(it.launch_fee_off_pct, 0)) : 0,
-      launchFeeSol: num(it.launch_fee_sol, PERK_DEFAULTS.launchFeeSol),
-      yourLaunchFeeSol: mine ? num(it.your_launch_fee_sol, num(it.launch_fee_sol, 0.05)) : num(it.launch_fee_sol, 0.05),
+      launchFeeSol: num(it.launch_fee_sol, 0),
+      yourLaunchFeeSol: mine ? num(it.your_launch_fee_sol, num(it.launch_fee_sol, 0)) : num(it.launch_fee_sol, 0),
       holderMin: num(it.holder_min, PERK_DEFAULTS.holderMin),
       whaleMin: num(it.whale_min, PERK_DEFAULTS.whaleMin),
     };

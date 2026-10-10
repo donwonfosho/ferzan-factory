@@ -10,6 +10,7 @@ import { ChainMark, type MarkChain } from "./chain-mark";
 import { compactUsd } from "./market-line";
 
 import { tr } from "@/lib/i18n";
+import { LAUNCH_AT_MS, LAUNCH_LABEL } from "@/lib/factory/launch";
 const pad = (n: number) => String(Math.max(0, Math.floor(n))).padStart(2, "0");
 
 function useNow(ms = 1000) {
@@ -21,22 +22,22 @@ function useNow(ms = 1000) {
   return now;
 }
 
-/** FERZAN on the floor: a countdown until 7:00 PM ET on Oct 9, then its live numbers and the burn total. */
+/** FERZAN on the floor. Countdown uses LAUNCH_LABEL until the API says the token is live. A passed clock is not "live". */
 export function FerzanHero() {
   const p = usePulse();
   const now = useNow();
   const f = p?.ferzan;
-  const launchAt = (f?.launchAt ?? 1791586800) * 1000;
+  const launchAt = f?.launchAt ? f.launchAt * 1000 : LAUNCH_AT_MS;
   const left = launchAt - now;
 
   if (f?.live) {
     return (
-      <section className="hero-live ticket overflow-hidden">
+      <section className="hero-live fz-glow fz-border fz-shimmer ticket overflow-hidden lg:p-8">
         <div className="flex flex-wrap items-center gap-2">
           <span className="live-dot" aria-hidden />
           <span className="text-sm font-semibold text-cyan">{tr("FERZAN is live")}</span>
         </div>
-        <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4 lg:mt-6">
           <Stat label={tr("Price")} value={f.priceUsd ? `$${f.priceUsd.toPrecision(3)}` : "—"} />
           <Stat label={tr("Market cap")} value={compactUsd(f.mcapUsd)} />
           <Stat label={f.graduated ? tr("Graduated") : tr("To graduation")} value={f.progress === null ? "—" : `${f.progress.toFixed(1)}%`} />
@@ -63,7 +64,7 @@ export function FerzanHero() {
   if (left <= 0) {
     return (
       <section className="ticket">
-        <p className="text-sm font-semibold text-cyan">{tr("FERZAN is launching now")}</p>
+        <p className="text-sm font-semibold text-cyan">{tr("Launching soon")}</p>
         <p className="mt-2 text-sm text-muted">{tr("The contract appears here and in @Ferzan_Launches the moment the pool is created. Only trust that address.")}</p>
       </section>
     );
@@ -74,31 +75,36 @@ export function FerzanHero() {
   const m = (left % 3_600_000) / 60_000;
   const s = (left % 60_000) / 1000;
   return (
-    <section className="hero-count ticket overflow-hidden" data-floor-rev="3">
-      <p className="text-sm font-semibold text-cyan">{tr("FERZAN launches Friday, October 9 · 7:00 PM ET")}</p>
-      <div className="mt-4 flex flex-wrap gap-2 sm:gap-3" role="timer" aria-live="off" aria-label={tr("Time until FERZAN launches")}>
-        {[
-          [d, "days"],
-          [h, "hours"],
-          [m, "min"],
-          [s, "sec"],
-        ].map(([v, label]) => (
-          <div key={label as string} className="count-box">
-            <span className="block text-3xl font-extrabold tabular-nums sm:text-5xl">{pad(v as number)}</span>
-            <span className="block text-xs uppercase tracking-wider text-muted">{tr(label)}</span>
+    <section className="hero-count fz-glow fz-border fz-shimmer ticket overflow-hidden lg:p-8" data-floor-rev="3">
+      <div className="grid items-center gap-6 lg:grid-cols-[1.1fr_1fr] lg:gap-10">
+        <div>
+          <p className="fz-eyebrow">{tr(`FERZAN launches ${LAUNCH_LABEL}`)}</p>
+          <p className="fz-grad-text mt-2 text-3xl font-extrabold sm:text-4xl">{tr("FERZAN")}</p>
+          <p className="mt-3 max-w-xl text-sm text-muted">
+            {tr("The token behind the Ferzan launchpad and bots. Every day, part of the platform's trading fees buys FERZAN and burns it. The contract is posted here and in @Ferzan_Launches at 4:00 PM ET. Any address before that is fake.")}
+          </p>
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+            <a href="https://t.me/Ferzan_Launches" target="_blank" rel="noopener noreferrer" className="btn-cyan w-full sm:w-auto">
+              {tr("Get the launch alert")}
+            </a>
+            <Link to="/ferzan" className="btn-line w-full sm:w-auto">
+              {tr("About FERZAN")}
+            </Link>
           </div>
-        ))}
-      </div>
-      <p className="mt-4 max-w-xl text-sm text-muted">
-        {tr("The token behind the Ferzan launchpad and bots. Every day, part of the platform's trading fees buys FERZAN and burns it. The contract is posted here and in @Ferzan_Launches at 7:00 PM. Any address before that is fake.")}
-      </p>
-      <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-        <a href="https://t.me/Ferzan_Launches" target="_blank" rel="noopener noreferrer" className="btn-cyan w-full sm:w-auto">
-          {tr("Get the launch alert")}
-        </a>
-        <Link to="/ferzan" className="btn-line w-full sm:w-auto">
-          {tr("About FERZAN")}
-        </Link>
+        </div>
+        <div className="grid grid-cols-4 gap-2 sm:gap-3" role="timer" aria-live="off" aria-label={tr("Time until FERZAN launches")}>
+          {[
+            [d, "days"],
+            [h, "hours"],
+            [m, "min"],
+            [s, "sec"],
+          ].map(([v, label]) => (
+            <div key={label as string} className="count-box min-w-0 px-1 py-3 sm:px-3 sm:py-5">
+              <span className="block text-3xl font-extrabold tabular-nums sm:text-5xl">{pad(v as number)}</span>
+              <span className="block text-xs uppercase tracking-wider text-muted">{tr(label)}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -193,7 +199,7 @@ const MARKS = new Set(["solana", "base", "bsc", "ethereum", "robinhood", "arc", 
 const ONLY = [
   { t: "Eight chains, one board", d: "Solana, Base, BNB, Ethereum, Robinhood, Arc, Tron and TON. Launch and trade on any of them from the same page." },
   { t: "Telegram and web together", d: "Launch from @Ferzan_Launch_Bot or here. Every coin lands on the same board, and the Trade Bot trades them all." },
-  { t: "Creators keep half the fees", d: "Ferzan curves charge 1% per trade and send half of it to the coin's creator on every trade. Solana creators get half of the Meteora trading fees." },
+  { t: "Creators keep half the fees", d: "Coins launched here or with the Telegram bot charge 1% per trade and send half of it to the creator on every trade. Solana creators get half of the Meteora trading fees." },
   { t: "A creator score on every coin", d: "Other launches by the same creator, launch sprees, and what the dev bought and sold, shown before you buy." },
   { t: "Rug Guard", d: "Turn it on in the Trade Bot and it sells your bag if the liquidity is pulled or the dev dumps. On Solana it also watches the top holders." },
   { t: "Fake-address guard", d: "In Ferzan's Telegram chats, Guardian deletes any contract address that isn't the official one or a Ferzan launch." },
@@ -211,7 +217,7 @@ export function OnlyOnFerzan() {
       <p className="mt-1 max-w-xl text-sm text-muted">{tr("What you get here that a single-chain launchpad doesn't give you.")}</p>
       {st && st.launches > 0 ? (
         <div className="mt-4 grid grid-cols-3 gap-2 sm:gap-3">
-          <div className="ticket">
+          <div className="ticket fz-card">
             <p className="text-xs text-muted">{tr("Coins launched")}</p>
             <p className="text-2xl font-extrabold tabular-nums">{st.launches.toLocaleString()}</p>
           </div>
@@ -225,9 +231,9 @@ export function OnlyOnFerzan() {
           </div>
         </div>
       ) : null}
-      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+      <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {ONLY.map((x) => (
-          <div key={x.t} className="ticket">
+          <div key={x.t} className="ticket fz-card">
             <p className="font-extrabold">{x.t}</p>
             <p className="mt-1 text-sm text-muted">{x.d}</p>
           </div>

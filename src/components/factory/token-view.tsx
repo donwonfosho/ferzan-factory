@@ -17,6 +17,8 @@ import { GraduationMeter } from "./graduation-meter";
 import { Dollar } from "./dollar";
 import { Holders } from "./holders";
 import { Button, Mark } from "./ui";
+import { CopyAddress } from "./copy-address";
+import { OpenInTelegram } from "./open-telegram";
 
 import { tr } from "@/lib/i18n";
 export function TokenView({ id }: { id: string }) {
@@ -38,9 +40,10 @@ export function TokenView({ id }: { id: string }) {
   const picture = item.kind === "primary" ? item : primary;
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
-      <div>
-        <p className="text-sm font-medium text-cyan">
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,0.85fr)] lg:gap-8">
+      <div className="min-w-0">
+        <div className="ticket fz-glow fz-rise">
+        <p className="fz-eyebrow">
           {item.kind === "primary" ? tr("Primary") : tr("Attached")} · {tr(chain.label)}
         </p>
         <div className="mt-3 flex items-center gap-4">
@@ -69,10 +72,12 @@ export function TokenView({ id }: { id: string }) {
         <Social item={item.kind === "primary" ? item : (primary ?? item)} />
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <CopyLink />
+          {item.contract ? <OpenInTelegram token={item.contract} /> : null}
         </div>
         {item.contract ? (
           <ContractLine chain={item.chain} address={item.contract} />
         ) : null}
+        </div>
         {item.kind === "primary" && item.mode === "curve" && primary && !item.contract ? (
           <CurveBlock launchId={primary.id} />
         ) : null}
@@ -110,7 +115,7 @@ export function TokenView({ id }: { id: string }) {
         ) : item.kind === "primary" && item.mode === "curve" ? (
           <TradeTicket id={item.id} />
         ) : item.kind === "attached" && primary?.mode === "curve" ? (
-          <div className="ticket">
+          <div className="ticket fz-panel">
             <p className="text-lg font-extrabold">{tr("Trade the primary")}</p>
             <p className="mt-2 text-sm text-muted">{tr("Buys that pick")}{" "}{item.name}{" "}{tr("pay the referrer cut here.")}</p>
             <Link
@@ -122,7 +127,7 @@ export function TokenView({ id }: { id: string }) {
             </Link>
           </div>
         ) : (
-          <div className="ticket text-sm text-muted">{tr("This coin has no curve.")}</div>
+          <div className="ticket fz-panel text-sm text-muted">{tr("This coin has no curve.")}</div>
         )}
         <p className="mt-4 text-xs text-muted">
           {tr("Desk")}{" "}{tr(chain.label)}: {formatSmart(BigInt(desk.balances[item.chain] ?? "0"), chain.nativeDecimals)} {chain.native}
@@ -335,7 +340,7 @@ function TradeTicket({ id }: { id: string }) {
   }
 
   return (
-    <form onSubmit={submit} className="ticket space-y-4">
+    <form onSubmit={submit} className="ticket fz-panel space-y-4">
       {needTerms ? <TermsGate onAccept={() => setNeedTerms(false)} /> : null}
       <div className="grid grid-cols-2 gap-2">
         <button
@@ -410,7 +415,6 @@ const SCAN: Record<string, string> = {
 };
 
 export function ContractLine({ chain, address }: { chain: string; address: string }) {
-  const [copied, setCopied] = useState("");
   const href =
     chain === "solana"
       ? solanaExplorerMint(address)
@@ -420,29 +424,15 @@ export function ContractLine({ chain, address }: { chain: string; address: strin
   const scan = SCAN[chain] ?? "the explorer";
 
   return (
-    <div className="mt-4 bg-surface px-3 py-3 shadow-border">
-      <p className="text-sm font-medium text-cyan">{tr("Contract")}</p>
-      <p className="mt-2 text-sm font-semibold break-all">{address}</p>
-      <div className="mt-3 flex flex-wrap gap-2">
-        <button
-          type="button"
-          className="btn-line"
-          onClick={() => {
-            void navigator.clipboard.writeText(address).then(
-              () => setCopied("Contract copied."),
-              () => setCopied("Copy was blocked. Select the address above."),
-            );
-          }}
-        >
-          {tr("Copy contract")}
-        </button>
-        {href ? (
+    <div className="fz-panel mt-4 px-3 py-3">
+      <CopyAddress address={address} className="mt-0" />
+      {href ? (
+        <div className="mt-2 flex flex-wrap gap-2">
           <a className="btn-line" href={href}>
             {tr("View on")}{" "}{scan}
           </a>
-        ) : null}
-      </div>
-      {copied ? <p className="mt-2 text-sm text-muted">{copied}</p> : null}
+        </div>
+      ) : null}
     </div>
   );
 }

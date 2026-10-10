@@ -3,6 +3,12 @@ import { TermsBody } from "@/components/factory/terms";
 
 import { tr } from "@/lib/i18n";
 export const Route = createFileRoute("/terms")({
+  head: () => ({
+    meta: [
+      { title: "Terms · Ferzan Factory" },
+      { name: "description", content: "The rules for using Ferzan Factory." },
+    ],
+  }),
   component: TermsPage,
 });
 

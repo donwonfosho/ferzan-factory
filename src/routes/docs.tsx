@@ -1,7 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import type { ReactNode } from "react";
 
 import { tr } from "@/lib/i18n";
 export const Route = createFileRoute("/docs")({
+  head: () => ({
+    meta: [
+      { title: "Docs · Ferzan Factory" },
+      { name: "description", content: "How a Ferzan launch, a trade, the 1% fee, and graduation work on eight chains." },
+    ],
+  }),
   component: DocsPage,
 });
 
@@ -9,33 +16,61 @@ export function DocsPage() {
   return (
     <div className="mx-auto max-w-lg">
       <h1 className="text-4xl">{tr("How it works")}</h1>
-      <p className="mt-3 text-muted">{tr("A coin launched here is a fixed supply. The curve sells it. Graduation opens a pool. This site never holds the key.")}</p>
+      <p className="mt-3 text-muted">
+        {tr("Ferzan Factory launches and trades coins on Solana, Base, BNB, Ethereum, Robinhood, Arc, Tron and TON. Launch from this site or from Telegram.")}
+      </p>
       <ol className="mt-6 space-y-4">
-        <Item n="1" title={tr("Create a wallet on Profile")}>
-          {tr("One key covers Ethereum, Base, BNB, Robinhood, and Arc. Solana is a second address from the same key. Export it before you fund it.")}
+        <Item n="1" title={tr("One account")}>
+          {tr("One account wallet covers the EVM chains and Solana. Tron and TON addresses are shown on Profile.")}
         </Item>
-        <Item n="2" title={tr("Launch a curve")}>
-          {tr("You pick the chain, the supply, and the graduation target. The anti-snipe wall caps each wallet at 0.5% of that target until graduation. Turn it off if you want an open curve.")}
+        <Item n="2" title={tr("Launch from the site or from Telegram")}>
+          {tr("Launch here, or from Telegram with the Launch Bot. Either way the coin shows on the floor.")}{" "}
+          <Link to="/launch" search={{ kind: "curve" }} className="text-cyan">
+            {tr("Launch")}
+          </Link>
+          {" · "}
+          <Link to="/bots" className="text-cyan">
+            {tr("Bots")}
+          </Link>
         </Item>
-        <Item n="3" title={tr("Trades stay on the coin page")}>
-          {tr("Buys and sells sign in the wallet this site opened. A 1% fee splits 0.30% to the creator, 0.10% to a referrer when the buyer names one, and 0.60% to treasury.")}
+        <Item n="3" title={tr("Add funds and the Ferzan Bridge")}>
+          <Link to="/funds" className="text-cyan">
+            {tr("Add funds")}
+          </Link>
+          {tr(" with a card or Apple Pay. If your funds are on another chain, use the Ferzan Bridge.")}{" "}
+          <Link to="/bridge" className="text-cyan">
+            {tr("Bridge")}
+          </Link>
         </Item>
-        <Item n="4" title={tr("Graduation opens the pool")}>
-          {tr("The buy that fills the curve opens the pool in that same transaction on Ethereum, Base, BNB, Robinhood, and Arc. The creator keeps 30% of the LP. The rest is burned. Solana does not seed a Raydium pool yet.")}
+        <Item n="4" title={tr("The 1% fee")}>
+          {tr("Every trade on a Ferzan curve pays 1%. Half goes to the coin's creator. The other half goes to Ferzan, or 40% to Ferzan and 10% to a referrer when the buyer came from a referral. Older curves launched on this website split that 1% as 60% treasury, 30% creator and 10% referrer.")}
+        </Item>
+        <Item n="5" title={tr("Graduation")}>
+          {tr("Solana graduates into a Meteora pool. On Base, BNB, Ethereum, Robinhood and Arc, the buy that fills the curve opens a pool in that same transaction. When a TON curve fills, its STON.fi pool opens. When a Tron curve fills, its SunSwap pool opens.")}
+        </Item>
+        <Item n="6" title={tr("Weekly competition")}>
+          {tr("Top traders and top callers on every Ferzan coin, every chain. A new week starts every Friday at 4:00 PM ET.")}{" "}
+          <Link to="/compete" className="text-cyan">
+            {tr("Weekly competition")}
+          </Link>
         </Item>
       </ol>
       <p className="mt-6 text-sm text-muted">
-        {tr("Nothing here is a promise of buyers or a price. Read the")}{" "}<Link to="/terms" className="text-cyan">{tr("terms")}</Link>{" "}{tr("before you launch or trade.")}
+        {tr("Nothing here is a promise of buyers or a price. Read the")}{" "}
+        <Link to="/terms" className="text-cyan">
+          {tr("terms")}
+        </Link>{" "}
+        {tr("before you launch or trade.")}
       </p>
     </div>
   );
 }
 
-function Item({ n, title, children }: { n: string; title: string; children: string }) {
+function Item({ n, title, children }: { n: string; title: string; children: ReactNode }) {
   return (
     <li className="bg-surface p-4 shadow-border">
       <p className="text-sm font-extrabold text-cyan">{n}</p>
-      <p className="mt-1 font-semibold">{tr(title)}</p>
+      <p className="mt-1 font-semibold">{title}</p>
       <p className="mt-1 text-sm text-muted">{children}</p>
     </li>
   );

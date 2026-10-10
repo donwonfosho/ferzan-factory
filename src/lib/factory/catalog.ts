@@ -76,7 +76,7 @@ export const BOTS: BotMeta[] = [
 ];
 
 export const COMMUNITY_URL = "https://t.me/Ferzan_Chat";
-export const X_URL = "https://x.com/ferzaneco";
+export const X_URL = "https://x.com/ferzanfactory";
 
 export const PLACES = [
   {
@@ -135,8 +135,8 @@ export const PLACES = [
   },
   {
     name: "X",
-    handle: "ferzaneco",
-    href: "https://x.com/ferzaneco",
+    handle: "ferzanfactory",
+    href: "https://x.com/ferzanfactory",
     blurb: "Ferzan Trade on X.",
   },
 ];

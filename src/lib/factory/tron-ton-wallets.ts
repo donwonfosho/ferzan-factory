@@ -1,3 +1,4 @@
+import "@/lib/factory/buffer-polyfill";
 /**
  * Browser wallets for the two non-EVM, non-Solana launch chains:
  *   Tron -> TronLink (browser extension, or the TronLink app's built-in browser)
@@ -5,7 +6,80 @@
  * Both sign what the Ferzan Launch Bot built; the site never sees a key.
  */
 import type { TonMessage } from "./bot-launch";
-import { WalletNeeded } from "./wallet-bridge";
+import { WalletNeeded, accountWallets } from "./wallet-bridge";
+import { broadcastTronTx } from "./site-chains";
+
+/**
+ * Which signer Tron / TON use. Default: the Ferzan account's own wallet when the user is signed in and has one;
+ * TronLink / TON Connect stay available as the visible alternative (Account page and the launch form).
+ */
+const PREF_KEY = "ferzan-signer-";
+export type ExtendedChain = "tron" | "ton";
+
+export function prefersExternal(chain: ExtendedChain): boolean {
+  try {
+    return typeof window !== "undefined" && window.localStorage.getItem(PREF_KEY + chain) === "external";
+  } catch {
+    return false;
+  }
+}
+
+export function setPrefersExternal(chain: ExtendedChain, external: boolean) {
+  try {
+    if (external) window.localStorage.setItem(PREF_KEY + chain, "external");
+    else window.localStorage.removeItem(PREF_KEY + chain);
+    window.dispatchEvent(new Event("ferzan-signer"));
+  } catch {
+    /* private mode: the choice just does not stick */
+  }
+}
+
+/** The account's Privy wallet for `chain`, or null when signed out / not created / the user chose the external wallet. */
+function accountFor(chain: ExtendedChain) {
+  const acc = accountWallets();
+  if (!acc?.authenticated || prefersExternal(chain)) return null;
+  return (chain === "tron" ? acc.tronAddress : acc.tonAddress) ? acc : null;
+}
+
+const hexOf = (bytes: Uint8Array) => Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+const bytesOf = (hex: string) => Uint8Array.from(hex.match(/../g) ?? [], (h) => parseInt(h, 16));
+
+/** Signs a Tron transaction with the account wallet: Privy signs the txID (sha256 of raw_data_hex), then the site broadcasts. */
+async function signAndSendTronWithAccount(transactionJson: string): Promise<string> {
+  const acc = accountWallets();
+  if (!acc?.tronAddress) throw new Error("This account has no Tron wallet yet.");
+  const tx = JSON.parse(transactionJson) as { txID?: string; raw_data_hex?: string; signature?: string[] };
+  const txID = String(tx.txID ?? "");
+  const rawHex = String(tx.raw_data_hex ?? "");
+  if (!/^[0-9a-f]{64}$/.test(txID) || !/^([0-9a-f]{2})+$/.test(rawHex)) throw new Error("The transaction looks wrong.");
+  // Never sign an id we did not derive from the bytes ourselves.
+  const digest = hexOf(new Uint8Array(await crypto.subtle.digest("SHA-256", bytesOf(rawHex))));
+  if (digest !== txID) throw new Error("The transaction looks wrong (its id does not match its content).");
+
+  const sig = (await acc.tronSignHash(txID)).replace(/^0x/, "").toLowerCase();
+  if (!/^[0-9a-f]+$/.test(sig) || (sig.length !== 130 && sig.length !== 128)) throw new Error("Privy returned a signature of an unexpected size.");
+  // r || s || recovery id. A 65-byte answer carries v as 0/1 or 27/28; a 64-byte one has none, so both are tried (a wrong one is refused, nothing is sent).
+  const rs = sig.slice(0, 128);
+  let candidates: string[];
+  if (sig.length === 130) {
+    let v = parseInt(sig.slice(128), 16);
+    if (v >= 27) v -= 27;
+    if (v > 1) throw new Error("Privy returned a signature of an unexpected shape.");
+    candidates = [rs + "0" + v];
+  } else {
+    candidates = [rs + "00", rs + "01"];
+  }
+  let lastError: unknown = null;
+  for (const signature of candidates) {
+    try {
+      const { txid } = await broadcastTronTx({ data: { txJson: JSON.stringify({ ...tx, signature: [signature] }) } });
+      return txid;
+    } catch (e) {
+      lastError = e;
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error("Tron did not take the transaction.");
+}
 
 type TronWebLike = {
   ready?: boolean;
@@ -61,6 +135,8 @@ export function tronLinkAppLink(): string {
 
 /** Connects TronLink and returns the visitor's Tron address. */
 export async function tronWallet(): Promise<{ address: string; signAndSend: (transactionJson: string) => Promise<string> }> {
+  const own = accountFor("tron");
+  if (own?.tronAddress) return { address: own.tronAddress, signAndSend: signAndSendTronWithAccount };
   const g = await waitForTron();
   if (!g.tronLink && !g.tronWeb) {
     throw new WalletNeeded("No Tron wallet found in this browser. Use one of the options below.");
@@ -108,6 +184,14 @@ async function ui(): Promise<TonUi> {
 
 /** Connects a TON wallet (opens the TON Connect picker if needed) and returns its raw address (0:…). */
 export async function tonWallet(): Promise<{ address: string; send: (req: { validUntil: number; network: string; messages: TonMessage[] }) => Promise<string> }> {
+  const own = accountFor("ton");
+  if (own?.tonAddress) {
+    const { rawTonAddress, sendFromAccountTon } = await import("./ton-sign");
+    return {
+      address: await rawTonAddress(own.tonAddress), // raw form (0:…), the same shape TON Connect gives
+      send: (req) => sendFromAccountTon(own, { validUntil: req.validUntil, messages: req.messages }),
+    };
+  }
   const u = await ui();
   await u.connectionRestored.catch(() => false); // a wallet connected earlier reconnects by itself first
   if (!u.account) {

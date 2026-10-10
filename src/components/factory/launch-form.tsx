@@ -11,16 +11,21 @@ import { tr } from "@/lib/i18n";
  */
 export function LaunchForm(_props: { initialMode?: Mode; initialChain?: MarkChain }) {
   return (
-    <div className="mx-auto max-w-5xl">
-      <p className="text-sm font-medium text-cyan">{tr("Curve")}</p>
-      <h1 className="mt-2 text-4xl">{tr("Launch a coin")}</h1>
-      <p className="mt-2 text-sm text-muted">
-        {tr("Prefer Telegram?")}{" "}
-        <a className="font-semibold text-cyan" href="https://t.me/Ferzan_Launch_Bot" target="_blank" rel="noopener noreferrer">
-          {tr("Launch with @Ferzan_Launch_Bot")}
-        </a>
-        {tr(". Both land on the same board.")}
-      </p>
+    <div className="mx-auto max-w-6xl">
+      <section className="fz-glow fz-rise relative overflow-hidden rounded-2xl px-4 py-4 sm:px-8 sm:py-8">
+        <div className="fz-orb -right-10 -top-10 h-40 w-40" aria-hidden />
+        <p className="fz-eyebrow relative">{tr("Curve")}</p>
+        <h1 className="relative mt-1 text-3xl sm:mt-2 sm:text-5xl">
+          <span className="fz-grad-text">{tr("Launch a coin")}</span>
+        </h1>
+        <p className="relative mt-2 text-sm text-muted">
+          {tr("Prefer Telegram?")}{" "}
+          <a className="font-semibold text-cyan" href="https://t.me/Ferzan_Launch_Bot" target="_blank" rel="noopener noreferrer">
+            {tr("Launch with @Ferzan_Launch_Bot")}
+          </a>
+          {tr(". Both land on the same board.")}
+        </p>
+      </section>
       <OwnWalletLaunch />
     </div>
   );

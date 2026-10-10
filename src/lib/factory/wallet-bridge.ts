@@ -38,6 +38,28 @@ export type AccountWallets = {
   evmEmbedded: boolean;
   exportEvm: () => Promise<void>;
   exportSol: () => Promise<void>;
+  /** Tron and TON wallets held by Privy under this account (null until created). */
+  tronAddress: string | null;
+  tonAddress: string | null;
+  /** Creates the Tron / TON wallet under this account. */
+  createTron: () => Promise<void>;
+  createTon: () => Promise<void>;
+  /** Opens Privy's export screen for the wallet. Throws if Privy does not offer export for that chain. */
+  exportTron: () => Promise<void>;
+  exportTon: () => Promise<void>;
+  /** Signs a 32-byte hash (64 hex chars, no 0x) with the Tron wallet; returns the raw Privy signature as 0x-hex. */
+  tronSignHash: (hashHex: string) => Promise<string>;
+  /** Signs a 32-byte hash (64 hex chars, no 0x) with the TON wallet's ed25519 key; returns the 64-byte signature as 0x-hex. */
+  tonSignHash: (hashHex: string) => Promise<string>;
+  /** The TON wallet's ed25519 public key as 64 hex chars (from Privy's account data or Privy's wallet API; throws if neither has it). */
+  tonPublicKey: () => Promise<string>;
+  /** Imports an existing private key into the account as an embedded wallet (EVM: hex key; Solana: base58 key). Returns the address. */
+  importEvm: (privateKey: string) => Promise<string>;
+  importSol: (privateKey: string) => Promise<string>;
+  /** Signs a plain message with the embedded EVM wallet. Optional; proof signing falls back without it. */
+  signEvmMessage?: (message: string) => Promise<string>;
+  /** Signs a plain message with the embedded Solana wallet. Optional; proof signing falls back without it. */
+  signSolMessage?: (message: Uint8Array) => Promise<Uint8Array>;
 };
 
 let account: AccountWallets | null = null;
@@ -108,7 +130,12 @@ export async function evmWallet(chain: EvmChainId): Promise<{ address: string; p
   }
   const eth = injectedProvider();
   if (!eth) needSignIn("account");
-  await switchChain(eth, chain);
+  try {
+    await switchChain(eth, chain);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    throw new Error(message + " Or sign in with a Ferzan account and launch from its wallet, no extension needed.");
+  }
   const accounts = (await eth.request({ method: "eth_requestAccounts" })) as string[];
   const address = accounts?.[0]?.toLowerCase();
   if (!address) throw new Error("The wallet returned no account.");
@@ -161,8 +188,28 @@ export async function solanaWallet(): Promise<{ address: string; signAndSend: (t
 /** Signs a plain-text message with the account's EVM wallet if it owns `address`; null otherwise. */
 export async function signWithAccount(address: string, message: string): Promise<string | null> {
   if (!account?.authenticated || !account.evmAddress || account.evmAddress.toLowerCase() !== address.toLowerCase()) return null;
+  if (account.signEvmMessage) {
+    try {
+      const signature = await account.signEvmMessage(message);
+      if (typeof signature === "string" && signature) return signature;
+    } catch {
+      // The silent per-call signer is missing or refused. The provider path below still prompts.
+    }
+  }
   const p = await account.evmProvider();
   const hex = "0x" + Array.from(new TextEncoder().encode(message), (b) => b.toString(16).padStart(2, "0")).join("");
   const signature = await p.request({ method: "personal_sign", params: [hex, account.evmAddress] });
   return typeof signature === "string" ? signature : null;
+}
+
+/** Signs a plain-text message with the account's Solana wallet if it owns `address`. Signature is base64, or null to use another wallet. */
+export async function signSolanaWithAccount(address: string, message: string): Promise<string | null> {
+  if (!account?.authenticated || !account.solAddress || account.solAddress !== address || !account.signSolMessage) return null;
+  try {
+    const bytes = await account.signSolMessage(new TextEncoder().encode(message));
+    if (!(bytes instanceof Uint8Array) || bytes.length === 0) return null;
+    return toBase64(bytes);
+  } catch {
+    return null;
+  }
 }

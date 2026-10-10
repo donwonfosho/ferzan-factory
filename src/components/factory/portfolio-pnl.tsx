@@ -93,6 +93,13 @@ export function PortfolioPnl({ wallets }: { wallets: string[] }) {
                 );
               })}
             </ul>
+            <div className="flex flex-wrap gap-3 text-sm">
+              {wallets.filter(Boolean).map((w) => (
+                <a key={w} className="font-semibold text-cyan" href={`/p/${w}?pnl=1`}>
+                  {tr("Open my shareable trading record")} ({w.slice(0, 4)}…{w.slice(-4)})
+                </a>
+              ))}
+            </div>
           </>
         )}
       </div>

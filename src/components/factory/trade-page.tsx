@@ -8,6 +8,7 @@ import type { ChainId } from "@/lib/factory/types";
 import { ChainPanel } from "./chain-panel";
 import { SolanaPanel } from "./solana-panel";
 import { ContractLine } from "./token-view";
+import { OpenInTelegram } from "./open-telegram";
 import { CoinPush } from "./coin-push";
 import { CoinTape, CoinThread } from "./coin-board";
 import { Holders } from "./holders";
@@ -78,9 +79,10 @@ export function TradePage({ chain, address }: { chain: string; address: string }
 
   const meta = CHAINS[listed];
   return (
-    <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-      <div>
-        <p className="text-sm font-medium text-cyan">
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-8">
+      <div className="min-w-0">
+        <div className="ticket fz-glow fz-rise">
+        <p className="fz-eyebrow">
           {coin?.mode === "plain" ? tr("Regular pool") : tr("Curve")} · {tr(meta.label)}
         </p>
         <div className="mt-3 flex items-center gap-4">
@@ -96,7 +98,11 @@ export function TradePage({ chain, address }: { chain: string; address: string }
           </div>
         </div>
         <ContractLine chain={listed} address={coin?.contract || address} />
+        <div className="mt-4">
+          <OpenInTelegram token={coin?.contract || address} />
+        </div>
         <CoinPush chain={listed} address={coin?.contract || address} symbol={coin?.symbol || onChain?.symbol || "Coin"} />
+        </div>
         <p className="mt-4 max-w-xl text-sm text-muted">
           {tr("Buy and sell here. The signature stays in the wallet this site opened for you. No extension popup.")}
         </p>
@@ -118,7 +124,7 @@ export function TradePage({ chain, address }: { chain: string; address: string }
         ) : listed === "solana" ? (
           <SolanaPanel mint={address} symbol={coin?.symbol || "Coin"} />
         ) : coin && coin.mode === "plain" ? (
-          <div className="ticket text-sm text-muted">{tr("Regular pool. The supply was minted to the creator. There is no curve to trade.")}</div>
+          <div className="ticket fz-panel text-sm text-muted">{tr("Regular pool. The supply was minted to the creator. There is no curve to trade.")}</div>
         ) : coin === null && onChain === null ? null : (
           <p className="text-sm text-muted">{tr("Reading the coin.")}</p>
         )}

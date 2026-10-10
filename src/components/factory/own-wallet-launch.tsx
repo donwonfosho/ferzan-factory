@@ -1,5 +1,7 @@
+import "@/lib/factory/buffer-polyfill";
 import { useEffect, useState } from "react";
-import { WalletNeeded, evmWallet, solanaWallet } from "@/lib/factory/wallet-bridge";
+import { tonWalletAddress } from "@/lib/factory/ton-address";
+import { WalletNeeded, evmWallet, solanaWallet, useAccountWallets } from "@/lib/factory/wallet-bridge";
 import {
   BOT_LAUNCH_CHAINS,
   GRAD_PRESETS,
@@ -22,11 +24,12 @@ import { formatSmart } from "@/lib/factory/units";
 import { termsAccepted } from "@/lib/factory/terms";
 import { cn } from "@/lib/cn";
 import { ChainMark } from "./chain-mark";
+import { SignerChoice } from "./signer-choice";
 import { ProjectPicture } from "./launch-form";
 import { TermsGate } from "./terms";
 import { Button, Label, Mark, TextInput } from "./ui";
 import { LaunchPerksNote } from "./perks";
-import { FEE, LaunchCelebration, LaunchPreview } from "./launch-preview";
+import { LaunchCelebration, LaunchPreview, launchFeeText, useLaunchFees } from "./launch-preview";
 
 import { tr } from "@/lib/i18n";
 function bytesFromHex(hex: string): Uint8Array<ArrayBuffer> {
@@ -78,6 +81,7 @@ const WALLET_TEXT: Record<BotLaunchChain, string> = {
 };
 
 export function OwnWalletLaunch() {
+  const account = useAccountWallets();
   const [chain, setChain] = useState<BotLaunchChain>("base");
   const [wallet, setWallet] = useState("");
   const [image, setImage] = useState("");
@@ -99,6 +103,7 @@ export function OwnWalletLaunch() {
   const [launched, setLaunched] = useState<Launched | null>(null);
   const [tab, setTab] = useState<LaunchTab>("info");
   const [advanced, setAdvanced] = useState(false);
+  const fees = useLaunchFees();
 
   // The form is a draft: text fields are kept in this browser so a refresh does not lose them (never the picture or wallet).
   const [draftLoaded, setDraftLoaded] = useState(false);
@@ -242,8 +247,12 @@ export function OwnWalletLaunch() {
       if (built.kind === "tron") {
         setBusy(
           plain
-            ? tr("Approve in TronLink: {0} TRX launch fee + about 16 TRX of network energy.", formatSmart(BigInt(built.feeSun), 6))
-            : tr("Approve in TronLink: {0} TRX (launch fee and first buy) + about 50 TRX of network energy.", formatSmart(BigInt(built.feeSun), 6)),
+            ? BigInt(built.feeSun) === 0n
+              ? tr("Approve in TronLink: no Ferzan launch fee + about 16 TRX of network energy.")
+              : tr("Approve in TronLink: {0} TRX launch fee + about 16 TRX of network energy.", formatSmart(BigInt(built.feeSun), 6))
+            : BigInt(built.feeSun) === 0n
+              ? tr("Approve in TronLink: no Ferzan launch fee + about 50 TRX of network energy.")
+              : tr("Approve in TronLink: {0} TRX (launch fee and first buy) + about 50 TRX of network energy.", formatSmart(BigInt(built.feeSun), 6)),
         );
         const { signAndSend } = await tronWallet();
         txHash = await signAndSend(built.transactionJson);
@@ -252,8 +261,8 @@ export function OwnWalletLaunch() {
       } else if (built.kind === "ton") {
         setBusy(
           plain
-            ? tr("Approve in your TON wallet: 0.3 TON launch fee + about 0.3 TON for the coin contract (most comes back).")
-            : tr("Approve in your TON wallet: 0.3 TON launch fee + about 0.35 TON for the curve and coin contracts (most comes back). Trading opens about 2 minutes later."),
+            ? tr("Approve in your TON wallet: no Ferzan launch fee + about 0.3 TON for the coin contract (most comes back).")
+            : tr("Approve in your TON wallet: no Ferzan launch fee + about 0.35 TON for the curve and coin contracts (most comes back). Trading opens about 2 minutes later."),
         );
         const { send } = await tonWallet();
         await send({ validUntil: built.validUntil, network: built.network, messages: built.messages });
@@ -263,9 +272,13 @@ export function OwnWalletLaunch() {
         const fee = BigInt(built.launchFeeWei);
         const dev = BigInt(built.devBuyWei);
         setBusy(
-          `Approve in your wallet: ${formatSmart(fee, 18)} ${meta.native} launch fee` +
-            (dev > 0n ? ` + ${formatSmart(dev, 18)} ${meta.native} first buy` : "") +
-            " + gas.",
+          fee === 0n
+            ? dev > 0n
+              ? tr("Approve in your wallet: no Ferzan launch fee + {0} {1} first buy + gas.", formatSmart(dev, 18), meta.native)
+              : tr("Approve in your wallet: no Ferzan launch fee + gas.")
+            : dev > 0n
+              ? tr("Approve in your wallet: {0} {1} launch fee + {2} {1} first buy + gas.", formatSmart(fee, 18), meta.native, formatSmart(dev, 18))
+              : tr("Approve in your wallet: {0} {1} launch fee + gas.", formatSmart(fee, 18), meta.native),
         );
         txHash = await signEvm(built, account);
       } else {
@@ -307,7 +320,7 @@ export function OwnWalletLaunch() {
 
   if (launched) {
     return (
-      <div className="ticket mt-6">
+      <div className="ticket fz-panel mt-6">
         <p className="text-sm font-medium text-cyan">{tr("Launched")}</p>
         <h2 className="mt-2 text-3xl">
           {launched.name} <span className="text-muted">${launched.symbol}</span>
@@ -332,7 +345,18 @@ export function OwnWalletLaunch() {
           >
             {tr("View transaction")}
           </a>
-          <button type="button" className="btn-line" onClick={() => setLaunched(null)}>
+          <button
+            type="button"
+            className="btn-line"
+            onClick={() => {
+              // A fresh form: nothing from the coin just launched (text, picture, buy amounts) is carried over or saved.
+              clearDraft();
+              setError("");
+              setHash("");
+              setTab("info");
+              setLaunched(null);
+            }}
+          >
             {tr("Launch another")}
           </button>
         </div>
@@ -356,6 +380,7 @@ export function OwnWalletLaunch() {
   const at = Math.max(0, tabs.findIndex((t) => t.id === tab));
   const current = tabs[at]?.id ?? "info";
   const isLast = at >= tabs.length - 1;
+  const walletShown = wallet && chain === "ton" ? tonWalletAddress(wallet) : wallet;
   const sym = (symbol || "TOKEN").slice(0, 12);
   const firstBuy = Number(devBuy) > 0 ? `${devBuy} ${meta.native}` : "None";
   const opens = Number(startMinutes) > 0 ? `${startMinutes} min after launch` : "Right away";
@@ -385,9 +410,9 @@ export function OwnWalletLaunch() {
     ...(hasProtect ? ([["Max buy per wallet", Number(maxBuy) > 0 ? `${maxBuy} ${meta.native}` : "No limit"], ["Trading opens", opens]] as [string, string][]) : []),
     ...(chain === "solana" ? ([["Anti-sniper fee", "Built in"]] as [string, string][]) : []),
     ...(plain ? ([["Supply", Number(supply) > 0 ? Number(supply).toLocaleString("en-US") : "?"]] as [string, string][]) : []),
-    ["Launch fee", FEE[chain].fee],
+    ["Launch fee", launchFeeText(fees, chain, plain)],
     ["You earn", plain ? "The whole supply is yours" : "Half of every trading fee"],
-    ["Wallet", wallet ? `${wallet.slice(0, 6)}…${wallet.slice(-4)}` : "Connect at launch"],
+    ["Wallet", walletShown ? `${walletShown.slice(0, 6)}…${walletShown.slice(-4)}` : "Connect at launch"],
   ];
 
   return (
@@ -400,9 +425,9 @@ export function OwnWalletLaunch() {
         }
         void submit(e);
       }}
-      className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] lg:items-start"
+      className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:items-start"
     >
-      <aside className="ticket space-y-4 lg:sticky lg:top-24" aria-label={tr("Preview")}>
+      <aside className="ticket fz-panel order-last space-y-4 lg:sticky lg:top-24 lg:order-none" aria-label={tr("Preview")}>
         <p className="text-xs font-semibold uppercase tracking-wider text-muted">{tr("Preview")}</p>
         <div className="flex items-center gap-3 rounded-xl bg-bg p-3 shadow-border">
           <Mark symbol={sym} image={image || undefined} />
@@ -433,7 +458,7 @@ export function OwnWalletLaunch() {
         </div>
       </aside>
 
-      <div className="ticket min-w-0 space-y-5">
+      <div className="ticket fz-panel min-w-0 space-y-5">
         <div className="flex gap-2 overflow-x-auto pb-1" role="tablist">
           {tabs.map((t) => (
             <button
@@ -454,17 +479,20 @@ export function OwnWalletLaunch() {
             <div>
               <Label>{tr("Chain")}</Label>
               <p className="mb-2 text-xs text-muted">{tr("Where your coin lives and trades. The pair, the fees and the rewards all follow it.")}</p>
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
                 {BOT_LAUNCH_CHAINS.map((id) => (
                   <button
                     key={id}
                     type="button"
                     aria-pressed={chain === id}
                     onClick={() => pickChain(id)}
-                    className={cn("min-h-11 px-2 py-3 text-center", chain === id ? "bg-cyan text-cyan-ink" : "bg-bg text-fg shadow-border")}
+                    className={cn(
+                      "flex min-h-11 flex-col items-center justify-center gap-1 px-1 py-1.5 sm:py-3",
+                      chain === id ? "bg-cyan text-cyan-ink" : "bg-bg text-fg shadow-border",
+                    )}
                   >
-                    <ChainMark id={id} className="mx-auto h-8 w-8" />
-                    <span className="mt-2 block text-xs font-extrabold">{tr(LAUNCH_CHAIN_META[id].label)}</span>
+                    <ChainMark id={id} className="h-5 w-5 sm:h-8 sm:w-8" />
+                    <span className="text-[10px] font-extrabold leading-none sm:text-xs">{tr(LAUNCH_CHAIN_META[id].label)}</span>
                   </button>
                 ))}
               </div>
@@ -475,16 +503,16 @@ export function OwnWalletLaunch() {
                 </>
               ) : null}
               {chain === "ton" && !plain ? (
-                <p className="mt-2 text-xs text-muted">{tr("TON bonding curve: 1,000,000,000 supply, trades on the curve about 2 minutes after launch, then moves to a STON.fi pool with the liquidity locked. Cost: 0.3 TON launch fee + about 0.35 TON for the contracts (most comes back).")}</p>
+                <p className="mt-2 text-xs text-muted">{tr("TON bonding curve: 1,000,000,000 supply, trades on the curve about 2 minutes after launch, then moves to a STON.fi pool with the liquidity locked. Ferzan launch fee: {0}. About 0.35 TON for the curve and coin contracts (most comes back).", tr(launchFeeText(fees, "ton", false)))}</p>
               ) : null}
               {chain === "tron" && !plain ? (
-                <p className="mt-2 text-xs text-muted">{tr("Tron bonding curve: 1,000,000,000 supply, trades on the curve from the first second, then moves to a SunSwap pool. Cost: 5 TRX launch fee + about 50 TRX of Tron energy + your first buy, if any.")}</p>
+                <p className="mt-2 text-xs text-muted">{tr("Tron bonding curve: 1,000,000,000 supply, trades on the curve from the first second, then moves to a SunSwap pool. Ferzan launch fee: {0}. About 50 TRX of Tron energy, plus your first buy if you set one.", tr(launchFeeText(fees, "tron", false)))}</p>
               ) : null}
               {plain ? (
                 <p className="mt-2 text-xs text-muted">
                   {chain === "tron"
-                    ? tr("Standard TRC-20 coin. Cost: 5 TRX launch fee + about 16 TRX of Tron energy. Open a SunSwap pool afterwards so people can trade it.")
-                    : tr("Standard TON jetton. Cost: 0.3 TON launch fee + about 0.3 TON for the coin contract (most of it comes back).")}
+                    ? tr("Standard TRC-20 coin. Ferzan launch fee: {0}. About 16 TRX of Tron energy. Open a SunSwap pool afterwards so people can trade it.", tr(launchFeeText(fees, "tron", true)))
+                    : tr("Standard TON jetton. Ferzan launch fee: {0}. About 0.3 TON for the coin contract (most comes back).", tr(launchFeeText(fees, "ton", true)))}
                 </p>
               ) : null}
             </div>
@@ -621,11 +649,12 @@ export function OwnWalletLaunch() {
                 : tr("The coin goes on the same curves as @Ferzan_Launch_Bot launches.")}
             </p>
             <LaunchPreview chain={chain} name={name} symbol={symbol} image={image} description={description} devBuy={devBuy} startMinutes={startMinutes} plain={plain} />
-            {wallet ? <p className="break-all text-xs text-muted">{tr("Wallet")}{" "}{wallet}</p> : null}
+            {walletShown ? <p className="break-all text-xs text-muted">{tr("Wallet")}{" "}{walletShown}</p> : null}
+            {chain === "tron" || chain === "ton" ? <SignerChoice chain={chain} /> : null}
           </div>
         ) : null}
 
-        {error ? <p className="text-sm text-sell">{tr(error)}</p> : null}
+        {error ? <p className="break-words text-sm text-sell">{tr(error)}</p> : null}
 
       {error.startsWith("No Tron wallet") ? (
           <div className="space-y-1 text-sm">
@@ -677,9 +706,23 @@ export function OwnWalletLaunch() {
             </button>
           ) : null}
           {isLast ? (
-            <Button type="submit" className="min-w-40 flex-1" disabled={Boolean(busy)}>
-              {wallet ? tr("Launch") : tr("Connect wallet and launch")}
-            </Button>
+            !wallet && !account?.authenticated && chain !== "ton" && chain !== "tron" ? (
+              <div className="flex w-full min-w-0 flex-col gap-2">
+                <p className="text-sm text-muted">{tr("Sign in to use your Ferzan account wallet, or connect your own wallet.")}</p>
+                <div className="flex flex-wrap gap-3">
+                  <Button type="button" variant="ghost" disabled={Boolean(busy) || !account?.ready} onClick={() => account?.login()}>
+                    {tr("Sign in to launch")}
+                  </Button>
+                  <Button type="submit" className="min-w-40 flex-1" disabled={Boolean(busy)}>
+                    {tr("Connect wallet and launch")}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <Button type="submit" className="min-w-40 flex-1" disabled={Boolean(busy)}>
+                {account?.authenticated ? tr("Launch") : wallet ? tr("Launch") : tr("Connect wallet and launch")}
+              </Button>
+            )
           ) : (
             <button type="submit" className="btn-cyan ml-auto min-h-11 px-6">
               {tr("Continue")} →

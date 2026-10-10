@@ -336,3 +336,178 @@ select {
   .tape { overflow-x: auto; }
   .tape-track > [aria-hidden="true"] { display: none; }
 }
+
+/* ---- Layout A: wide pages (fz- utilities) ---- */
+.fz-card {
+  position: relative;
+  border-radius: 16px;
+  background: linear-gradient(160deg, rgba(62, 224, 230, 0.07), transparent 55%), #11181a;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+  transition: box-shadow 200ms ease, transform 200ms ease;
+}
+.fz-card:hover {
+  box-shadow: 0 0 0 1px rgba(62, 224, 230, 0.5), 0 18px 44px -24px rgba(62, 224, 230, 0.55);
+  transform: translateY(-2px);
+}
+
+.fz-glow {
+  background: radial-gradient(ellipse 70% 120% at 100% 0%, rgba(62, 224, 230, 0.2), transparent 60%),
+    radial-gradient(ellipse 50% 90% at 0% 100%, rgba(62, 224, 230, 0.1), transparent 65%), #0d1416;
+  box-shadow: 0 0 0 1px rgba(62, 224, 230, 0.35), 0 24px 70px -28px rgba(62, 224, 230, 0.6);
+}
+
+.fz-grad-text {
+  background: linear-gradient(100deg, #f4f7f7 0%, #7aeff2 45%, #3ee0e6 70%, #f4f7f7 100%);
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: fz-sheen 7s ease-in-out infinite;
+}
+@keyframes fz-sheen {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.fz-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.fz-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.07) 50%, transparent 65%);
+  transform: translateX(-120%);
+  animation: fz-sweep 6s ease-in-out infinite;
+}
+@keyframes fz-sweep {
+  0%, 60% { transform: translateX(-120%); }
+  100% { transform: translateX(120%); }
+}
+
+.fz-banner {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.35rem;
+  animation: fz-banner-glow 2.6s ease-in-out infinite;
+}
+.fz-banner img {
+  display: block;
+  width: 100%;
+  height: auto;
+  transform: scale(1.04);
+}
+@keyframes fz-banner-glow {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(62, 224, 230, 0.35), 0 0 18px rgba(62, 224, 230, 0.2); }
+  50% { box-shadow: 0 0 0 2px #3ee0e6, 0 0 32px rgba(62, 224, 230, 0.75); }
+}
+.fz-border::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  pointer-events: none;
+  background: linear-gradient(120deg, rgba(62, 224, 230, 0.15), rgba(62, 224, 230, 0.95), rgba(62, 224, 230, 0.15));
+  background-size: 250% 100%;
+  animation: fz-edge 5s linear infinite;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+@keyframes fz-edge {
+  from { background-position: 0% 0; }
+  to { background-position: 250% 0; }
+}
+
+.fz-rise {
+  animation: fz-rise 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@keyframes fz-rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+
+.fz-chip {
+  --fz-c: #3ee0e6;
+  display: block;
+  border-radius: 14px;
+  padding: 0.85rem 0.5rem;
+  text-align: center;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--fz-c) 20%, transparent), color-mix(in srgb, var(--fz-c) 6%, transparent));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fz-c) 40%, transparent);
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+.fz-chip:hover {
+  transform: translateY(-3px);
+  box-shadow: inset 0 0 0 1px var(--fz-c), 0 14px 30px -18px var(--fz-c);
+}
+
+.fz-eyebrow {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #3ee0e6;
+}
+
+.fz-orb {
+  position: absolute;
+  pointer-events: none;
+  border-radius: 999px;
+  filter: blur(60px);
+  background: rgba(62, 224, 230, 0.22);
+  animation: fz-float 9s ease-in-out infinite;
+}
+@keyframes fz-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-18px); }
+}
+
+/* ---- Layout B: shared panels and stat tiles for account, bots, launch and coin pages ---- */
+.fz-panel {
+  border-radius: 16px;
+  background: linear-gradient(160deg, rgba(62, 224, 230, 0.05), transparent 50%), #11181a;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+.fz-stat {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  background: radial-gradient(ellipse 90% 120% at 100% 0%, rgba(62, 224, 230, 0.14), transparent 60%), #11181a;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+.fz-stat-key {
+  background: radial-gradient(ellipse 90% 120% at 100% 0%, rgba(62, 224, 230, 0.26), transparent 60%), #0d1416;
+  box-shadow: 0 0 0 1px rgba(62, 224, 230, 0.4), 0 18px 50px -26px rgba(62, 224, 230, 0.6);
+}
+.fz-num {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+.fz-ca {
+  display: block;
+  width: 100%;
+  border-radius: 12px;
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  font-size: 0.875rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+  user-select: all;
+  -webkit-user-select: all;
+  background: #0b1113;
+  box-shadow: inset 0 0 0 1px rgba(62, 224, 230, 0.25);
+}
+.fz-ca:hover {
+  box-shadow: inset 0 0 0 1px rgba(62, 224, 230, 0.6);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fz-grad-text, .fz-shimmer::after, .fz-border::before, .fz-rise, .fz-orb, .fz-banner { animation: none !important; }
+  .fz-card:hover, .fz-chip:hover { transform: none; }
+}

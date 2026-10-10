@@ -12,7 +12,8 @@ import { cn } from "@/lib/cn";
 import { Button } from "./ui";
 import { WalletBalances } from "./gas-step";
 import { LaunchWatch } from "./launch-watch";
-import { GraduationBanner, TradeTape } from "./pulse-live";
+import { GraduationBanner, TradeTape, usePulse } from "./pulse-live";
+import { LAUNCH_AT_MS, LAUNCH_LABEL } from "@/lib/factory/launch";
 import { InstallApp } from "./perks";
 import { MobileNav } from "./mobile-nav";
 import { QuickBuyToast } from "./quick-buy";
@@ -21,11 +22,14 @@ import { SearchButton, SearchOverlay } from "./search";
 import { tr } from "@/lib/i18n";
 import { LangPicker } from "./lang";
 import { captureRef } from "@/lib/factory/compete";
+/** Reading pages stay a narrow column; every other page uses the wide container. */
+const NARROW_PATHS = ["/docs", "/terms", "/about", "/transparency", "/how-to-buy"];
 const LINKS = [
   { to: "/", label: "Floor" },
   { to: "/pulse", label: "Pulse" },
   { to: "/ferzan", label: "FERZAN" },
   { to: "/launch", label: "Launch" },
+  { to: "/bridge", label: "Bridge" },
   { to: "/bots", label: "Bots" },
   { to: "/login", label: "Profile" },
 ] as const;
@@ -68,12 +72,12 @@ export function Shell({ children }: { children: ReactNode }) {
     <div className="min-h-screen">
       <div className="h-px bg-cyan" />
       <header className="sticky top-0 z-40 border-b border-line bg-bg/90 backdrop-blur-md">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-2 px-4 py-3 sm:gap-3">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-2 px-4 py-3 sm:gap-3">
           <Link to="/" className="mr-auto flex items-center gap-2">
-            <img src="/brand/seal.jpg" alt="" className="h-10 w-10 rounded-full object-cover" />
+            <img src="/brand/seal.jpg" alt="" className="h-11 w-11 object-contain" />
             <span className="hidden text-base font-semibold text-fg min-[420px]:inline">{tr("Ferzan")}</span>
           </Link>
-          <nav className="order-last flex w-full gap-1 overflow-x-auto sm:order-none sm:w-auto">
+          <nav className="order-last hidden w-full gap-1 overflow-x-auto sm:order-none sm:flex sm:w-auto">
             {LINKS.filter((link) => wallet || link.to !== "/login").map((link) => {
               const on = link.to === "/" ? path === "/" : path.startsWith(link.to);
               return (
@@ -116,10 +120,18 @@ export function Shell({ children }: { children: ReactNode }) {
         </div>
         {open ? (
           <div className="border-t border-line bg-surface">
-            <div className="mx-auto grid max-w-5xl gap-4 px-4 py-4">
+            <div className="mx-auto grid max-w-7xl gap-4 px-4 py-4">
               <div>
                 <p className="text-sm font-medium text-muted">{tr("Menu")}</p>
                 <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                  <Link to="/ferzan" className="rounded-xl bg-bg px-3 py-3 shadow-border" onClick={() => setOpen(false)}>
+                    <span className="block font-semibold">{tr("FERZAN")}</span>
+                    <span className="text-sm text-muted">{tr("FERZAN launches {0}", LAUNCH_LABEL)}</span>
+                  </Link>
+                  <Link to="/bots" className="rounded-xl bg-bg px-3 py-3 shadow-border" onClick={() => setOpen(false)}>
+                    <span className="block font-semibold">{tr("Bots")}</span>
+                    <span className="text-sm text-muted">{tr("Launch, trade, and track from Telegram")}</span>
+                  </Link>
                   <Link to="/login" hash="portfolio" className="rounded-xl bg-bg px-3 py-3 shadow-border" onClick={() => setOpen(false)}>
                     <span className="block font-semibold">{tr("Portfolio")}</span>
                     <span className="text-sm text-muted">{tr("Balances, holdings, and launches")}</span>
@@ -136,13 +148,17 @@ export function Shell({ children }: { children: ReactNode }) {
                     <span className="block font-semibold">{tr("Docs")}</span>
                     <span className="text-sm text-muted">{tr("How a launch, a trade, and graduation work")}</span>
                   </Link>
+                  <Link to="/funds" className="rounded-xl bg-bg px-3 py-3 shadow-border" onClick={() => setOpen(false)}>
+                    <span className="block font-semibold">{tr("Add funds")}</span>
+                    <span className="text-sm text-muted">{tr("Card, Apple Pay, or cash out")}</span>
+                  </Link>
                   <a href={COMMUNITY_URL} className="rounded-xl bg-bg px-3 py-3 shadow-border">
                     <span className="block font-semibold">{tr("Telegram")}</span>
                     <span className="text-sm text-muted">{tr("Ferzan chat")}</span>
                   </a>
                   <a href={X_URL} className="rounded-xl bg-bg px-3 py-3 shadow-border">
                     <span className="block font-semibold">X</span>
-                    <span className="text-sm text-muted">{tr("@ferzaneco")}</span>
+                    <span className="text-sm text-muted">{tr("@ferzanfactory")}</span>
                   </a>
                 </div>
                 <p className="mt-4 text-sm font-medium text-muted">{tr("Your cuts")}</p>
@@ -159,67 +175,91 @@ export function Shell({ children }: { children: ReactNode }) {
         ) : null}
         <TradeTape />
       </header>
-      <main className={cn("mx-auto px-4 pt-10 pb-12 sm:px-6 sm:py-14", path.startsWith("/pulse") ? "max-w-7xl" : "max-w-5xl")}>{children}</main>
+      <LaunchBar />
+      <main className={cn("mx-auto px-4 pt-10 pb-28 sm:px-6 sm:py-14", NARROW_PATHS.some((p) => path.startsWith(p)) ? "max-w-5xl" : "max-w-7xl")}>{children}</main>
       <LaunchWatch />
       <GraduationBanner />
-      <footer className="mx-auto max-w-5xl px-4 pb-28 text-sm text-muted sm:pb-10">
+      <footer className="mx-auto max-w-7xl px-4 pb-28 text-sm text-muted sm:px-6 sm:pb-10">
         <div className="mb-4">
           <InstallApp compact />
         </div>
-        <p>
-          {tr("Site curves: 1% on every trade. 60% treasury, 30% creator, 10% to a referrer when a buyer names a wallet. After graduation the creator keeps 30% of the pool. Telegram curves: 1% on every trade. 50% creator, 50% platform, or 50% creator, 40% platform, 10% referrer when a buyer came from a referral link.")}
-        </p>
-        <p className="mt-2">
-          <a className="text-cyan" href={COMMUNITY_URL}>
-            {tr("Ferzan Chat")}
-          </a>
-          {" · "}
-          <a className="text-cyan" href="https://t.me/Ferzan_Trade_Ecosystem">
-            {tr("Hub")}
-          </a>
-          {" · "}
-          <a className="text-cyan" href="https://t.me/Ferzan_Launches">
-            {tr("Launches")}
-          </a>
-          {" · "}
-          <Link to="/leaderboard" className="text-cyan">
-            {tr("Leaderboard")}
-          </Link>
-          {" · "}
-          <Link to="/compete" className="text-cyan">
-            {tr("Competition")}
-          </Link>
-          {" · "}
-          <Link to="/docs" className="text-cyan">
-            {tr("Docs")}
-          </Link>
-          {" · "}
-          <Link to="/about" className="text-cyan">
-            {tr("About")}
-          </Link>
-          {" · "}
-          <Link to="/transparency" className="text-cyan">
-            {tr("Transparency")}
-          </Link>
-          {" · "}
-          <Link to="/terms" className="text-cyan">
-            {tr("Terms")}
-          </Link>
-          {" · "}
-          <a className="text-cyan" href={X_URL}>
-            X
-          </a>
-        </p>
-        <p className="mt-2">
-          {tr("Contact:")}{" "}
-          <a className="text-cyan" href="mailto:Ferzantrade@gmail.com">
-            {tr("Ferzantrade@gmail.com")}
-          </a>
-        </p>
+        <div className="mb-6">
+          <p className="font-semibold text-fg">{tr("Fees")}</p>
+          <ul className="mt-2 list-disc space-y-1 pl-5">
+            <li>{tr("Site curves: 1% on every trade. 60% treasury, 30% creator, 10% to a referrer when a buyer names a wallet.")}</li>
+            <li>{tr("Telegram curves: 1% on every trade. 50% creator, 50% platform, or 50% creator, 40% platform, 10% referrer when a buyer came from a referral link.")}</li>
+          </ul>
+        </div>
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div>
+            <p className="font-semibold text-fg">{tr("Product")}</p>
+            <ul className="mt-2 space-y-1">
+              <li><Link to="/" className="text-cyan">{tr("Floor")}</Link></li>
+              <li><Link to="/pulse" className="text-cyan">{tr("Pulse")}</Link></li>
+              <li><Link to="/launch" search={{ kind: "curve" }} className="text-cyan">{tr("Launch")}</Link></li>
+              <li><Link to="/bots" className="text-cyan">{tr("Bots")}</Link></li>
+            </ul>
+          </div>
+          <div>
+            <p className="font-semibold text-fg">{tr("Community")}</p>
+            <ul className="mt-2 space-y-1">
+              <li><a className="text-cyan" href={COMMUNITY_URL}>{tr("Chat")}</a></li>
+              <li><a className="text-cyan" href="https://t.me/Ferzan_Trade_Ecosystem">{tr("Hub")}</a></li>
+              <li><a className="text-cyan" href="https://t.me/Ferzan_Launches">{tr("Launches")}</a></li>
+              <li><a className="text-cyan" href={X_URL}>X</a></li>
+            </ul>
+          </div>
+          <div>
+            <p className="font-semibold text-fg">{tr("Learn")}</p>
+            <ul className="mt-2 space-y-1">
+              <li><Link to="/docs" className="text-cyan">{tr("Docs")}</Link></li>
+              <li><Link to="/how-to-buy" className="text-cyan">{tr("How to buy FERZAN")}</Link></li>
+              <li><Link to="/about" className="text-cyan">{tr("About")}</Link></li>
+              <li><Link to="/transparency" className="text-cyan">{tr("Transparency")}</Link></li>
+              <li><Link to="/terms" className="text-cyan">{tr("Terms")}</Link></li>
+            </ul>
+          </div>
+          <div>
+            <p className="font-semibold text-fg">{tr("Contact")}</p>
+            <p className="mt-2">
+              <a className="text-cyan" href="mailto:Ferzantrade@gmail.com">{tr("Ferzantrade@gmail.com")}</a>
+            </p>
+          </div>
+        </div>
       </footer>
       <MobileNav />
       <SearchOverlay />
       <QuickBuyToast />
+    </div>
+  );
+}
+
+function LaunchBar() {
+  const pulse = usePulse();
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(t);
+  }, []);
+  if (pulse?.ferzan?.live) return null;
+  const at = pulse?.ferzan?.launchAt ? pulse.ferzan.launchAt * 1000 : LAUNCH_AT_MS;
+  const left = Math.max(0, at - now);
+  const d = Math.floor(left / 86_400_000);
+  const h = Math.floor((left % 86_400_000) / 3_600_000);
+  const m = Math.floor((left % 3_600_000) / 60_000);
+  return (
+    <div className="border-b border-line bg-surface px-4 py-2 text-sm">
+      <span className="mx-auto flex max-w-7xl items-center justify-between gap-3">
+        <Link to="/ferzan" className="min-w-0 font-semibold text-fg">
+          {left === 0 ? tr("Launching soon") : tr(`FERZAN launches ${LAUNCH_LABEL}`)}
+        </Link>
+        <span className="flex shrink-0 items-center gap-3">
+          {left === 0 ? null : <span className="tabular-nums text-cyan">{d}d {h}h {m}m</span>}
+          <Link to="/how-to-buy" className="font-semibold text-cyan">
+            {tr("How to buy")}
+          </Link>
+        </span>
+      </span>
     </div>
   );
 }

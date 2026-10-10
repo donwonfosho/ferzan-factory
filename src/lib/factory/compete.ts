@@ -1,6 +1,6 @@
 /**
  * Weekly competition (volume and profit), the callers board, and share-link credit.
- * Data comes from the Launch Bot API; weeks start at the FERZAN launch (Fri Oct 9, 7:00 PM ET).
+ * Data comes from the Launch Bot API; weeks start at the FERZAN launch (Fri Nov 13, 4:00 PM ET).
  */
 import { createServerFn } from "@tanstack/react-start";
 
@@ -105,6 +105,7 @@ const creditCallFn = createServerFn({ method: "POST" })
     return { chain, tx, ref };
   })
   .handler(async ({ data }) => {
+    await (await import("./guard.server")).guardRelay("send");
     await fetch(`${API}/call-credit`, {
       method: "POST",
       headers: { "content-type": "application/json" },

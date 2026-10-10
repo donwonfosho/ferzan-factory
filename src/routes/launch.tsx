@@ -11,6 +11,12 @@ export const Route = createFileRoute("/launch")({
     kind: search.kind === "pool" ? "pool" : "curve",
     chain: typeof search.chain === "string" && CHAINS.has(search.chain as MarkChain) ? (search.chain as MarkChain) : undefined,
   }),
+  head: () => ({
+    meta: [
+      { title: "Launch · Ferzan Factory" },
+      { name: "description", content: "Launch a coin on Solana, Base, BNB, Ethereum, Robinhood, Arc, Tron or TON." },
+    ],
+  }),
   component: function LaunchPage() {
     const { kind, chain } = Route.useSearch();
     return <LaunchForm initialMode={kind === "pool" ? "plain" : "curve"} initialChain={chain ?? "base"} />;

@@ -53,8 +53,12 @@ export async function requireProof(
   const { getSql } = await import("@/lib/db");
   const sql = await getSql();
   await sql`delete from proof_sigs where created_at < now() - interval '15 minutes'`;
+  // Keyed on the signed message itself, not the signature text: the same signature written in another case or
+  // base64 variant is the same proof.
+  const { createHash } = await import("node:crypto");
+  const replayKey = createHash("sha256").update(address.toLowerCase() + "|" + message).digest("hex");
   const used = await sql<{ sig: string }>`
-    insert into proof_sigs (sig) values (${proof.signature})
+    insert into proof_sigs (sig) values (${replayKey})
     on conflict (sig) do nothing
     returning sig
   `;

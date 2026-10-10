@@ -3,7 +3,8 @@ import { PRIVY_APP_ID, accountWallets, evmWallet, useAccountWallets } from "@/li
 import { MoveFunds } from "./move-funds";
 import { AccountPortfolio, AccountRewards } from "./portfolio";
 import { AccountCard } from "./account-card";
-import { Link } from "@tanstack/react-router";
+import { ImportWallet } from "./import-wallet";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { GROK_PROVIDERS, authEnabled, signIn, signOut } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { readRemembered, useFactory } from "@/lib/factory/store";
@@ -30,6 +31,7 @@ import { FerzanPerksCard, InstallApp } from "./perks";
 import { PortfolioPnl } from "./portfolio-pnl";
 
 import { tr } from "@/lib/i18n";
+import { cn } from "@/lib/cn";
 const PROFILE_ID = "ferzan-profile-id";
 
 function accountProfileId(): string {
@@ -50,6 +52,7 @@ type EthereumProvider = {
 };
 
 export function AccountPage() {
+  const go = useNavigate();
   const { user, isPending } = useCurrentUserState();
   const wallet = useFactory((s) => s.wallet);
   const setWallet = useFactory((s) => s.setWallet);
@@ -157,31 +160,45 @@ export function AccountPage() {
   }
 
   return (
-    <div className="mx-auto max-w-lg">
+    <div className={cn("mx-auto", panel === "menu" ? "max-w-6xl" : "max-w-2xl")}>
       {panel !== "menu" ? (
         <button type="button" className="btn-line mb-4" onClick={() => open("menu")}>
           {tr("Back")}
         </button>
       ) : (
         <>
-          <h1 className="text-4xl">{tr("Manage account")}</h1>
-          <p className="mt-2 text-sm text-muted">{tr("Profile, wallets, rewards, and what the chart shows.")}</p>
-          <AccountCard />
-          <MoveFunds />
-          <FerzanPerksCard sol={mineSol} />
-          <MenuGroup label={tr("Account")}>
-            <MenuRow title={tr("Edit profile")} onClick={() => open("profile")} />
-            <MenuRow title={tr("Portfolio")} detail={tr("Balances, holdings, and launches")} onClick={() => open("portfolio")} />
-            <MenuRow title={tr("Rewards")} detail={tr("Creator fees and your referrer link")} onClick={() => open("rewards")} />
-          </MenuGroup>
-          <MenuGroup label={tr("Wallet")}>
-            <MenuRow title={tr("View wallets")} onClick={() => open("wallets")} />
-            <MenuRow title={tr("Send")} detail={tr("Move ETH, BNB, or Arc USDC out")} onClick={() => open("send")} />
-          </MenuGroup>
-          <MenuGroup label={tr("Preferences")}>
-            <MenuRow title={tr("Settings")} detail={tr("Chart, launch alerts, and sound")} onClick={() => open("settings")} />
-          </MenuGroup>
-          <InstallApp />
+          <section className="fz-glow fz-rise relative overflow-hidden rounded-2xl px-5 py-6 sm:px-8 sm:py-8">
+            <div className="fz-orb -right-10 -top-10 h-40 w-40" aria-hidden />
+            <p className="fz-eyebrow relative">{tr("Profile")}</p>
+            <h1 className="relative mt-2 text-4xl sm:text-5xl">
+              <span className="fz-grad-text">{tr("Manage account")}</span>
+            </h1>
+            <p className="relative mt-2 max-w-xl text-sm text-muted">{tr("Profile, wallets, rewards, and what the chart shows.")}</p>
+          </section>
+          <div className="mt-4 grid gap-4 lg:grid-cols-[1.25fr_1fr] lg:items-start">
+            <div className="flex min-w-0 flex-col gap-4 [&>*]:mt-0!">
+              <AccountCard />
+              <MoveFunds />
+              <ImportWallet />
+            </div>
+            <div className="flex min-w-0 flex-col gap-4 [&>*]:mt-0!">
+              <FerzanPerksCard sol={mineSol} />
+              <MenuGroup label={tr("Account")}>
+                <MenuRow title={tr("Edit profile")} onClick={() => open("profile")} />
+                <MenuRow title={tr("Portfolio")} detail={tr("Balances, holdings, and launches")} onClick={() => open("portfolio")} />
+                <MenuRow title={tr("Rewards")} detail={tr("Creator fees and your referrer link")} onClick={() => open("rewards")} />
+              </MenuGroup>
+              <MenuGroup label={tr("Wallet")}>
+                <MenuRow title={tr("View wallets")} onClick={() => open("wallets")} />
+                <MenuRow title={tr("Send")} detail={tr("Move ETH, BNB, or Arc USDC out")} onClick={() => open("send")} />
+                <MenuRow title={tr("Add funds")} detail={tr("Card, Apple Pay, or Google Pay")} onClick={() => void go({ to: "/funds" })} />
+              </MenuGroup>
+              <MenuGroup label={tr("Preferences")}>
+                <MenuRow title={tr("Settings")} detail={tr("Chart, launch alerts, and sound")} onClick={() => open("settings")} />
+              </MenuGroup>
+              <InstallApp />
+            </div>
+          </div>
         </>
       )}
 
@@ -189,7 +206,7 @@ export function AccountPage() {
       <>
       <h1 className="text-4xl">{tr("Edit profile")}</h1>
 
-      <div className="ticket mt-6">
+      <div className="ticket fz-panel mt-6">
         <div className="flex items-center gap-4">
           <label className="grid h-20 w-20 shrink-0 cursor-pointer place-items-center overflow-hidden bg-bg shadow-border">
             {profile?.image ? <img src={profile.image} alt="" className="h-full w-full object-cover" /> : <span className="text-xs font-semibold text-muted">{tr("Photo")}</span>}
@@ -396,15 +413,15 @@ function panelFromHash(): Panel {
 function MenuGroup({ label, children }: { label: string; children: ReactNode }) {
   return (
     <section className="mt-6">
-      <p className="text-sm font-medium text-muted">{tr(label)}</p>
-      <div className="mt-2 divide-y divide-line overflow-hidden rounded-2xl bg-surface shadow-border">{children}</div>
+      <p className="fz-eyebrow">{tr(label)}</p>
+      <div className="fz-panel mt-2 divide-y divide-line overflow-hidden">{children}</div>
     </section>
   );
 }
 
 function MenuRow({ title, detail, onClick }: { title: string; detail?: string; onClick: () => void }) {
   return (
-    <button type="button" onClick={onClick} className="flex min-h-14 w-full items-center justify-between gap-3 px-4 py-3 text-left">
+    <button type="button" onClick={onClick} className="flex min-h-14 w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-cyan/5">
       <span>
         <span className="block font-semibold">{tr(title)}</span>
         {detail ? <span className="block text-sm text-muted">{detail}</span> : null}

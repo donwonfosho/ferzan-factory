@@ -3,15 +3,25 @@ import { COMMUNITY_URL, X_URL } from "@/lib/factory/catalog";
 
 import { tr } from "@/lib/i18n";
 export const Route = createFileRoute("/about")({
+  head: () => ({
+    meta: [
+      { title: "About · Ferzan Factory" },
+      { name: "description", content: "About Ferzan Factory, the launchpad, the Telegram bots, and FERZAN, the platform's token." },
+    ],
+  }),
   component: AboutPage,
 });
 
+const TEAM = [
+  { name: "Don", role: "Co-founder" },
+  { name: "Dre", role: "Co-founder" },
+] as const;
 const EMAIL = "Ferzantrade@gmail.com";
 const MULTISIG = "2vWqwX72ijo24vgvPQW6yBQh2qXE4jrEd18YDdEbWKLG";
 
 const OFFICIAL: { label: string; href: string; text: string }[] = [
   { label: "Website", href: "https://ferzan-factory.com", text: "ferzan-factory.com" },
-  { label: "X", href: X_URL, text: "@ferzaneco" },
+  { label: "X", href: X_URL, text: "@ferzanfactory" },
   { label: "Telegram chat", href: COMMUNITY_URL, text: "t.me/Ferzan_Chat" },
   { label: "Telegram hub", href: "https://t.me/Ferzan_Trade_Ecosystem", text: "t.me/Ferzan_Trade_Ecosystem" },
   { label: "New launches channel", href: "https://t.me/Ferzan_Launches", text: "t.me/Ferzan_Launches" },
@@ -39,7 +49,7 @@ function AboutPage() {
             <span className="text-fg">{tr("Telegram bots")}</span>{tr(": a Launch Bot, a Trade Bot, a Buy Bot that posts buys in project chats, and Guardian, which moderates Telegram groups.")}
           </li>
           <li>
-            <span className="text-fg">{tr("FERZAN")}</span>{tr(": the platform's token, launching on Solana on Friday, October 9, 2026 at 7:00 PM ET.")}{" "}
+            <span className="text-fg">{tr("FERZAN")}</span>{tr(": the platform's token.")}{" "}
             <Link to="/ferzan" className="text-cyan">
               {tr("How it works")}
             </Link>
@@ -58,10 +68,10 @@ function AboutPage() {
       <section className="space-y-3">
         <h2 className="text-2xl">{tr("Team")}</h2>
         <div className="grid gap-3 sm:grid-cols-2">
-          {["Don", "Dre"].map((name) => (
-            <div key={name} className="ticket flex items-center gap-3">
-              <span className="grid h-12 w-12 place-items-center rounded-full bg-cyan/15 text-lg font-extrabold text-cyan">{name[0]}</span>
-              <span className="text-lg font-semibold">{name}</span>
+          {TEAM.map((person) => (
+            <div key={person.name} className="ticket">
+              <p className="text-lg font-semibold">{person.name}</p>
+              <p className="text-sm text-muted">{tr(person.role)}</p>
             </div>
           ))}
         </div>
@@ -90,7 +100,7 @@ function AboutPage() {
         <h2 className="text-xl">{tr("Stay safe")}</h2>
         <ul className="list-disc space-y-1 pl-5 text-sm text-muted">
           <li>{tr("Ferzan admins never DM you first and never ask for a seed phrase, private key or payment.")}</li>
-          <li>{tr("The FERZAN contract address is posted only on this site, by @ferzaneco on X and in the Ferzan Telegram chat, at 7:00 PM ET on October 9. Any address before that is fake.")}</li>
+          <li>{tr("The FERZAN contract address is posted only on this site, by @ferzanfactory on X and in the Ferzan Telegram chat, at 4:00 PM ET on November 13. Any address before that is fake.")}</li>
           <li>{tr("Ferzan does not sell listings, guaranteed pumps or \"recovery\" services. Anyone offering them in our name is a scammer.")}</li>
         </ul>
       </section>

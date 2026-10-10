@@ -5,9 +5,12 @@
  * Top-level runs (download/export, local `npm run dev`, deployed sites) noop.
  */
 
+import "@/lib/zod-config";
 import { z } from "zod";
 import { CONNECTOR_TOKEN_READY_EVENT } from "./app-data/types";
 import { resolveParentEmbedderOrigin } from "./preview-embedder-origin";
+
+z.config({ jitless: true });
 
 export {
   isGrokEmbedderOrigin,

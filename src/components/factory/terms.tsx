@@ -62,7 +62,7 @@ export function TermsBody() {
       <p className="text-sm text-muted">
         {tr("Takedowns go to")}{" "}
         <a className="text-cyan" href={X_URL}>
-          {tr("@ferzaneco")}
+          {tr("@ferzanfactory")}
         </a>
         {tr(". These terms are the rules for using the site. They are not a substitute for your own lawyer.")}
       </p>
