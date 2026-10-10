@@ -14,7 +14,7 @@ import { WalletBalances } from "./gas-step";
 import { LaunchWatch } from "./launch-watch";
 import { GraduationBanner, TradeTape, usePulse } from "./pulse-live";
 import { LAUNCH_AT_MS, LAUNCH_LABEL } from "@/lib/factory/launch";
-import { FeedbackButton } from "./feedback";
+import { FeedbackButton, openFeedback } from "./feedback";
 import { Analytics } from "./analytics";
 import { StatusBanner, StatusLine } from "./status-line";
 import { InstallApp } from "./perks";
@@ -222,6 +222,11 @@ export function Shell({ children }: { children: ReactNode }) {
               <li><Link to="/about" className="text-cyan">{tr("About")}</Link></li>
               <li><Link to="/transparency" className="text-cyan">{tr("Transparency")}</Link></li>
               <li><Link to="/terms" className="text-cyan">{tr("Terms")}</Link></li>
+              <li>
+                <button type="button" className="text-cyan" onClick={() => openFeedback()}>
+                  {tr("Report a bug / Feedback")}
+                </button>
+              </li>
             </ul>
           </div>
           <div>

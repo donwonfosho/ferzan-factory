@@ -205,6 +205,7 @@ const dict: Record<string, string> = {
   "After graduation the creator keeps 30% of the pool.": "Tras la graduación, el creador se queda el 30% del pool.",
   "Telegram curves: 1% on every trade. 50% creator, 50% platform, or 50% creator, 40% platform, 10% referrer when a buyer came from a referral link.": "Curvas de Telegram: 1% en cada operación. 50% creador y 50% plataforma, o 50% creador, 40% plataforma y 10% referido cuando el comprador llegó por un enlace de referido.",
   "Fees": "Comisiones",
+  "Feedback": "Comentarios",
   "Product": "Producto",
   "Community": "Comunidad",
   "Learn": "Aprende",

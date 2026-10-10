@@ -1,5 +1,5 @@
 import { useRouterState } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { APP_VERSION } from "@/lib/factory/beta";
 import { sendReport } from "@/lib/factory/feedback";
 import { track } from "@/lib/factory/analytics";
@@ -123,17 +123,73 @@ function Sheet({
   );
 }
 
-/** Floating beta feedback. Sits above the phone tab bar. */
+/** Opens the same sheet as the floating button. */
+export function openFeedback() {
+  if (typeof window !== "undefined") window.dispatchEvent(new Event("ferzan-feedback"));
+}
+
+/** Floating beta feedback. Hidden whenever it would cover a link, a button, or the footer. */
 export function FeedbackButton() {
   const [open, setOpen] = useState(false);
+  const [node, setNode] = useState<HTMLButtonElement | null>(null);
+  const path = useRouterState({ select: (s) => s.location.pathname });
+
+  useEffect(() => {
+    const onOpen = () => setOpen(true);
+    window.addEventListener("ferzan-feedback", onOpen);
+    return () => window.removeEventListener("ferzan-feedback", onOpen);
+  }, []);
+
+  useEffect(() => {
+    if (!node) return;
+    let frame = 0;
+    const check = () => {
+      frame = 0;
+      const box = node.getBoundingClientRect();
+      const footer = document.querySelector("footer")?.getBoundingClientRect();
+      const overFooter = !!footer && footer.top < box.bottom && footer.bottom > box.top && footer.left < box.right && footer.right > box.left;
+      node.style.pointerEvents = "none";
+      const spots: Array<[number, number]> = [
+        [box.left + 3, box.top + 3],
+        [box.right - 3, box.top + 3],
+        [box.left + box.width / 2, box.top + box.height / 2],
+        [box.left + 3, box.bottom - 3],
+        [box.right - 3, box.bottom - 3],
+      ];
+      const overControl = spots.some(([x, y]) => !!document.elementFromPoint(x, y)?.closest("a, button, input, textarea, select, summary, label, [role='button']"));
+      const hide = overFooter || overControl;
+      node.style.pointerEvents = hide ? "none" : "";
+      node.classList.toggle("invisible", hide);
+      node.toggleAttribute("aria-hidden", hide);
+      node.tabIndex = hide ? -1 : 0;
+    };
+    const schedule = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(check);
+    };
+    schedule();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    const watch = new ResizeObserver(schedule);
+    watch.observe(document.body);
+    return () => {
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+      watch.disconnect();
+      if (frame) window.cancelAnimationFrame(frame);
+    };
+  }, [path, node]);
+
   return (
     <>
       <button
+        ref={setNode}
         type="button"
-        className="fixed left-3 z-30 max-w-[11rem] rounded-full bg-cyan px-3 py-2 text-left text-sm font-semibold leading-tight text-cyan-ink shadow-border bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] sm:bottom-6"
+        aria-label={tr("Report a bug / Feedback")}
+        className="fixed right-3 z-30 inline-flex h-8 items-center whitespace-nowrap rounded-full bg-cyan px-3 text-xs font-semibold leading-none text-cyan-ink shadow-border bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] sm:bottom-4"
         onClick={() => setOpen(true)}
       >
-        {tr("Report a bug / Feedback")}
+        {tr("Feedback")}
       </button>
       {open ? <Sheet title={tr("Report a bug / Feedback")} kind="feedback" categories={FEEDBACK} onClose={() => setOpen(false)} /> : null}
     </>

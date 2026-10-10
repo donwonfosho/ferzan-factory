@@ -207,6 +207,7 @@ const dict: Record<string, string> = {
   "After graduation the creator keeps 30% of the pool.": "毕业后创建者保留资金池的 30%。",
   "Telegram curves: 1% on every trade. 50% creator, 50% platform, or 50% creator, 40% platform, 10% referrer when a buyer came from a referral link.": "Telegram 曲线：每笔交易 1%。50% 创建者、50% 平台；如果买家来自推荐链接，则 50% 创建者、40% 平台、10% 推荐人。",
   "Fees": "手续费",
+  "Feedback": "反馈",
   "Product": "产品",
   "Community": "社区",
   "Learn": "了解",
