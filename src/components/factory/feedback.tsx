@@ -1,7 +1,7 @@
 import { useRouterState } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { APP_VERSION } from "@/lib/factory/beta";
-import { sendReport } from "@/lib/factory/feedback.server";
+import { sendReport } from "@/lib/factory/feedback";
 import { track } from "@/lib/factory/analytics";
 import { tr } from "@/lib/i18n";
 

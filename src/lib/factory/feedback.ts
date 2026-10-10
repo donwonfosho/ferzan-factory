@@ -2,10 +2,9 @@
  * Beta feedback and coin reports. Stored in our database.
  * Never stores a private key, a seed phrase, or a wallet address.
  * The coin field is the token being reported, which the report form asks for.
+ * Server-only helpers are imported inside the handler so the browser can call this function.
  */
 import { createServerFn } from "@tanstack/react-start";
-import { assertSameSiteRequest } from "@/lib/auth/isolation.server";
-import { visitor } from "./guard.server";
 
 const CATEGORY = new Set(["bug", "idea", "other", "scam", "impersonation", "offensive"]);
 const COIN = /^(0x[0-9a-fA-F]{40}|[1-9A-HJ-NP-Za-km-z]{32,48}|[EUk]Q[A-Za-z0-9_-]{46}|T[1-9A-HJ-NP-Za-km-z]{33})$/;
@@ -32,14 +31,6 @@ function redact(text: string): string {
     .trim();
 }
 
-async function limitKey(): Promise<{ key: string; limit: number }> {
-  const { createHash } = await import("node:crypto");
-  const salt = process.env.FERZAN_INGEST_SECRET ?? "ferzan-feedback";
-  const ip = visitor();
-  const key = "fb:" + createHash("sha256").update(salt + "|" + (ip ?? "unknown")).digest("hex").slice(0, 32);
-  return { key, limit: ip ? 5 : 8 };
-}
-
 export const sendReport = createServerFn({ method: "POST" })
   .validator((data: unknown) => {
     const row = (data && typeof data === "object" ? data : {}) as Record<string, unknown>;
@@ -57,6 +48,8 @@ export const sendReport = createServerFn({ method: "POST" })
     return { kind, category, message, contact, path, version, coin, company };
   })
   .handler(async ({ data }) => {
+    const { assertSameSiteRequest } = await import("@/lib/auth/isolation.server");
+    const { visitor } = await import("./guard.server");
     assertSameSiteRequest();
     if (data.company) return { ok: true as const };
     const blob = `${data.message}\n${data.contact}`;
@@ -64,9 +57,13 @@ export const sendReport = createServerFn({ method: "POST" })
     const message = redact(data.message);
     const contact = redact(data.contact).replace(/\[removed\]/g, "").trim().slice(0, 40);
     if (message.length < 4) throw new Error("Write a short message.");
+    const { createHash } = await import("node:crypto");
+    const salt = process.env.FERZAN_INGEST_SECRET ?? "ferzan-feedback";
+    const ip = visitor();
+    const key = "fb:" + createHash("sha256").update(salt + "|" + (ip ?? "unknown")).digest("hex").slice(0, 32);
+    const limit = ip ? 5 : 8;
     const { getSql } = await import("@/lib/db");
     const sql = await getSql();
-    const { key, limit } = await limitKey();
     const hour = Math.floor(Date.now() / 3_600_000);
     const rows = await sql<{ hits: number }>`
       insert into feedback_hits (key, hour, hits) values (${key}, ${hour}, 1)
