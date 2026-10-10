@@ -78,8 +78,10 @@ export function Shell({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen">
-      <div className="h-px bg-cyan" />
-      <header className="sticky top-0 z-40 border-b border-line bg-bg/90 backdrop-blur-md">
+      <div className="sticky top-0 z-40">
+        <StatusBanner />
+        <div className="h-px bg-cyan" />
+        <header className="border-b border-line bg-bg/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-2 px-4 py-3 sm:gap-3">
           <Link to="/" className="mr-auto flex items-center gap-2">
             <img src="/brand/seal.jpg" alt="" className="h-11 w-11 object-contain" />
@@ -183,8 +185,8 @@ export function Shell({ children }: { children: ReactNode }) {
           </div>
         ) : null}
         <TradeTape />
-      </header>
-      <StatusBanner />
+        </header>
+      </div>
       <LaunchBar />
       <main className={cn("mx-auto px-4 pt-10 pb-28 sm:px-6 sm:py-14", NARROW_PATHS.some((p) => path.startsWith(p)) ? "max-w-5xl" : "max-w-7xl")}>{children}</main>
       <LaunchWatch />

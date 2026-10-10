@@ -20,6 +20,7 @@ const ENTRIES = [
       "Known issues notice: the site is in beta. Real funds are at risk. Start small.",
       "Coin creator badges on coin pages. They count launches we already have. They are not a guarantee.",
       "Launch date locked: Friday, November 13, 2026 at 4:00 PM ET.",
+      "System status",
     ],
   },
 ];
