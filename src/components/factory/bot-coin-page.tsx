@@ -29,6 +29,8 @@ import { CopyAddress } from "./copy-address";
 import { OpenInTelegram } from "./open-telegram";
 
 import { tr } from "@/lib/i18n";
+import { tryFive } from "@/lib/factory/retry";
+import { FEE_TG, FEE_TG_REF, TradePreview, approveLine, beginTx, minText } from "./trade-confidence";
 import { evmReferrer, sharedBy } from "@/lib/factory/compete";
 const ZERO = "0x0000000000000000000000000000000000000000";
 const TIMEFRAMES = [
@@ -127,14 +129,19 @@ export function BotCoinPage({ chain, curve }: { chain: BotCurveChain; curve: str
   const [error, setError] = useState("");
   const [lastTx, setLastTx] = useState("");
   const [copied, setCopied] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const seen = useRef("");
 
   const load = useCallback(async () => {
+    const key = `${chain}:${curve}`;
+    const once = () => getBotCurve({ data: { chain, curve, wallet: account, tf } });
     try {
-      const next = await getBotCurve({ data: { chain, curve, wallet: account, tf } });
+      const next = seen.current === key ? await once() : await tryFive(once, () => setLoadError("Busy right now, retrying"));
+      seen.current = key;
       setState(next);
       setLoadError("");
-    } catch (err) {
-      setLoadError(err instanceof Error ? err.message : tr("This coin did not load."));
+    } catch {
+      if (seen.current !== key) setLoadError("Busy right now. Try again in a minute.");
     }
   }, [chain, curve, account, tf]);
 
@@ -175,7 +182,7 @@ export function BotCoinPage({ chain, curve }: { chain: BotCurveChain; curve: str
     return address;
   }
 
-  async function send(from: string, to: string, data: string, value = 0n): Promise<void> {
+  async function send(from: string, to: string, data: string, value = 0n, onHash?: (hash: string) => void): Promise<string> {
     const { address, provider: eth } = await evmWallet(chain);
     if (address !== from.toLowerCase()) throw new Error(tr("The wallet changed. Press the button again."));
     const hash = await eth.request({
@@ -183,12 +190,13 @@ export function BotCoinPage({ chain, curve }: { chain: BotCurveChain; curve: str
       params: [{ from, to, data, ...(value > 0n ? { value: "0x" + value.toString(16) } : {}) }],
     });
     if (typeof hash !== "string") throw new Error(tr("The wallet did not send it."));
+    onHash?.(hash);
     setLastTx(hash);
     for (let i = 0; i < 60; i += 1) {
       const receipt = await getReceipt({ data: { chain, hash } }).catch(() => null);
       if (receipt) {
         if (receipt.status !== "0x1") throw new Error(tr("The transaction failed on chain."));
-        return;
+        return hash;
       }
       await new Promise((resolve) => setTimeout(resolve, 2500));
     }
@@ -209,6 +217,17 @@ export function BotCoinPage({ chain, curve }: { chain: BotCurveChain; curve: str
       const out = BigInt(fresh.out);
       if (out <= 0n) throw new Error(tr("That amount gets nothing back. Try a larger amount."));
       const minOut = (out * BigInt(10_000 - slip)) / 10_000n;
+      const follow = async (run: (onHash: (hash: string) => void) => Promise<string>, label: string) => {
+        const tx = beginTx(label);
+        try {
+          const hash = await run((h) => tx.hash(explorerTx(chain, h)));
+          tx.confirmed(explorerTx(chain, hash));
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : "";
+          if (!/Still confirming/i.test(msg)) tx.failed(() => formRef.current?.requestSubmit());
+          throw err;
+        }
+      };
       if (side === "buy") {
         const cap = BigInt(state.maxBuy);
         const bought = BigInt(state.mine?.bought ?? "0");
@@ -216,17 +235,17 @@ export function BotCoinPage({ chain, curve }: { chain: BotCurveChain; curve: str
           throw new Error(tr("Max buy is {0} {1} per wallet. You have {2} left.", formatSmart(cap, 18), state.native, formatSmart(cap - bought, 18)));
         }
         setBusy(tr("Approve the buy in your wallet."));
-        await send(from, curve, SEL.buy + word(minOut) + addrWord(ref), raw);
+        await follow((onHash) => send(from, curve, SEL.buy + word(minOut) + addrWord(ref), raw, onHash), tr("Buy"));
       } else {
         const now = await getBotCurve({ data: { chain, curve, wallet: from, tf } });
         const free = now.mine ? BigInt(now.mine.balance) - BigInt(now.mine.locked) : 0n;
         if (raw > free) throw new Error(tr("You can sell up to {0} {1}.", formatSmart(free > 0n ? free : 0n, 18), state.symbol));
         if (BigInt(now.mine?.allowance ?? "0") < raw) {
           setBusy(tr("Step 1 of 2: let the curve take the tokens you are selling."));
-          await send(from, now.token, SEL.approve + addrWord(curve) + word(raw));
+          await follow((onHash) => send(from, now.token, SEL.approve + addrWord(curve) + word(raw), 0n, onHash), tr("Approve"));
         }
         setBusy(BigInt(now.mine?.allowance ?? "0") < raw ? tr("Step 2 of 2: approve the sell.") : tr("Approve the sell in your wallet."));
-        await send(from, curve, SEL.sell + word(raw) + word(minOut) + addrWord(ref));
+        await follow((onHash) => send(from, curve, SEL.sell + word(raw) + word(minOut) + addrWord(ref), 0n, onHash), tr("Sell"));
       }
       setAmount("");
       await load();
@@ -251,8 +270,22 @@ export function BotCoinPage({ chain, curve }: { chain: BotCurveChain; curve: str
     }
   }
 
-  if (loadError && !state) return <p className="ticket text-sm text-sell">{tr(loadError)}</p>;
-  if (!state) return <p className="ticket text-sm text-muted">{tr("Loading the curve…")}</p>;
+  if (loadError && !state) {
+    return (
+      <div className="ticket" role="status">
+        <p className="text-sm text-muted">{tr(loadError)}</p>
+        <div className="mt-3 h-28 animate-pulse rounded-xl bg-bg" />
+      </div>
+    );
+  }
+  if (!state) {
+    return (
+      <div className="ticket" aria-busy="true">
+        <p className="text-sm text-muted">{tr("Loading the curve…")}</p>
+        <div className="mt-3 h-28 animate-pulse rounded-xl bg-bg" />
+      </div>
+    );
+  }
 
   const dex = dexSwapUrl(chain, state.token);
   const opensAt = state.startTime > Date.now() / 1000 ? new Date(state.startTime * 1000) : null;
@@ -388,7 +421,7 @@ export function BotCoinPage({ chain, curve }: { chain: BotCurveChain; curve: str
           )}
         </div>
       ) : (
-        <form onSubmit={(e) => void trade(e)} className="ticket fz-panel space-y-3">
+        <form ref={formRef} onSubmit={(e) => void trade(e)} className="ticket fz-panel space-y-3">
           <div className="grid grid-cols-2 gap-2">
             <button type="button" className={cn("w-full", side === "buy" ? "btn-cyan" : "btn-line")} onClick={() => { setSide("buy"); setAmount(""); }}>
               {tr("Buy")}
@@ -446,11 +479,16 @@ export function BotCoinPage({ chain, curve }: { chain: BotCurveChain; curve: str
           ) : null}
           {error ? <p className="text-sm text-sell">{tr(error)}</p> : null}
           {busy ? <p className="text-sm text-cyan">{tr(busy)}</p> : null}
-          {lastTx ? (
-            <a className="text-sm text-cyan" href={explorerTx(chain, lastTx)} target="_blank" rel="noopener noreferrer">
-              {tr("View last transaction")}
-            </a>
-          ) : null}
+          <TradePreview
+            amountIn={amount.trim() ? `${amount.trim()} ${side === "buy" ? state.native : state.symbol}` : undefined}
+            amountOut={quoted ? (side === "buy" ? `${formatSmart(quoted.out, 18)} ${state.symbol}` : `${formatSmart(quoted.out, 18)} ${state.native}`) : undefined}
+            minReceived={quoted ? minText(quoted.out, slip, 18, side === "buy" ? state.symbol : state.native) : undefined}
+            fee={side === "buy" && referrerFor(account) !== ZERO ? FEE_TG_REF : FEE_TG}
+            approving={approveLine(
+              amount.trim() ? `${amount.trim()} ${side === "buy" ? state.native : state.symbol}` : undefined,
+              quoted ? (side === "buy" ? `${formatSmart(quoted.out, 18)} ${state.symbol}` : `${formatSmart(quoted.out, 18)} ${state.native}`) : undefined,
+            )}
+          />
           <Button type="submit" className="w-full" disabled={Boolean(busy) || Boolean(opensAt)}>
             {!account ? tr("Connect wallet") : side === "buy" ? tr("Buy {0}", state.symbol) : tr("Sell {0}", state.symbol)}
           </Button>

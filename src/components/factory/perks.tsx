@@ -6,28 +6,45 @@ import { cn } from "@/lib/cn";
 
 import { track } from "@/lib/factory/analytics";
 import { tr } from "@/lib/i18n";
+import { tryFive } from "@/lib/factory/retry";
 import { usePortfolio } from "./portfolio";
 import { compactUsd } from "./market-line";
 const whole = (n: number) => (n >= 1e6 ? `${+(n / 1e6).toFixed(2)}M` : n >= 1e3 ? `${+(n / 1e3).toFixed(1)}K` : n.toFixed(0));
 const sol = (n: number) => `${+n.toFixed(4)} SOL`;
 
-function usePerks(wallet: string | null | undefined): Perks | null {
-  const [p, setP] = useState<Perks | null>(null);
+function usePerks(wallet: string | null | undefined): { data: Perks | null; note: string } {
+  const [data, setData] = useState<Perks | null>(null);
+  const [note, setNote] = useState("");
   useEffect(() => {
     let stop = false;
-    getPerks({ data: { wallet: wallet || "" } })
-      .then((r) => !stop && setP(r))
-      .catch(() => !stop && setP(PERK_DEFAULTS));
+    setData(null);
+    setNote("");
+    tryFive(
+      () => getPerks({ data: { wallet: wallet || "" } }),
+      () => {
+        if (!stop) setNote("Busy right now, retrying");
+      },
+    )
+      .then((r) => {
+        if (!stop) {
+          setData(r);
+          setNote("");
+        }
+      })
+      .catch(() => {
+        if (!stop) setNote("Busy right now. Try again in a minute.");
+      });
     return () => {
       stop = true;
     };
   }, [wallet]);
-  return p;
+  return { data, note };
 }
 
 /** Profile card: current FERZAN tier, the next one, and what each tier gives. Numbers come from the perks API. */
 export function FerzanPerksCard({ sol: wallet }: { sol: string | null }) {
-  const p = usePerks(wallet) ?? PERK_DEFAULTS;
+  const { data, note } = usePerks(wallet);
+  const p = data ?? PERK_DEFAULTS;
   const next = p.tiers.find((row) => row.tier === p.nextTier);
   const more = p.nextMin > p.balance ? p.nextMin - p.balance : 0;
   return (
@@ -36,7 +53,8 @@ export function FerzanPerksCard({ sol: wallet }: { sol: string | null }) {
         <p className="text-sm font-medium text-cyan">{tr("FERZAN holder tier")}</p>
         {p.active && p.badge ? <span className="chip-on rounded-full px-3 py-1 text-xs font-semibold">{tr(p.badge)}</span> : null}
       </div>
-      {!p.active ? <p className="mt-2 text-sm text-muted">{tr("Opens at launch · Fri Nov 13, 4:00 PM ET")}</p> : null}
+      {!data && note ? <p className="mt-2 text-sm text-muted">{tr(note)}</p> : null}
+      {!p.active && data ? <p className="mt-2 text-sm text-muted">{tr("Opens at launch · Fri Nov 13, 4:00 PM ET")}</p> : null}
       {p.active && !wallet ? <p className="mt-2 text-sm text-muted">{tr("Sign in to see your status. It is read from your Solana wallet.")}</p> : null}
       {p.active && wallet && p.balance <= 0 ? (
         <p className="mt-2 text-sm text-muted">
@@ -154,7 +172,8 @@ export function ReferralCard({ evm, sol: solWallet }: { evm: string | null; sol:
 export function LaunchPerksNote() {
   const account = useAccountWallets();
   const wallet = account?.authenticated ? account.solAddress : null;
-  const p = usePerks(wallet);
+  const { data: p, note } = usePerks(wallet);
+  if (note && !p) return <p className="mt-2 text-xs text-muted">{tr(note)}</p>;
   if (!p) return null;
   const mine =
     p.active && p.tierName !== "none" && p.badge

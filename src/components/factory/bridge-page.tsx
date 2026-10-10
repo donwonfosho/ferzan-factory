@@ -3,6 +3,7 @@ import { BRIDGE_FEE_BPS, BRIDGE_META, BRIDGE_SOURCES, type BridgeChain } from "@
 import { cn } from "@/lib/cn";
 import { tr } from "@/lib/i18n";
 import { useBridgeFlow } from "./bridge-buy-panel";
+import { TradePreview, bridgeApproveLine } from "./trade-confidence";
 import { Button, TextInput } from "./ui";
 
 const ALL_CHAINS = Object.keys(BRIDGE_META) as BridgeChain[];
@@ -79,6 +80,12 @@ export function BridgePage() {
                 <span className="text-muted">{quote.q.via === "relay" ? "Relay" : "deBridge"}</span>
               </p>
               {quote.q.feeText ? <p className="text-sm">{tr(quote.q.feeText)}</p> : null}
+              <TradePreview
+                amountIn={flow.amount.trim() ? `${flow.amount.trim()} ${meta.sym}` : undefined}
+                amountOut={quote.q.outText || undefined}
+                fee={quote.q.feeText ? tr(quote.q.feeText) : undefined}
+                approving={bridgeApproveLine(`${flow.amount.trim()} ${meta.sym}`, dmeta.label)}
+              />
               <div className="min-w-0">
                 <p className="fz-eyebrow">{tr("Your {0} wallet", dmeta.label)}</p>
                 <div className="mt-1 flex flex-col gap-2 sm:flex-row sm:items-stretch">

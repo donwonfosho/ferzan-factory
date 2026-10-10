@@ -33,6 +33,7 @@ export function Floor() {
 
   return (
     <div className="space-y-10 lg:space-y-14">
+      <FerzanHero />
       <section className="relative grid items-center gap-8 lg:grid-cols-[1.15fr_1fr] lg:gap-12">
         <div className="fz-orb -top-10 left-0 h-56 w-56" aria-hidden />
         <div className="relative fz-rise">
@@ -89,8 +90,6 @@ export function Floor() {
           <KingOfTheHill />
         </div>
       </section>
-
-      <FerzanHero />
 
       <section aria-label={tr("Chains")}>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3 lg:grid-cols-8">

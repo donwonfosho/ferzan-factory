@@ -21,6 +21,7 @@ const ENTRIES = [
       "Coin creator badges on coin pages. They count launches we already have. They are not a guarantee.",
       "Launch date locked: Friday, November 13, 2026 at 4:00 PM ET.",
       "System status",
+      "Launch countdown on the home page, and a preview before you sign a buy, sell, or bridge.",
     ],
   },
 ];

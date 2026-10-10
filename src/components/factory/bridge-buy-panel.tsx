@@ -5,12 +5,14 @@ import { solBalance } from "@/lib/factory/solana";
 import { tronWallet } from "@/lib/factory/tron-ton-wallets";
 import { formatSmart, parseDecimal } from "@/lib/factory/units";
 import { evmWallet, solanaWallet } from "@/lib/factory/wallet-bridge";
-import type { EvmChainId } from "@/lib/factory/deploy";
+import { explorerTx, type EvmChainId } from "@/lib/factory/deploy";
+import { solanaExplorerTx } from "@/lib/factory/solana";
 import { cn } from "@/lib/cn";
 import { Button, TextInput } from "./ui";
 
 import { track } from "@/lib/factory/analytics";
 import { tr } from "@/lib/i18n";
+import { TradePreview, beginTx, bridgeApproveLine } from "./trade-confidence";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const hexToBytes = (hex: string) => Uint8Array.from((hex.match(/.{1,2}/g) ?? []).map((b) => parseInt(b, 16)));
@@ -78,19 +80,27 @@ export function useBridgeFlow(src: BridgeChain, dest: BridgeChain, onArrived?: (
     if (!quote) return;
     setError("");
     setNote("");
+    const tx = beginTx(tr("Bridge"));
+    let explorer = "";
     try {
       const before = await balanceOf(dest, quote.recipient).catch(() => 0n);
       setBusy(tr("Approve the bridge in your wallet."));
       if (src === "solana") {
         const w = await solanaWallet();
-        await w.signAndSend(hexToBytes(quote.q.solHex));
+        const sig = await w.signAndSend(hexToBytes(quote.q.solHex));
+        explorer = solanaExplorerTx(sig);
+        tx.hash(explorer);
       } else {
         const w = await evmWallet(src as EvmChainId); // switches to the source chain again in case it changed
         for (const t of quote.q.evm) {
-          await w.provider.request({
+          const hash = await w.provider.request({
             method: "eth_sendTransaction",
             params: [{ from: quote.sender, to: t.to, data: t.data, value: "0x" + BigInt(t.value).toString(16) }],
           });
+          if (typeof hash === "string" && hash.startsWith("0x")) {
+            explorer = explorerTx(src as EvmChainId, hash);
+            tx.hash(explorer);
+          }
         }
       }
       setQuote(null);
@@ -102,6 +112,7 @@ export function useBridgeFlow(src: BridgeChain, dest: BridgeChain, onArrived?: (
         const now = await balanceOf(dest, quote.recipient).catch(() => before);
         if (now - before >= want) {
           const got = formatSmart(now - before, dmeta.dec);
+          tx.confirmed(explorer || undefined, `+${got} ${dmeta.sym}`);
           setNote(
             standalone
               ? tr("Arrived: +{0} {1} on {2}.", got, dmeta.sym, dmeta.label)
@@ -113,6 +124,7 @@ export function useBridgeFlow(src: BridgeChain, dest: BridgeChain, onArrived?: (
       }
       if (alive.current) setNote(tr("Not there yet. Bridges can be slow; check your wallet on {0} in a few minutes. Your funds are safe with the bridge.", dmeta.label));
     } catch (err) {
+      tx.failed();
       const msg = err instanceof Error ? err.message : "";
       setError(/declin|reject|denied|cancel|4001/i.test(msg) ? tr("You cancelled in the wallet.") : msg.split("\n")[0] || tr("The bridge did not go through."));
     } finally {
@@ -168,6 +180,12 @@ export function BridgeBuy({ dest, onArrived }: { dest: BridgeChain; onArrived?: 
               <span className="text-muted">{quote.q.via === "relay" ? "Relay" : "deBridge"}</span>
             </p>
             {quote.q.feeText ? <p className="text-xs text-muted">{tr(quote.q.feeText)}</p> : null}
+            <TradePreview
+              amountIn={amount.trim() ? `${amount.trim()} ${meta.sym}` : undefined}
+              amountOut={quote.q.outText || undefined}
+              fee={quote.q.feeText ? tr(quote.q.feeText) : undefined}
+              approving={bridgeApproveLine(`${amount.trim()} ${meta.sym}`, dmeta.label)}
+            />
             <Button type="button" className="w-full" disabled={Boolean(busy)} onClick={() => void send()}>
               {tr("Approve in wallet")}
             </Button>

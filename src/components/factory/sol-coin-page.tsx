@@ -19,6 +19,8 @@ import { BridgeBuy } from "./bridge-buy-panel";
 import { CopyAddress } from "./copy-address";
 import { OpenInTelegram } from "./open-telegram";
 import { tr } from "@/lib/i18n";
+import { tryFive } from "@/lib/factory/retry";
+import { FEE_TG, TradePreview, approveLine, beginTx, minText, watchSolana } from "./trade-confidence";
 import { creditCall } from "@/lib/factory/compete";
 const TIMEFRAMES = [
   { tf: 60, label: "1m" },
@@ -64,21 +66,26 @@ export function SolCoinPage({ mint }: { mint: string }) {
   const [amount, setAmount] = useState("");
   const [slip, setSlip] = useState(500);
   const [quote, setQuote] = useState<bigint | null>(null);
+  const [minQuoted, setMinQuoted] = useState<bigint | null>(null);
   const [feeBps, setFeeBps] = useState<number | null>(null);
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
   const [lastTx, setLastTx] = useState("");
+  const formRef = useRef<HTMLFormElement>(null);
+  const seen = useRef("");
 
   // A signed-in account's Solana wallet is known without asking; an extension is asked on first trade.
   const knownWallet = wallet || (account?.authenticated ? account.solAddress ?? "" : "");
 
   const load = useCallback(async () => {
+    const once = () => getSolCoin({ data: { mint, wallet: knownWallet, tf } });
     try {
-      const next = await getSolCoin({ data: { mint, wallet: knownWallet, tf } });
+      const next = seen.current === mint ? await once() : await tryFive(once, () => setLoadError("Busy right now, retrying"));
+      seen.current = mint;
       setCoin(next);
       setLoadError("");
-    } catch (err) {
-      setLoadError(err instanceof Error ? err.message : tr("This coin did not load."));
+    } catch {
+      if (seen.current !== mint) setLoadError("Busy right now. Try again in a minute.");
     }
   }, [mint, knownWallet, tf]);
 
@@ -101,15 +108,18 @@ export function SolCoinPage({ mint }: { mint: string }) {
   // Live quote once we know which wallet will trade (the builder needs its token accounts).
   useEffect(() => {
     setQuote(null);
+    setMinQuoted(null);
     if (!raw || raw <= 0n || !knownWallet || !coin || coin.graduated) return;
     const id = window.setTimeout(() => {
       void buildSolSwap({ data: { mint, wallet: knownWallet, side, amount: raw.toString(), slippageBps: slip } }).then(
         (q) => {
           setQuote(BigInt(q.amountOut));
+          setMinQuoted(/^\d+$/.test(q.minOut) ? BigInt(q.minOut) : null);
           setFeeBps(q.feeBps);
         },
         () => {
           setQuote(null);
+          setMinQuoted(null);
           setFeeBps(null);
         },
       );
@@ -140,9 +150,17 @@ export function SolCoinPage({ mint }: { mint: string }) {
         );
       }
       setBusy(tr("Approve it in your wallet."));
-      const signature = await w.signAndSend(fromB64(built.txB64));
+      const tx = beginTx(side === "buy" ? tr("Buy") : tr("Sell"));
+      let signature = "";
+      try {
+        signature = await w.signAndSend(fromB64(built.txB64));
+      } catch (err) {
+        tx.failed(() => formRef.current?.requestSubmit());
+        throw err;
+      }
       if (side === "buy") creditCall("solana", signature, w.address);
       setLastTx(signature);
+      watchSolana(tx.id, signature, solanaExplorerTx(signature));
       setAmount("");
       setBusy(tr("Sent. Updating in a few seconds."));
       window.setTimeout(() => void load(), 6000);
@@ -154,8 +172,22 @@ export function SolCoinPage({ mint }: { mint: string }) {
     }
   }
 
-  if (loadError && !coin) return <p className="ticket mx-auto max-w-3xl text-sm text-sell">{tr(loadError)}</p>;
-  if (!coin) return <p className="ticket mx-auto max-w-3xl text-sm text-muted">{tr("Loading the curve…")}</p>;
+  if (loadError && !coin) {
+    return (
+      <div className="ticket mx-auto max-w-3xl" role="status">
+        <p className="text-sm text-muted">{tr(loadError)}</p>
+        <div className="mt-3 h-28 animate-pulse rounded-xl bg-bg" />
+      </div>
+    );
+  }
+  if (!coin) {
+    return (
+      <div className="ticket mx-auto max-w-3xl" aria-busy="true">
+        <p className="text-sm text-muted">{tr("Loading the curve…")}</p>
+        <div className="mt-3 h-28 animate-pulse rounded-xl bg-bg" />
+      </div>
+    );
+  }
   if (!coin.indexed) {
     return (
       <p className="ticket mx-auto max-w-3xl text-sm text-muted">
@@ -259,7 +291,7 @@ export function SolCoinPage({ mint }: { mint: string }) {
           </a>
         </div>
       ) : (
-        <form onSubmit={(e) => void trade(e)} className="ticket fz-panel space-y-3">
+        <form ref={formRef} onSubmit={(e) => void trade(e)} className="ticket fz-panel space-y-3">
           <div className="grid grid-cols-2 gap-2">
             <button type="button" className={cn("w-full", side === "buy" ? "btn-cyan" : "btn-line")} onClick={() => { setSide("buy"); setAmount(""); }}>
               {tr("Buy")}
@@ -304,11 +336,16 @@ export function SolCoinPage({ mint }: { mint: string }) {
           ) : null}
           {error ? <p className="text-sm text-sell">{tr(error)}</p> : null}
           {busy ? <p className="text-sm text-cyan">{tr(busy)}</p> : null}
-          {lastTx ? (
-            <a className="text-sm text-cyan" href={solanaExplorerTx(lastTx)} target="_blank" rel="noopener noreferrer">
-              {tr("View last transaction")}
-            </a>
-          ) : null}
+          <TradePreview
+            amountIn={amount.trim() ? `${amount.trim()} ${side === "buy" ? "SOL" : coin.symbol}` : undefined}
+            amountOut={quote !== null ? (side === "buy" ? `${formatSmart(quote, TOKEN_DECIMALS)} ${coin.symbol}` : `${formatSmart(quote, SOL_DECIMALS)} SOL`) : undefined}
+            minReceived={minQuoted !== null && minQuoted > 0n ? `${formatSmart(minQuoted, side === "buy" ? TOKEN_DECIMALS : SOL_DECIMALS)} ${side === "buy" ? coin.symbol : "SOL"}` : quote !== null ? minText(quote, slip, side === "buy" ? TOKEN_DECIMALS : SOL_DECIMALS, side === "buy" ? coin.symbol : "SOL") : undefined}
+            fee={feeBps === 100 ? FEE_TG : feeBps !== null ? tr("Fee on this trade: {0}%.", feeBps % 100 === 0 ? String(feeBps / 100) : (feeBps / 100).toFixed(2)) : undefined}
+            approving={approveLine(
+              amount.trim() ? `${amount.trim()} ${side === "buy" ? "SOL" : coin.symbol}` : undefined,
+              quote !== null ? (side === "buy" ? `${formatSmart(quote, TOKEN_DECIMALS)} ${coin.symbol}` : `${formatSmart(quote, SOL_DECIMALS)} SOL`) : undefined,
+            )}
+          />
           <Button type="submit" className="w-full" disabled={Boolean(busy)}>
             {side === "buy" ? tr("Buy {0}", coin.symbol) : tr("Sell {0}", coin.symbol)}
           </Button>

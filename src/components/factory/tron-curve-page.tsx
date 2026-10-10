@@ -19,6 +19,8 @@ import { CopyAddress } from "./copy-address";
 import { OpenInTelegram } from "./open-telegram";
 
 import { tr } from "@/lib/i18n";
+import { tryFive } from "@/lib/factory/retry";
+import { FEE_TG, FEE_TG_REF, TradePreview, approveLine, beginTx, minText } from "./trade-confidence";
 const TIMEFRAMES = [
   { tf: 60, label: "1m" },
   { tf: 300, label: "5m" },
@@ -80,13 +82,18 @@ export function TronCurvePage({ curve }: { curve: string }) {
   const [error, setError] = useState("");
   const [lastTx, setLastTx] = useState("");
   const [copied, setCopied] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const seen = useRef("");
 
   const load = useCallback(async () => {
+    const once = () => getTronCurve({ data: { curve, wallet: account, tf } });
     try {
-      setState(await getTronCurve({ data: { curve, wallet: account, tf } }));
+      const next = seen.current === curve ? await once() : await tryFive(once, () => setLoadError("Busy right now, retrying"));
+      seen.current = curve;
+      setState(next);
       setLoadError("");
-    } catch (err) {
-      setLoadError(err instanceof Error ? err.message : tr("This coin did not load."));
+    } catch {
+      if (seen.current !== curve) setLoadError("Busy right now. Try again in a minute.");
     }
   }, [curve, account, tf]);
 
@@ -152,13 +159,27 @@ export function TronCurvePage({ curve }: { curve: string }) {
           throw new Error(tr("Keep about 40 TRX in the wallet for Tron network energy on top of what you spend."));
         }
         setBusy(tr("Approve the buy in TronLink."));
-        await sign(wallet, "buy", raw, minOut);
+        const tx = beginTx(tr("Buy"));
+        try {
+          const txid = await sign(wallet, "buy", raw, minOut);
+          tx.hash(`https://tronscan.org/#/transaction/${txid}`);
+        } catch (err) {
+          tx.failed(() => formRef.current?.requestSubmit());
+          throw err;
+        }
       } else {
         const have = fresh.mine ? BigInt(fresh.mine.balance) : 0n;
         if (raw > have) throw new Error(tr("You can sell up to {0} {1}.", formatSmart(have, DEC), state.symbol));
         if (BigInt(fresh.mine?.allowance ?? "0") < raw) {
           setBusy(tr("Step 1 of 2: let the curve take the tokens you are selling."));
-          await sign(wallet, "approve", raw, 0n);
+          const allow = beginTx(tr("Approve"));
+          try {
+            const txid = await sign(wallet, "approve", raw, 0n);
+            allow.hash(`https://tronscan.org/#/transaction/${txid}`);
+          } catch (err) {
+            allow.failed(() => formRef.current?.requestSubmit());
+            throw err;
+          }
           for (let i = 0; i < 20; i += 1) {
             await sleep(3000);
             const again = await getTronCurve({ data: { curve, wallet: wallet.address, tf } });
@@ -169,7 +190,14 @@ export function TronCurvePage({ curve }: { curve: string }) {
         } else {
           setBusy(tr("Approve the sell in TronLink."));
         }
-        await sign(wallet, "sell", raw, minOut);
+        const tx = beginTx(tr("Sell"));
+        try {
+          const txid = await sign(wallet, "sell", raw, minOut);
+          tx.hash(`https://tronscan.org/#/transaction/${txid}`);
+        } catch (err) {
+          tx.failed(() => formRef.current?.requestSubmit());
+          throw err;
+        }
       }
       setAmount("");
       setBusy(tr("Sent. Waiting for Tron to confirm."));
@@ -199,8 +227,22 @@ export function TronCurvePage({ curve }: { curve: string }) {
     }
   }
 
-  if (loadError && !state) return <p className="ticket text-sm text-sell">{tr(loadError)}</p>;
-  if (!state) return <p className="ticket text-sm text-muted">{tr("Loading the curve…")}</p>;
+  if (loadError && !state) {
+    return (
+      <div className="ticket" role="status">
+        <p className="text-sm text-muted">{tr(loadError)}</p>
+        <div className="mt-3 h-28 animate-pulse rounded-xl bg-bg" />
+      </div>
+    );
+  }
+  if (!state) {
+    return (
+      <div className="ticket" aria-busy="true">
+        <p className="text-sm text-muted">{tr("Loading the curve…")}</p>
+        <div className="mt-3 h-28 animate-pulse rounded-xl bg-bg" />
+      </div>
+    );
+  }
 
   const opensAt = state.start > Date.now() / 1000 ? new Date(state.start * 1000) : null;
 
@@ -326,7 +368,7 @@ export function TronCurvePage({ curve }: { curve: string }) {
           </div>
         </div>
       ) : (
-        <form onSubmit={(e) => void trade(e)} className="ticket fz-panel space-y-3">
+        <form ref={formRef} onSubmit={(e) => void trade(e)} className="ticket fz-panel space-y-3">
           <div className="grid grid-cols-2 gap-2">
             <button type="button" className={cn("w-full", side === "buy" ? "btn-cyan" : "btn-line")} onClick={() => { setSide("buy"); setAmount(""); }}>
               {tr("Buy")}
@@ -382,11 +424,16 @@ export function TronCurvePage({ curve }: { curve: string }) {
             </p>
           ) : null}
           {busy ? <p className="text-sm text-cyan">{tr(busy)}</p> : null}
-          {lastTx ? (
-            <a className="text-sm text-cyan" href={`https://tronscan.org/#/transaction/${lastTx}`} target="_blank" rel="noopener noreferrer">
-              {tr("View last transaction")}
-            </a>
-          ) : null}
+          <TradePreview
+            amountIn={amount.trim() ? `${amount.trim()} ${side === "buy" ? "TRX" : state.symbol}` : undefined}
+            amountOut={quoted ? (side === "buy" ? `${formatSmart(quoted.out, DEC)} ${state.symbol}` : `${formatSmart(quoted.out, DEC)} TRX`) : undefined}
+            minReceived={quoted ? minText(quoted.out, slip, DEC, side === "buy" ? state.symbol : "TRX") : undefined}
+            fee={side === "buy" && referrerFor(account) ? FEE_TG_REF : FEE_TG}
+            approving={approveLine(
+              amount.trim() ? `${amount.trim()} ${side === "buy" ? "TRX" : state.symbol}` : undefined,
+              quoted ? (side === "buy" ? `${formatSmart(quoted.out, DEC)} ${state.symbol}` : `${formatSmart(quoted.out, DEC)} TRX`) : undefined,
+            )}
+          />
           <Button type="submit" className="w-full" disabled={Boolean(busy) || Boolean(opensAt)}>
             {!account ? tr("Connect wallet") : side === "buy" ? tr("Buy {0}", state.symbol) : tr("Sell {0}", state.symbol)}
           </Button>

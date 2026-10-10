@@ -110,7 +110,7 @@ export const listTelegram = createServerFn({ method: "GET" })
       const items = Array.isArray(body.items) ? body.items : [];
       return items.map(toCoin).filter((coin) => coin.token && coin.url && coin.symbol);
     } catch {
-      return [];
+      throw new Error("Busy right now");
     }
   });
 

@@ -19,6 +19,8 @@ import { CopyAddress } from "./copy-address";
 import { OpenInTelegram } from "./open-telegram";
 
 import { tr } from "@/lib/i18n";
+import { tryFive } from "@/lib/factory/retry";
+import { FEE_TG, FEE_TG_REF, TradePreview, approveLine, beginTx, minText } from "./trade-confidence";
 const TIMEFRAMES = [
   { tf: 60, label: "1m" },
   { tf: 300, label: "5m" },
@@ -81,13 +83,18 @@ export function TonCurvePage({ curve }: { curve: string }) {
   const [error, setError] = useState("");
   const [sentOnce, setSentOnce] = useState(false);
   const [copied, setCopied] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const seen = useRef("");
 
   const load = useCallback(async () => {
+    const once = () => getTonCurve({ data: { curve, wallet: account, tf } });
     try {
-      setState(await getTonCurve({ data: { curve, wallet: account, tf } }));
+      const next = seen.current === curve ? await once() : await tryFive(once, () => setLoadError("Busy right now, retrying"));
+      seen.current = curve;
+      setState(next);
       setLoadError("");
-    } catch (err) {
-      setLoadError(err instanceof Error ? err.message : tr("This coin did not load."));
+    } catch {
+      if (seen.current !== curve) setLoadError("Busy right now. Try again in a minute.");
     }
   }, [curve, account, tf]);
 
@@ -149,7 +156,14 @@ export function TonCurvePage({ curve }: { curve: string }) {
         if (raw > have) throw new Error(tr("You can sell up to {0} {1}.", formatSmart(have, DEC), state.symbol));
       }
       setBusy(side === "buy" ? tr("Approve the buy in your TON wallet.") : tr("Approve the sell in your TON wallet."));
-      await sign(wallet, side, raw, minOut);
+      const tx = beginTx(side === "buy" ? tr("Buy") : tr("Sell"));
+      try {
+        await sign(wallet, side, raw, minOut);
+      } catch (err) {
+        tx.failed(() => formRef.current?.requestSubmit());
+        throw err;
+      }
+      // TON Connect does not give this site a chain receipt. Stay pending until the visitor dismisses it.
       setAmount("");
       setBusy(tr("Sent. Waiting for TON to confirm."));
       await sleep(6000);
@@ -178,8 +192,22 @@ export function TonCurvePage({ curve }: { curve: string }) {
     }
   }
 
-  if (loadError && !state) return <p className="ticket text-sm text-sell">{tr(loadError)}</p>;
-  if (!state) return <p className="ticket text-sm text-muted">{tr("Loading the curve…")}</p>;
+  if (loadError && !state) {
+    return (
+      <div className="ticket" role="status">
+        <p className="text-sm text-muted">{tr(loadError)}</p>
+        <div className="mt-3 h-28 animate-pulse rounded-xl bg-bg" />
+      </div>
+    );
+  }
+  if (!state) {
+    return (
+      <div className="ticket" aria-busy="true">
+        <p className="text-sm text-muted">{tr("Loading the curve…")}</p>
+        <div className="mt-3 h-28 animate-pulse rounded-xl bg-bg" />
+      </div>
+    );
+  }
 
   const opensAt = state.start > Date.now() / 1000 ? new Date(state.start * 1000) : null;
 
@@ -305,7 +333,7 @@ export function TonCurvePage({ curve }: { curve: string }) {
           </div>
         </div>
       ) : (
-        <form onSubmit={(e) => void trade(e)} className="ticket fz-panel space-y-3">
+        <form ref={formRef} onSubmit={(e) => void trade(e)} className="ticket fz-panel space-y-3">
           <div className="grid grid-cols-2 gap-2">
             <button type="button" className={cn("w-full", side === "buy" ? "btn-cyan" : "btn-line")} onClick={() => { setSide("buy"); setAmount(""); }}>
               {tr("Buy")}
@@ -354,11 +382,16 @@ export function TonCurvePage({ curve }: { curve: string }) {
           </p>
           {error ? <p className="text-sm text-sell">{tr(error)}</p> : null}
           {busy ? <p className="text-sm text-cyan">{tr(busy)}</p> : null}
-          {sentOnce ? (
-            <a className="text-sm text-cyan" href={`https://tonviewer.com/${curve}`} target="_blank" rel="noopener noreferrer">
-              {tr("View the curve on Tonviewer")}
-            </a>
-          ) : null}
+          <TradePreview
+            amountIn={amount.trim() ? `${amount.trim()} ${side === "buy" ? "TON" : state.symbol}` : undefined}
+            amountOut={quoted ? (side === "buy" ? `${formatSmart(quoted.out, DEC)} ${state.symbol}` : `${formatSmart(quoted.out, DEC)} TON`) : undefined}
+            minReceived={quoted ? minText(quoted.out, slip, DEC, side === "buy" ? state.symbol : "TON") : undefined}
+            fee={side === "buy" && referrerFor(account) ? FEE_TG_REF : FEE_TG}
+            approving={approveLine(
+              amount.trim() ? `${amount.trim()} ${side === "buy" ? "TON" : state.symbol}` : undefined,
+              quoted ? (side === "buy" ? `${formatSmart(quoted.out, DEC)} ${state.symbol}` : `${formatSmart(quoted.out, DEC)} TON`) : undefined,
+            )}
+          />
           <Button type="submit" className="w-full" disabled={Boolean(busy) || Boolean(opensAt)}>
             {!account ? tr("Connect wallet") : side === "buy" ? tr("Buy {0}", state.symbol) : tr("Sell {0}", state.symbol)}
           </Button>

@@ -10,13 +10,14 @@ import {
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import { Buffer } from "buffer";
 import { TREASURY } from "./catalog";
+import { SOLANA_CURVE_PROGRAM } from "./contracts";
 import { keypairFromSite, solanaRelay } from "./solana";
 import { readSiteWallet } from "./site-wallet";
 import { bufferReady } from "./buffer-polyfill";
 
 void bufferReady;
 
-export const SOLANA_PROGRAM_ID = new PublicKey("G7n5XBB7pjvKS7JfC6esgQGGAyPku5cposdiHfVAUxnJ");
+export const SOLANA_PROGRAM_ID = new PublicKey(SOLANA_CURVE_PROGRAM);
 const LOADER = new PublicKey("BPFLoaderUpgradeab1e11111111111111111111111");
 const TOKEN_PROGRAM = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
 const ATA_PROGRAM = new PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");

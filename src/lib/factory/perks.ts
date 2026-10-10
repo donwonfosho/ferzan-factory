@@ -60,7 +60,7 @@ export const getPerks = createServerFn({ method: "GET" })
       headers: { accept: "application/json" },
       signal: AbortSignal.timeout(8_000),
     }).catch(() => null);
-    if (!res || !res.ok) return PERK_DEFAULTS;
+    if (!res || !res.ok) throw new Error("Busy right now");
     const it = (await res.json().catch(() => ({}))) as Record<string, unknown>;
     const tier: PerkTier = it.tier === "holder" || it.tier === "whale" ? it.tier : "none";
     const mine = Boolean(data.wallet);

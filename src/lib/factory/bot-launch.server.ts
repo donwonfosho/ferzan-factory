@@ -5,29 +5,13 @@
 import { env } from "@/lib/env.server";
 import { chainRpc, type RelayChain } from "./relay";
 import type { AnyLaunchTx, BotLaunchChain, BotLaunchInput, ChainModes, CurveLaunchChain, TonMessage } from "./bot-launch";
+import { FACTORIES, PLAIN_FACTORIES, TRON_PLAIN_FACTORY } from "./contracts";
 import { TRON_CURVE_FACTORY } from "./tron-curve";
 
-const API = "https://launch.ferzaneco.com/api";
+export { FACTORIES, PLAIN_FACTORIES, TRON_PLAIN_FACTORY };
 
-/** Current (v3) bonding-curve factories, lower-case. Same addresses the Launch API uses (evm-factories.json, *_v3). */
-export const FACTORIES: Record<CurveLaunchChain, string> = {
-  bsc: "0xe8ca8382ab3ab55ffb310fb55da988fb83c922bd",
-  base: "0x10b1c446ff600dfc4dd9218a364bdbaf93a0fea2",
-  ethereum: "0xb56b4184dbb5bc5c67168ae3a4960e69392118de",
-  robinhood: "0xb56b4184dbb5bc5c67168ae3a4960e69392118de",
-  arc: "0xe8ca8382ab3ab55ffb310fb55da988fb83c922bd",
-};
-/** Current (v3) standard-coin factories, lower-case. A standard launch goes here, never to a curve factory. */
-export const PLAIN_FACTORIES: Record<CurveLaunchChain, string> = {
-  bsc: "0x10b1c446ff600dfc4dd9218a364bdbaf93a0fea2",
-  base: "0xe8ca8382ab3ab55ffb310fb55da988fb83c922bd",
-  ethereum: "0x05a1290f6cabb1681f2599b2935f8b3ee5981cba",
-  robinhood: "0x05a1290f6cabb1681f2599b2935f8b3ee5981cba",
-  arc: "0x7a7ef0415ac2f118cdf0ce9090b0207d43da1d3c",
-};
+const API = "https://launch.ferzaneco.com/api";
 const CHAIN_IDS: Record<CurveLaunchChain, number> = { bsc: 56, base: 8453, ethereum: 1, robinhood: 4663, arc: 5042 };
-/** Ferzan's Tron plain-launch factory. TRON_FACTORY_HEX is this same contract. */
-export const TRON_PLAIN_FACTORY = "TBcPG1XKutsns1dJtgJeWQDuGRxeESeMXn";
 /** Ferzan's Tron launch factory (TBcPG1XKutsns1dJtgJeWQDuGRxeESeMXn), as TronGrid writes it. */
 const TRON_FACTORY_HEX = "4112001441b5746c26ce9f287e48404e4fbc7d57d8";
 const TRON_MAX_FEE_SUN = 50_000_000n; // the launch fee is fixed in the factory (5 TRX); refuse anything above 50

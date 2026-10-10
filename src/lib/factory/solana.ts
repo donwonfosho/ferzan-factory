@@ -24,7 +24,8 @@ type SolanaRequest =
   | { method: "rent"; size: number }
   | { method: "account"; address: string }
   | { method: "send"; raw: string; blockhash: string; lastValidBlockHeight: number }
-  | { method: "holders"; mint: string };
+  | { method: "holders"; mint: string }
+  | { method: "status"; signature: string };
 
 export const solanaRelay = createServerFn({ method: "POST" })
   .validator((data: unknown): SolanaRequest => {
@@ -53,6 +54,12 @@ export const solanaRelay = createServerFn({ method: "POST" })
     if (row.method === "holders") {
       if (typeof row.mint !== "string" || !/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(row.mint)) throw new Error("Mint looks wrong.");
       return { method: "holders", mint: row.mint };
+    }
+    if (row.method === "status") {
+      if (typeof row.signature !== "string" || !/^[1-9A-HJ-NP-Za-km-z]{32,88}$/.test(row.signature)) {
+        throw new Error("Signature looks wrong.");
+      }
+      return { method: "status", signature: row.signature };
     }
     if (row.method === "send") {
       if (typeof row.raw !== "string" || row.raw.length < 20 || row.raw.length > 8_000) throw new Error("Transaction looks wrong.");
@@ -111,6 +118,14 @@ export const solanaRelay = createServerFn({ method: "POST" })
         return { address: owner, amount: row.amount };
       });
       return { holders: rows };
+    }
+    if (data.method === "status") {
+      const found = await rpc.getSignatureStatuses([data.signature]);
+      const row = found.value[0];
+      if (!row) return { status: "pending" as const };
+      if (row.err) return { status: "failed" as const };
+      if (row.confirmationStatus === "confirmed" || row.confirmationStatus === "finalized") return { status: "confirmed" as const };
+      return { status: "pending" as const };
     }
     const signature = await rpc.sendRawTransaction(Buffer.from(data.raw, "base64"), { skipPreflight: false });
     const confirmed = await rpc.confirmTransaction(

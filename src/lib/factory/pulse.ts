@@ -34,12 +34,16 @@ export type FerzanPulse = {
   burned: number;
   boughtSol: number;
   trades: number;
+  /** Set only when the Launch API returns a number above zero. */
+  holders: number;
+  volume24hUsd: number;
 };
 export type PulseStats = { launches: number; graduated: number; curves: number; chainsUsed: number; chains: number };
 export type Pulse = { now: number; tape: TapeItem[]; graduations: Graduation[]; ferzan: FerzanPulse; stats: PulseStats };
 
 const str = (v: unknown, max = 80) => (typeof v === "string" ? v.slice(0, max) : "");
 const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : 0);
+const positive = (v: unknown) => (typeof v === "number" && Number.isFinite(v) && v > 0 ? v : 0);
 const rec = (v: unknown): Record<string, unknown> => (v && typeof v === "object" ? (v as Record<string, unknown>) : {});
 const https = (v: unknown) => {
   const s = str(v, 300);
@@ -98,6 +102,8 @@ export const getPulse = createServerFn({ method: "GET" }).handler(async (): Prom
       burned: num(f.burned),
       boughtSol: num(f.bought_sol),
       trades: num(f.trades),
+      holders: positive(f.holders) || positive(f.holder_count),
+      volume24hUsd: positive(f.volume_24h_usd) || positive(f.vol24h_usd) || positive(f.volume_usd_24h),
     },
     stats: { launches: num(st.launches), graduated: num(st.graduated), curves: num(st.curves), chainsUsed: num(st.chains_used), chains: num(st.chains) || 8 },
   };

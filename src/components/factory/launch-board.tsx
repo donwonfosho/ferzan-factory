@@ -10,6 +10,7 @@ import { SafetyBadges } from "./safety-badges";
 import { QuickBuyBar, QuickBuyButton } from "./quick-buy";
 
 import { tr } from "@/lib/i18n";
+import { tryFive } from "@/lib/factory/retry";
 const TABS: { id: TelegramSort; label: string }[] = [
   { id: "new", label: "New" },
   { id: "koth", label: "👑 King" },
@@ -42,10 +43,12 @@ export function LaunchBoard({ chain, onChain }: { chain: "all" | MarkChain; onCh
   const [sort, setSort] = useState<TelegramSort>("new");
   const [q, setQ] = useState("");
   const [coins, setCoins] = useState<TelegramCoin[] | null>(null);
+  const [listNote, setListNote] = useState("");
   const [more, setMore] = useState(false);
   const [chainsOpen, setChainsOpen] = useState(false);
   // Cards whose trade count went up since the last refresh flash once, so the board visibly moves.
   const lastTrades = useRef<Map<string, number>>(new Map());
+  const coinsRef = useRef<TelegramCoin[] | null>(null);
   const [flashing, setFlashing] = useState<Set<string>>(new Set());
   const apiChain: TelegramChain = chain !== "all" && BOARD_CHAINS.has(chain) ? (chain as TelegramChain) : "";
   const [bump, setBump] = useState(0);
@@ -79,7 +82,11 @@ export function LaunchBoard({ chain, onChain }: { chain: "all" | MarkChain; onCh
     if (!bump) return;
     let stop = false;
     listTelegram({ data: { sort, chain: apiChain, q: q.trim() } })
-      .then((rows) => !stop && rows && setCoins(rows))
+      .then((rows) => {
+        if (stop || !rows) return;
+        coinsRef.current = rows;
+        setCoins(rows);
+      })
       .catch(() => null);
     return () => {
       stop = true;
@@ -90,22 +97,35 @@ export function LaunchBoard({ chain, onChain }: { chain: "all" | MarkChain; onCh
   useEffect(() => {
     let stop = false;
     async function pull() {
-      const rows = await listTelegram({ data: { sort, chain: apiChain, q: q.trim() } }).catch(() => null);
-      if (stop || !rows) return;
-      const moved = new Set<string>();
-      for (const c of rows) {
-        const key = `${c.chain}-${c.token}`;
-        const before = lastTrades.current.get(key);
-        if (before !== undefined && c.trades > before) moved.add(key);
-        lastTrades.current.set(key, c.trades);
-      }
-      setCoins(rows);
-      if (moved.size) {
-        setFlashing(moved);
-        window.setTimeout(() => setFlashing(new Set()), 1300);
+      const once = () => listTelegram({ data: { sort, chain: apiChain, q: q.trim() } });
+      try {
+        const rows = coinsRef.current
+          ? await once()
+          : await tryFive(once, () => {
+              if (!stop) setListNote("Busy right now, retrying");
+            });
+        if (stop) return;
+        setListNote("");
+        coinsRef.current = rows;
+        const moved = new Set<string>();
+        for (const c of rows) {
+          const key = `${c.chain}-${c.token}`;
+          const before = lastTrades.current.get(key);
+          if (before !== undefined && c.trades > before) moved.add(key);
+          lastTrades.current.set(key, c.trades);
+        }
+        setCoins(rows);
+        if (moved.size) {
+          setFlashing(moved);
+          window.setTimeout(() => setFlashing(new Set()), 1300);
+        }
+      } catch {
+        if (!stop && !coinsRef.current) setListNote("Busy right now. Try again in a minute.");
       }
     }
     setCoins(null);
+    coinsRef.current = null;
+    setListNote("");
     setMore(false);
     const first = window.setTimeout(() => void pull(), q ? 300 : 0);
     const timer = window.setInterval(() => void pull(), live ? 45_000 : 15_000);
@@ -184,7 +204,14 @@ export function LaunchBoard({ chain, onChain }: { chain: "all" | MarkChain; onCh
         ))}
       </div>
       {coins === null ? (
-        <p className="mt-4 text-sm text-muted">{tr("Loading…")}</p>
+        <div className="mt-4" aria-busy="true">
+          <p className="text-sm text-muted">{tr(listNote || "Loading…")}</p>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            {Array.from({ length: 4 }, (_, i) => (
+              <div key={i} className="ticket h-28 animate-pulse" />
+            ))}
+          </div>
+        </div>
       ) : shown.length === 0 ? (
         <p className="mt-4 text-sm text-muted">{empty}</p>
       ) : (

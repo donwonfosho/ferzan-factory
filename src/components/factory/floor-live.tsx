@@ -10,13 +10,17 @@ import { ChainMark, type MarkChain } from "./chain-mark";
 import { compactUsd } from "./market-line";
 
 import { tr } from "@/lib/i18n";
+import { tryFive } from "@/lib/factory/retry";
+import { COMMUNITY_URL } from "@/lib/factory/catalog";
 import { LAUNCH_AT_MS, LAUNCH_LABEL } from "@/lib/factory/launch";
 const pad = (n: number) => String(Math.max(0, Math.floor(n))).padStart(2, "0");
 
 function useNow(ms = 1000) {
-  const [now, setNow] = useState(() => Date.now());
+  const [now, setNow] = useState<number | null>(null);
   useEffect(() => {
-    const t = window.setInterval(() => setNow(Date.now()), ms);
+    const tick = () => setNow(Date.now());
+    tick();
+    const t = window.setInterval(tick, ms);
     return () => window.clearInterval(t);
   }, [ms]);
   return now;
@@ -28,83 +32,82 @@ export function FerzanHero() {
   const now = useNow();
   const f = p?.ferzan;
   const launchAt = f?.launchAt ? f.launchAt * 1000 : LAUNCH_AT_MS;
-  const left = launchAt - now;
+  const left = now == null ? null : launchAt - now;
 
   if (f?.live) {
+    const stats = [
+      f.priceUsd > 0 ? { label: tr("Price"), value: `$${f.priceUsd.toPrecision(3)}` } : null,
+      f.mcapUsd > 0 ? { label: tr("Market cap"), value: compactUsd(f.mcapUsd) } : null,
+      f.holders > 0 ? { label: tr("Holders"), value: f.holders.toLocaleString() } : null,
+      f.volume24hUsd > 0 ? { label: tr("24h volume"), value: compactUsd(f.volume24hUsd) } : null,
+    ].filter((row): row is { label: string; value: string } => row !== null);
     return (
-      <section className="hero-live fz-glow fz-border fz-shimmer ticket overflow-hidden lg:p-8">
+      <section className="hero-live fz-glow fz-border fz-shimmer ticket overflow-hidden lg:p-8" data-ferzan-live>
         <div className="flex flex-wrap items-center gap-2">
           <span className="live-dot" aria-hidden />
           <span className="text-sm font-semibold text-cyan">{tr("FERZAN is live")}</span>
         </div>
-        <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4 lg:mt-6">
-          <Stat label={tr("Price")} value={f.priceUsd ? `$${f.priceUsd.toPrecision(3)}` : "—"} />
-          <Stat label={tr("Market cap")} value={compactUsd(f.mcapUsd)} />
-          <Stat label={f.graduated ? tr("Graduated") : tr("To graduation")} value={f.progress === null ? "—" : `${f.progress.toFixed(1)}%`} />
-          <Stat label={tr("Burned so far")} value={`${Math.round(f.burned).toLocaleString()} FERZAN`} accent />
-        </div>
-        {f.progress !== null ? (
-          <div className="mt-4 h-2 overflow-hidden rounded-full bg-line">
-            <div className="h-full rounded-full bg-cyan transition-[width] duration-700" style={{ width: `${Math.max(2, f.progress)}%` }} />
+        {stats.length ? (
+          <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4 lg:mt-6">
+            {stats.map((row) => (
+              <Stat key={row.label} label={row.label} value={row.value} />
+            ))}
           </div>
         ) : null}
-        <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-          <a href={`/coin/solana/${f.token}`} className="btn-cyan w-full sm:w-auto">
-            {tr("Buy FERZAN")}
-          </a>
-          <Link to="/ferzan" className="btn-line w-full sm:w-auto">
-            {tr("How the burn works")}
-          </Link>
-        </div>
-        <p className="mt-3 break-all text-xs text-muted">{tr("Contract")}{" "}{f.token}</p>
+        {f.token ? (
+          <div className="mt-5">
+            <a href={`/coin/solana/${f.token}`} className="btn-cyan w-full sm:w-auto">
+              {tr("Buy FERZAN")}
+            </a>
+          </div>
+        ) : null}
       </section>
     );
   }
 
-  if (left <= 0) {
-    return (
-      <section className="ticket">
-        <p className="text-sm font-semibold text-cyan">{tr("Launching soon")}</p>
-        <p className="mt-2 text-sm text-muted">{tr("The contract appears here and in @Ferzan_Launches the moment the pool is created. Only trust that address.")}</p>
-      </section>
-    );
-  }
-
-  const d = left / 86_400_000;
-  const h = (left % 86_400_000) / 3_600_000;
-  const m = (left % 3_600_000) / 60_000;
-  const s = (left % 60_000) / 1000;
+  const opening = left !== null && left <= 0;
+  const d = left == null ? 0 : left / 86_400_000;
+  const h = left == null ? 0 : (left % 86_400_000) / 3_600_000;
+  const m = left == null ? 0 : (left % 3_600_000) / 60_000;
+  const s = left == null ? 0 : (left % 60_000) / 1000;
   return (
-    <section className="hero-count fz-glow fz-border fz-shimmer ticket overflow-hidden lg:p-8" data-floor-rev="3">
+    <section className="hero-count fz-glow fz-border fz-shimmer ticket overflow-hidden lg:p-8" data-floor-rev="4" data-launch-card>
       <div className="grid items-center gap-6 lg:grid-cols-[1.1fr_1fr] lg:gap-10">
-        <div>
-          <p className="fz-eyebrow">{tr(`FERZAN launches ${LAUNCH_LABEL}`)}</p>
+        <div className="order-2 lg:order-1">
+          <p className="fz-eyebrow">{tr(LAUNCH_LABEL)}</p>
           <p className="fz-grad-text mt-2 text-3xl font-extrabold sm:text-4xl">{tr("FERZAN")}</p>
-          <p className="mt-3 max-w-xl text-sm text-muted">
-            {tr("The token behind the Ferzan launchpad and bots. Every day, part of the platform's trading fees buys FERZAN and burns it. The contract is posted here and in @Ferzan_Launches at 4:00 PM ET. Any address before that is fake.")}
+          <h2 className="mt-4 text-lg font-extrabold">{tr("What happens at launch")}</h2>
+          <p className="mt-2 max-w-xl text-sm text-muted">
+            {tr("When the clock hits zero, FERZAN opens for buying on this site and in the Trade Bot. This is not a promise about price or buyers.")}
           </p>
           <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-            <a href="https://t.me/Ferzan_Launches" target="_blank" rel="noopener noreferrer" className="btn-cyan w-full sm:w-auto">
-              {tr("Get the launch alert")}
+            <a href={COMMUNITY_URL} target="_blank" rel="noopener noreferrer" className="btn-cyan w-full sm:w-auto">
+              {tr("Notify me")}
             </a>
             <Link to="/ferzan" className="btn-line w-full sm:w-auto">
               {tr("About FERZAN")}
             </Link>
           </div>
         </div>
-        <div className="grid grid-cols-4 gap-2 sm:gap-3" role="timer" aria-live="off" aria-label={tr("Time until FERZAN launches")}>
-          {[
-            [d, "days"],
-            [h, "hours"],
-            [m, "min"],
-            [s, "sec"],
-          ].map(([v, label]) => (
-            <div key={label as string} className="count-box min-w-0 px-1 py-3 sm:px-3 sm:py-5">
-              <span className="block text-3xl font-extrabold tabular-nums sm:text-5xl">{pad(v as number)}</span>
-              <span className="block text-xs uppercase tracking-wider text-muted">{tr(label)}</span>
-            </div>
-          ))}
-        </div>
+        {opening ? (
+          <p className="order-1 text-2xl font-extrabold text-cyan sm:text-3xl lg:order-2" role="status">
+            {tr("Opening any moment")}
+          </p>
+        ) : (
+          <div className="order-1 grid grid-cols-4 gap-2 sm:gap-3 lg:order-2" role="timer" aria-live="off" aria-label={tr("Time until FERZAN launches")}>
+            {[
+              [d, "days"],
+              [h, "hours"],
+              [m, "min"],
+              [s, "sec"],
+            ].map(([v, label]) => (
+              <div key={label as string} className="count-box min-w-0 px-1 py-3 sm:px-3 sm:py-5">
+                <span className="block text-3xl font-extrabold tabular-nums sm:text-5xl">{left == null ? "--" : pad(v as number)}</span>
+                <span className="block text-xs uppercase tracking-wider text-muted">{tr(label)}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
@@ -128,7 +131,7 @@ export function KingOfTheHill() {
   useEffect(() => {
     let stop = false;
     async function pull() {
-      const rows = await listTelegram({ data: { sort: "koth", chain: "", q: "" } }).catch(() => null);
+      const rows = await tryFive(() => listTelegram({ data: { sort: "koth", chain: "", q: "" } })).catch(() => null);
       const top = rows?.find((c) => !c.graduated) ?? null;
       if (stop || !top) return;
       const key = `${top.chain}:${top.token}`;

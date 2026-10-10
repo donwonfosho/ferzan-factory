@@ -8,8 +8,20 @@ import { siteCoinHref, SEL, word, addrWord, getBotCurve, quoteBotCurve, BOT_CURV
 import { buildSolSwap } from "@/lib/factory/sol-coin";
 import { evmWallet, solanaWallet } from "@/lib/factory/wallet-bridge";
 import { getReceipt } from "@/lib/factory/relay";
-import { parseDecimal } from "@/lib/factory/units";
+import { parseDecimal, formatSmart } from "@/lib/factory/units";
 import { creditCall, evmReferrer } from "./compete";
+import { tr } from "@/lib/i18n";
+
+function previewLine(amount: string, unit: string, outRaw: string, decimals: number): string {
+  let out = "";
+  try {
+    if (/^\d+$/.test(outRaw)) out = formatSmart(BigInt(outRaw), decimals);
+  } catch {
+    out = "";
+  }
+  if (out) return tr("You're swapping {0} for {1}. This site never holds your funds.", `${amount} ${unit}`, out);
+  return tr("You're swapping {0}. This site never holds your funds.", `${amount} ${unit}`);
+}
 
 export type QuickUnit = "SOL" | "ETH" | "BNB" | "USDC";
 const DEFAULTS: Record<QuickUnit, string> = { SOL: "0.1", ETH: "0.005", BNB: "0.02", USDC: "5" };
@@ -87,7 +99,12 @@ function referrer(me: string): string {
 }
 
 /** Buys `amount` (whole units of the chain's coin). Resolves with the transaction id once sent (Solana) or confirmed (EVM). */
-export async function quickBuy(target: { chain: string; id: string }, amount: string, step: (msg: string) => void): Promise<string> {
+export async function quickBuy(
+  target: { chain: string; id: string },
+  amount: string,
+  step: (msg: string) => void,
+  onSent?: (hash: string) => void,
+): Promise<string> {
   if (target.chain === "solana") {
     const lamports = parseDecimal(amount, 9);
     if (!lamports || lamports <= 0n) throw new Error("Set a quick-buy amount first.");
@@ -98,8 +115,10 @@ export async function quickBuy(target: { chain: string; id: string }, amount: st
     if (built.simError) {
       throw new Error(/insufficient/i.test(built.simError) ? "Not enough SOL for this buy plus fees (keep about 0.01 SOL extra)." : `Solana would reject this buy: ${built.simError}`);
     }
+    step(previewLine(amount, "SOL", built.amountOut, 6));
     step("Approve the buy in your wallet.");
     const sig = await w.signAndSend(fromB64(built.txB64));
+    onSent?.(sig);
     creditCall("solana", sig, w.address);
     return sig;
   }
@@ -117,12 +136,14 @@ export async function quickBuy(target: { chain: string; id: string }, amount: st
   const out = BigInt(q.out);
   if (out <= 0n) throw new Error("That amount gets nothing back.");
   const minOut = (out * BigInt(10_000 - SLIPPAGE_BPS)) / 10_000n;
+  step(previewLine(amount, chain === "bsc" ? "BNB" : chain === "arc" ? "USDC" : "ETH", out.toString(), 18));
   step("Approve the buy in your wallet.");
   const hash = await provider.request({
     method: "eth_sendTransaction",
     params: [{ from, to: curve, data: SEL.buy + word(minOut) + addrWord(referrer(from)), value: "0x" + wei.toString(16) }],
   });
   if (typeof hash !== "string") throw new Error("The wallet did not send it.");
+  onSent?.(hash);
   step("Confirming…");
   for (let i = 0; i < 48; i += 1) {
     const r = await getReceipt({ data: { chain, hash } }).catch(() => null);
@@ -132,5 +153,5 @@ export async function quickBuy(target: { chain: string; id: string }, amount: st
     }
     await new Promise((res) => setTimeout(res, 2500));
   }
-  return hash;
+  throw new Error("Still confirming. Check the transaction before trying again.");
 }

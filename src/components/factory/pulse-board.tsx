@@ -10,6 +10,7 @@ import { Mark } from "./ui";
 import { WatchlistStrip } from "./watch";
 
 import { tr } from "@/lib/i18n";
+import { tryFive } from "@/lib/factory/retry";
 const COLS: { sort: TelegramSort; title: string; hint: string }[] = [
   { sort: "new", title: "New", hint: "Just launched" },
   { sort: "koth", title: "About to graduate", hint: "Closest to filling the curve" },
@@ -58,17 +59,30 @@ function Row({ coin, flash, now }: { coin: TelegramCoin; flash: boolean; now: nu
 
 function Column({ sort, title, hint, chain, hidden, now }: { sort: TelegramSort; title: string; hint: string; chain: TelegramChain; hidden: boolean; now: number }) {
   const [coins, setCoins] = useState<TelegramCoin[] | null>(null);
+  const [note, setNote] = useState("");
+  const seen = useRef(false);
   const [hot, setHot] = useState<Set<string>>(new Set());
   const live = useLiveConnected();
   const again = useRef<number | null>(null);
 
   const pull = useCallback(async () => {
-    const rows = await listTelegram({ data: { sort, chain, q: "" } }).catch(() => null);
-    if (rows) setCoins(rows.slice(0, 30));
+    const once = () => listTelegram({ data: { sort, chain, q: "" } });
+    try {
+      const rows = seen.current
+        ? await once()
+        : await tryFive(once, () => setNote("Busy right now, retrying"));
+      seen.current = true;
+      setNote("");
+      setCoins(rows.slice(0, 30));
+    } catch {
+      if (!seen.current) setNote("Busy right now. Try again in a minute.");
+    }
   }, [sort, chain]);
 
   useEffect(() => {
     setCoins(null);
+    seen.current = false;
+    setNote("");
     void pull();
     const id = window.setInterval(() => void pull(), live ? 45_000 : 12_000);
     return () => window.clearInterval(id);
@@ -110,7 +124,8 @@ function Column({ sort, title, hint, chain, hidden, now }: { sort: TelegramSort;
         <span className="text-xs text-muted">{tr(hint)}</span>
       </div>
       {coins === null ? (
-        <div className="space-y-2 p-2">
+        <div className="space-y-2 p-2" aria-busy="true">
+          <p className="px-2 text-sm text-muted">{tr(note || "Loading…")}</p>
           {Array.from({ length: 6 }, (_, i) => (
             <div key={i} className="h-14 animate-pulse rounded-xl bg-bg" />
           ))}

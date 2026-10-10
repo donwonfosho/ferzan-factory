@@ -17,6 +17,7 @@ import { LAUNCH_AT_MS, LAUNCH_LABEL } from "@/lib/factory/launch";
 import { FeedbackButton, openFeedback } from "./feedback";
 import { Analytics } from "./analytics";
 import { StatusBanner, StatusLine } from "./status-line";
+import { TxDock } from "./trade-confidence";
 import { InstallApp } from "./perks";
 import { MobileNav } from "./mobile-nav";
 import { QuickBuyToast } from "./quick-buy";
@@ -252,18 +253,20 @@ export function Shell({ children }: { children: ReactNode }) {
       <Analytics />
       <SearchOverlay />
       <QuickBuyToast />
+      <TxDock />
     </div>
   );
 }
 
 function LaunchBar() {
+  const path = useRouterState({ select: (s) => s.location.pathname });
   const pulse = usePulse();
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const t = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(t);
   }, []);
-  if (pulse?.ferzan?.live) return null;
+  if (path === "/" || pulse?.ferzan?.live) return null;
   const at = pulse?.ferzan?.launchAt ? pulse.ferzan.launchAt * 1000 : LAUNCH_AT_MS;
   const left = Math.max(0, at - now);
   const d = Math.floor(left / 86_400_000);
@@ -273,7 +276,7 @@ function LaunchBar() {
     <div className="relative z-30 isolate border-b border-line bg-surface px-4 py-2 text-sm text-fg [transform:translateZ(0)]">
       <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-x-3 gap-y-1">
         <Link to="/ferzan" className="min-w-[12rem] flex-1 font-semibold leading-5 text-fg">
-          {left === 0 ? tr("Launching soon") : tr(`FERZAN launches ${LAUNCH_LABEL}`)}
+          {left === 0 ? tr("Opening any moment") : tr(`FERZAN launches ${LAUNCH_LABEL}`)}
         </Link>
         <span className="flex shrink-0 items-center gap-3">
           {left === 0 ? null : <span className="tabular-nums font-semibold text-cyan">{d}d {h}h {m}m</span>}

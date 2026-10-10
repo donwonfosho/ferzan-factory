@@ -172,6 +172,7 @@ async function broadcast(input: {
   to?: string;
   data: string;
   value?: bigint;
+  onHash?: (hash: string) => void;
 }): Promise<{ hash: string; contractAddress: string | null; status: string }> {
   if (siteMatches(input.from)) {
     throw new Error("The old browser wallet is retired. Sign in, then move its coins on Manage account.");
@@ -185,6 +186,7 @@ async function broadcast(input: {
     if (input.to) tx.to = input.to;
     if (input.value && input.value > 0n) tx.value = "0x" + input.value.toString(16);
     const hash = (await own.request({ method: "eth_sendTransaction", params: [tx] })) as string;
+    if (typeof hash === "string" && hash.startsWith("0x")) input.onHash?.(hash);
     const receipt = await waitReceipt(own, hash);
     return { hash, contractAddress: receipt.contractAddress ?? null, status: receipt.status ?? "0x0" };
   }
@@ -201,6 +203,7 @@ async function broadcast(input: {
   if (input.to) tx.to = input.to;
   if (input.value && input.value > 0n) tx.value = "0x" + input.value.toString(16);
   const hash = (await eth.request({ method: "eth_sendTransaction", params: [tx] })) as string;
+  if (typeof hash === "string" && hash.startsWith("0x")) input.onHash?.(hash);
   const receipt = await waitReceipt(eth, hash);
   return { hash, contractAddress: receipt.contractAddress ?? null, status: receipt.status ?? "0x0" };
 }
@@ -487,6 +490,7 @@ export async function sendCurve(input: {
   data: string;
   value?: bigint;
   from: string;
+  onHash?: (hash: string) => void;
 }): Promise<{ ok: true; hash: string } | { ok: false; error: string }> {
   try {
     const receipt = await broadcast({
@@ -495,6 +499,7 @@ export async function sendCurve(input: {
       to: input.address,
       data: input.data,
       value: input.value,
+      onHash: input.onHash,
     });
     if (receipt.status === "0x0") return { ok: false, error: "The transaction failed." };
     return { ok: true, hash: receipt.hash };

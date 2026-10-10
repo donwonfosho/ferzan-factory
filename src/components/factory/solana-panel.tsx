@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { quoteBuy, quoteSell, spot } from "@/lib/factory/curve";
 import { buySolanaCurve, migrateSolanaCurve, readSolanaCurve, readSolanaHeld, sellSolanaCurve, type SolanaCurve } from "@/lib/factory/solana-curve";
 import { solanaAddress, solanaExplorerTx } from "@/lib/factory/solana";
@@ -17,6 +17,8 @@ import { TermsGate } from "./terms";
 import { KeyLock } from "./key-gate";
 
 import { tr } from "@/lib/i18n";
+import { tryFive } from "@/lib/factory/retry";
+import { FEE_SITE, TradePreview, approveLine, beginTx, minText } from "./trade-confidence";
 export function SolanaPanel({ mint, symbol }: { mint: string; symbol: string }) {
   const wallet = useFactory((s) => s.wallet);
   const [state, setState] = useState<SolanaCurve | null | undefined>(undefined);
@@ -30,21 +32,36 @@ export function SolanaPanel({ mint, symbol }: { mint: string; symbol: string }) 
   const [busy, setBusy] = useState("");
   const [tx, setTx] = useState("");
   const [sol, setSol] = useState<string | null>(null);
+  const [miss, setMiss] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const seen = useRef(false);
 
   useEffect(() => {
     setSol(solanaAddress());
     let stop = false;
     async function pull() {
       try {
-        const next = await readSolanaCurve(mint);
-        if (!stop) setState(next);
+        const next = seen.current
+          ? await readSolanaCurve(mint)
+          : await tryFive(() => readSolanaCurve(mint), () => {
+              if (!stop) setError("Busy right now, retrying");
+            });
+        if (stop) return;
+        seen.current = true;
+        setMiss(false);
+        setState(next);
+        if (next) setError("");
         const owner = solanaAddress();
         if (owner && next) {
           const balance = await readSolanaHeld(mint, owner);
           if (!stop) setHeld(balance);
         }
       } catch {
-        if (!stop) setState(null);
+        if (!stop && !seen.current) {
+          setMiss(true);
+          setState(null);
+          setError("Busy right now. Try again in a minute.");
+        }
       }
     }
     void pull();
@@ -55,7 +72,21 @@ export function SolanaPanel({ mint, symbol }: { mint: string; symbol: string }) 
     };
   }, [mint, tx]);
 
-  if (state === undefined) return <p className="text-sm text-muted">{tr("Reading the Solana curve.")}</p>;
+  if (state === undefined) {
+    return (
+      <div className="ticket" aria-busy="true">
+        <p className="text-sm text-muted">{tr("Reading the Solana curve.")}</p>
+        <div className="mt-3 h-28 animate-pulse rounded-xl bg-bg" />
+      </div>
+    );
+  }
+  if (!state && miss) {
+    return (
+      <div className="ticket" role="status">
+        <p className="text-sm text-muted">{tr("Busy right now. Try again in a minute.")}</p>
+      </div>
+    );
+  }
   if (!state) {
     return (
       <div className="ticket text-sm text-muted">
@@ -113,6 +144,7 @@ export function SolanaPanel({ mint, symbol }: { mint: string; symbol: string }) 
       return;
     }
     setBusy(side === "buy" ? tr("Signing the buy.") : tr("Signing the sell."));
+    const retry = () => formRef.current?.requestSubmit();
     if (side === "buy") {
       const solIn = parseDecimal(amount, 9);
       if (!solIn || solIn <= 0n) {
@@ -129,12 +161,15 @@ export function SolanaPanel({ mint, symbol }: { mint: string; symbol: string }) 
         setError(err instanceof Error ? err.message : tr("That buy does not fit."));
         return;
       }
+      const dock = beginTx(tr("Buy"));
       const sent = await buySolanaCurve({ mint, solIn, minOut, referrer: referrer.trim() });
       setBusy("");
       if (!sent.ok) {
+        dock.failed(retry);
         setError(sent.error);
         return;
       }
+      dock.confirmed(solanaExplorerTx(sent.signature));
       setTx(sent.signature);
       void recordTrade({ data: { chain: "solana", hash: sent.signature } }).catch(() => undefined);
       setAmount("");
@@ -170,12 +205,15 @@ export function SolanaPanel({ mint, symbol }: { mint: string; symbol: string }) 
       setError(err instanceof Error ? err.message : tr("That sell does not fit."));
       return;
     }
+    const dock = beginTx(tr("Sell"));
     const sent = await sellSolanaCurve({ mint, tokenIn: tokens, minOut });
     setBusy("");
     if (!sent.ok) {
+      dock.failed(retry);
       setError(sent.error);
       return;
     }
+    dock.confirmed(solanaExplorerTx(sent.signature));
     setTx(sent.signature);
     void recordTrade({ data: { chain: "solana", hash: sent.signature } }).catch(() => undefined);
     setAmount("");
@@ -183,7 +221,7 @@ export function SolanaPanel({ mint, symbol }: { mint: string; symbol: string }) 
 
   return (
     <KeyLock address={wallet}>
-    <form onSubmit={(e) => void submit(e)} className="ticket space-y-3">
+    <form ref={formRef} onSubmit={(e) => void submit(e)} className="ticket space-y-3">
       <p className="text-lg font-extrabold">{tr("Trade with SOL")}</p>
       <p className="text-sm text-muted">
         {formatPrice(spot(curve, 9, state.decimals))}{" "}{tr("SOL each")}
@@ -253,6 +291,28 @@ export function SolanaPanel({ mint, symbol }: { mint: string; symbol: string }) 
           {tr("View transaction")}
         </a>
       ) : null}
+      <TradePreview
+        amountIn={amount.trim() ? `${amount.trim()} ${side === "buy" ? "SOL" : symbol}` : undefined}
+        amountOut={quote || undefined}
+        minReceived={(() => {
+          const bps = Math.round(Number(slip) * 100);
+          if (!quote || !Number.isFinite(bps) || bps < 0 || bps > 5_000) return undefined;
+          try {
+            if (side === "buy") {
+              const solIn = parseDecimal(amount, 9);
+              if (!solIn || solIn <= 0n) return undefined;
+              return minText(quoteBuy(curve, solIn), bps, state.decimals, symbol);
+            }
+            const tokens = parseDecimal(amount, state.decimals);
+            if (!tokens || tokens <= 0n) return undefined;
+            return minText(quoteSell(curve, tokens).ethOut, bps, 9, "SOL");
+          } catch {
+            return undefined;
+          }
+        })()}
+        fee={FEE_SITE}
+        approving={approveLine(amount.trim() ? `${amount.trim()} ${side === "buy" ? "SOL" : symbol}` : undefined, quote || undefined)}
+      />
       <Button type="submit" variant={side === "sell" ? "sell" : "cyan"} disabled={Boolean(busy) || (side === "buy" && state.graduated) || (side === "sell" && state.pooled)}>
         {side === "buy" && state.graduated ? tr("Graduated") : side === "sell" && state.pooled ? tr("In the pool") : side === "buy" ? tr("Buy") : tr("Sell")}
       </Button>

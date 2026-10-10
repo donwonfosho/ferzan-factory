@@ -3,6 +3,7 @@ import { quickBuy, quickTarget, setQuickAmount, UNIT_OF, useQuickAmounts, validA
 import { WalletNeeded } from "@/lib/factory/wallet-bridge";
 import { explorerTx, type EvmChainId } from "@/lib/factory/deploy";
 import { solanaExplorerTx } from "@/lib/factory/solana";
+import { beginTx, watchSolana } from "./trade-confidence";
 import { cn } from "@/lib/cn";
 
 import { tr } from "@/lib/i18n";
@@ -72,15 +73,27 @@ export function QuickBuyButton({
     busy = true;
     const id = ++seq;
     const show = (msg: string, tone: Toast["tone"] = "busy", href = "") => setToast({ id, symbol: coin.symbol, msg, tone, href });
+    let dock: ReturnType<typeof beginTx> | null = null;
     try {
       show(tr("Buying {0} {1}…", amount, unit));
-      const tx = await quickBuy(target, amount, (m) => show(m));
+      dock = beginTx(tr("Buy"));
+      const tx = await quickBuy(target, amount, (m) => show(tr(m)), (hash) => {
+        const href = target.chain === "solana" ? solanaExplorerTx(hash) : explorerTx(target.chain as EvmChainId, hash);
+        dock?.hash(href);
+      });
       const href = target.chain === "solana" ? solanaExplorerTx(tx) : explorerTx(target.chain as EvmChainId, tx);
-      show(tr("Bought with {0} {1}.", amount, unit), "ok", href);
-      window.setTimeout(() => toast?.id === id && setToast(null), 8000);
+      if (target.chain === "solana") {
+        watchSolana(dock.id, tx, href);
+        show(tr("Sent. Waiting for Solana to confirm."), "busy", href);
+      } else {
+        dock.confirmed(href);
+        show(tr("Bought with {0} {1}.", amount, unit), "ok", href);
+        window.setTimeout(() => toast?.id === id && setToast(null), 8000);
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "The buy did not go through.";
-      show(err instanceof WalletNeeded ? tr(msg) : /user (rejected|denied)|rejected the request|4001/i.test(msg) ? tr("You cancelled in the wallet.") : msg.split("\n")[0], "err");
+      if (dock && !/Still confirming/i.test(msg)) dock.failed();
+      show(err instanceof WalletNeeded ? tr(msg) : /user (rejected|denied)|rejected the request|4001/i.test(msg) ? tr("You cancelled in the wallet.") : tr(msg.split("\n")[0]), "err");
     } finally {
       busy = false;
     }

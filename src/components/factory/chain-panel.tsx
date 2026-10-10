@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CHAINS } from "@/lib/factory/catalog";
 import { spot, quoteBuy, quoteSell } from "@/lib/factory/curve";
 import { recordTrade } from "@/lib/factory/board";
@@ -16,6 +16,8 @@ import { TermsGate } from "./terms";
 import { KeyLock } from "./key-gate";
 
 import { tr } from "@/lib/i18n";
+import { tryFive } from "@/lib/factory/retry";
+import { FEE_SITE, TradePreview, approveLine, beginTx, minText } from "./trade-confidence";
 import { evmReferrer } from "@/lib/factory/compete";
 export function ChainPanel({ chain, address, symbol }: { chain: EvmChainId; address: string; symbol: string }) {
   const wallet = useFactory((s) => s.wallet);
@@ -36,6 +38,8 @@ export function ChainPanel({ chain, address, symbol }: { chain: EvmChainId; addr
   const [owed, setOwed] = useState(0n);
   const [txHash, setTxHash] = useState("");
   const [guards, setGuards] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const seen = useRef(false);
   const meta = CHAINS[chain];
   const onSite = Boolean(wallet && siteMatches(wallet));
 
@@ -48,17 +52,21 @@ export function ChainPanel({ chain, address, symbol }: { chain: EvmChainId; addr
     let stop = false;
     async function pull() {
       try {
-        const next = await readCurve(chain, address);
+        const read = () => readCurve(chain, address);
+        const next = seen.current ? await read() : await tryFive(read, () => {
+          if (!stop) setCurveNote("Busy right now, retrying");
+        });
         const opened = next.graduated ? await readPool(chain, address) : null;
         const cap = await readCurveWall(chain, address);
         if (!stop) {
+          seen.current = true;
           setState(next);
           setPool(opened ?? "");
           setWall(cap);
           setCurveNote("");
         }
-      } catch (err) {
-        if (!stop) setCurveNote(err instanceof Error ? err.message.split("\n")[0] : "Could not read the curve.");
+      } catch {
+        if (!stop && !seen.current) setCurveNote("Busy right now. Try again in a minute.");
       }
     }
     void pull();
@@ -183,6 +191,14 @@ export function ChainPanel({ chain, address, symbol }: { chain: EvmChainId; addr
     }
     const payRef = wallet && referrer.toLowerCase() === wallet.toLowerCase() ? "" : referrer;
     setBusy(side === "buy" ? tr("Approve the buy.") : tr("Approve the sell."));
+    const track = (run: (onHash: (hash: string) => void) => ReturnType<typeof sendCurve>) => {
+      const tx = beginTx(side === "buy" ? tr("Buy") : tr("Sell"));
+      return run((hash) => tx.hash(explorerTx(chain, hash))).then((res) => {
+        if (!res.ok) tx.failed(() => formRef.current?.requestSubmit());
+        else tx.confirmed(explorerTx(chain, res.hash));
+        return res;
+      });
+    };
     const sent =
       side === "buy"
         ? await (async () => {
@@ -196,10 +212,10 @@ export function ChainPanel({ chain, address, symbol }: { chain: EvmChainId; addr
             }
             const moved = await guardSlip("buy", value);
             if (moved) return moved;
-            if (!guards) return sendCurve({ chain, address, data: buyData(payRef), value, from: wallet });
+            if (!guards) return track((onHash) => sendCurve({ chain, address, data: buyData(payRef), value, from: wallet, onHash }));
             const priced = minReceived("buy", value, curve);
             if (!priced.ok) return priced;
-            return sendCurve({ chain, address, data: buyData(payRef, priced.floor), value, from: wallet });
+            return track((onHash) => sendCurve({ chain, address, data: buyData(payRef, priced.floor), value, from: wallet, onHash }));
           })()
         : await (async () => {
             const parsed = parseDecimal(amount, meta.tokenDecimals);
@@ -225,10 +241,10 @@ export function ChainPanel({ chain, address, symbol }: { chain: EvmChainId; addr
             }
             const moved = await guardSlip("sell", tokens);
             if (moved) return moved;
-            if (!guards) return sendCurve({ chain, address, data: sellData(tokens), from: wallet });
+            if (!guards) return track((onHash) => sendCurve({ chain, address, data: sellData(tokens), from: wallet, onHash }));
             const priced = minReceived("sell", tokens, curve);
             if (!priced.ok) return priced;
-            return sendCurve({ chain, address, data: sellData(tokens, priced.floor), from: wallet });
+            return track((onHash) => sendCurve({ chain, address, data: sellData(tokens, priced.floor), from: wallet, onHash }));
           })();
     setBusy("");
     if (!sent.ok) {
@@ -330,6 +346,15 @@ export function ChainPanel({ chain, address, symbol }: { chain: EvmChainId; addr
     setAmount(tokens.toString());
   }
 
+  if (!state) {
+    return (
+      <div className="ticket" role="status">
+        <p className="text-sm text-muted">{tr(curveNote || "Loading the curve…")}</p>
+        <div className="mt-3 h-28 animate-pulse rounded-xl bg-bg" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div>
@@ -382,7 +407,7 @@ export function ChainPanel({ chain, address, symbol }: { chain: EvmChainId; addr
         <p className="text-sm text-muted">{tr("This coin graduated before a pool could open. Selling stays on the curve.")}</p>
       ) : null}
       <KeyLock address={wallet}>
-      <form onSubmit={submit} className="ticket space-y-4">
+      <form ref={formRef} onSubmit={submit} className="ticket space-y-4">
         <div className="grid grid-cols-2 gap-2">
           <button type="button" className={cn("min-h-11 font-semibold", side === "buy" ? "bg-cyan text-cyan-ink" : "bg-bg text-muted shadow-border")} onClick={() => setSide("buy")}>
             {tr("Buy")}
@@ -458,7 +483,29 @@ export function ChainPanel({ chain, address, symbol }: { chain: EvmChainId; addr
         <p className="text-sm text-muted">
           {tr("Unaudited. A new curve on")}{" "}{CURVE_POOL[chain].dex || tr("this chain")} {CURVE_POOL[chain].dex ? tr("opens that pool when the meter fills. The creator keeps 30% of the LP. The rest is burned.") : tr("has no exchange pool, so selling stays on the curve.")}{" "}{tr("Coins launched before this update burn the whole LP.")}
         </p>
-        <Button type="submit" variant={side === "sell" ? "sell" : "cyan"} disabled={Boolean(busy) || (side === "buy" && state?.graduated)}>
+        <TradePreview
+          amountIn={amount.trim() ? `${amount.trim()} ${side === "buy" ? meta.native : symbol}` : undefined}
+          amountOut={out || undefined}
+          minReceived={(() => {
+            const bps = slipBps(slip);
+            if (!out || bps == null || !amount.trim()) return undefined;
+            try {
+              if (side === "buy") {
+                const eth = parseDecimal(amount, meta.nativeDecimals);
+                if (!eth || eth <= 0n) return undefined;
+                return minText(quoteBuy(state, eth), bps, meta.tokenDecimals, symbol);
+              }
+              const tokens = parseDecimal(amount, meta.tokenDecimals);
+              if (!tokens || tokens <= 0n) return undefined;
+              return minText(quoteSell(state, tokens).ethOut, bps, meta.nativeDecimals, meta.native);
+            } catch {
+              return undefined;
+            }
+          })()}
+          fee={FEE_SITE}
+          approving={approveLine(amount.trim() ? `${amount.trim()} ${side === "buy" ? meta.native : symbol}` : undefined, out || undefined)}
+        />
+        <Button type="submit" variant={side === "sell" ? "sell" : "cyan"} disabled={Boolean(busy) || (side === "buy" && state.graduated)}>
           {side === "buy" && state?.graduated ? tr("Buys closed") : side === "buy" ? tr("Buy") : tr("Sell")}
         </Button>
         <Button
