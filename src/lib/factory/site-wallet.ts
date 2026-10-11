@@ -1,5 +1,3 @@
-import { generatePrivateKey, privateKeyToAccount, signTransaction } from "viem/accounts";
-import { getAddress } from "viem/utils";
 import type { EvmChainId } from "./deploy";
 import { broadcastSigned, getReceipt, prepareTx, readBalance, type ChainReceipt } from "./relay";
 
@@ -32,9 +30,8 @@ function savedKey(): `0x${string}` | null {
   }
 }
 
-function storeKey(privateKey: `0x${string}`) {
+function storeKey(privateKey: `0x${string}`, address: `0x${string}`) {
   memoryKey = privateKey;
-  const address = privateKeyToAccount(privateKey).address;
   if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(KEY, privateKey);
@@ -58,25 +55,44 @@ export function knownSiteAddress(): string | null {
 export function readSiteWallet(): SiteWallet | null {
   const privateKey = savedKey();
   if (!privateKey) return null;
-  const address = privateKeyToAccount(privateKey).address;
+  const address = knownSiteAddress();
+  if (!address) return null;
+  return { privateKey, address: address as `0x${string}` };
+}
+
+async function deriveAddress(privateKey: `0x${string}`): Promise<`0x${string}`> {
+  const { privateKeyToAccount } = await import("viem/accounts");
+  return privateKeyToAccount(privateKey).address;
+}
+
+/** Fills in the saved address the first time a key has no address stored yet. viem loads only then. */
+export async function hydrateSiteWallet(): Promise<SiteWallet | null> {
+  const ready = readSiteWallet();
+  if (ready) return ready;
+  const privateKey = savedKey();
+  if (!privateKey) return null;
+  const address = await deriveAddress(privateKey);
   remember(address);
   return { privateKey, address };
 }
 
-export function openSiteWallet(): SiteWallet | null {
-  const existing = readSiteWallet();
+export async function openSiteWallet(): Promise<SiteWallet | null> {
+  const existing = await hydrateSiteWallet();
   if (existing) return existing;
   if (knownSiteAddress()) return null;
+  const { generatePrivateKey } = await import("viem/accounts");
   const privateKey = generatePrivateKey();
-  storeKey(privateKey);
-  return { privateKey, address: privateKeyToAccount(privateKey).address };
+  const address = await deriveAddress(privateKey);
+  storeKey(privateKey, address);
+  return { privateKey, address };
 }
 
-export function importSiteWallet(privateKey: string): SiteWallet | null {
+export async function importSiteWallet(privateKey: string): Promise<SiteWallet | null> {
   if (!/^0x[a-fA-F0-9]{64}$/.test(privateKey)) return null;
   const key = privateKey as `0x${string}`;
-  storeKey(key);
-  return { privateKey: key, address: privateKeyToAccount(key).address };
+  const address = await deriveAddress(key);
+  storeKey(key, address);
+  return { privateKey: key, address };
 }
 
 export function keySaved(address: string): boolean {
@@ -114,6 +130,8 @@ export async function sendWithSiteWallet(input: {
   if (!site || site.address.toLowerCase() !== input.from.toLowerCase()) {
     throw new Error("Open the wallet on this site first.");
   }
+  const { getAddress } = await import("viem/utils");
+  const { signTransaction } = await import("viem/accounts");
   const to = input.to ? getAddress(input.to) : undefined;
   const prepared = await prepareTx({
     data: {

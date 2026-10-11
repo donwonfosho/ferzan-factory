@@ -4,8 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { CHAINS, COMMUNITY_URL, X_URL } from "@/lib/factory/catalog";
 import { creatorLabel, owns } from "@/lib/factory/engine";
 import { useFactory } from "@/lib/factory/store";
-import { readSiteWallet } from "@/lib/factory/site-wallet";
-import { solanaAddress } from "@/lib/factory/solana-address";
+import { hydrateSiteWallet } from "@/lib/factory/site-wallet";
 import { setPollInterval } from "@/lib/factory/poll";
 import type { ChainId } from "@/lib/factory/types";
 import { formatSmart } from "@/lib/factory/units";
@@ -53,10 +52,15 @@ export function Shell({ children }: { children: ReactNode }) {
   useEffect(() => {
     captureRef();
     const done = useFactory.persist.rehydrate();
-    void Promise.resolve(done).then(() => {
-      const site = readSiteWallet();
+    void Promise.resolve(done).then(async () => {
+      const site = await hydrateSiteWallet();
       const current = useFactory.getState().wallet;
       if (site && !current) useFactory.getState().setWallet(site.address);
+      if (!site) {
+        setSol(null);
+        return;
+      }
+      const { solanaAddress } = await import("@/lib/factory/solana-address");
       setSol(solanaAddress());
     });
   }, []);

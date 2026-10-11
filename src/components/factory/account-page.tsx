@@ -8,7 +8,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { GROK_PROVIDERS, authEnabled, signIn, signOut } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { readRemembered, useFactory } from "@/lib/factory/store";
-import { importSiteWallet, knownSiteAddress, markKeySaved, openSiteWallet, readSiteWallet, sendWithSiteWallet } from "@/lib/factory/site-wallet";
+import { importSiteWallet, knownSiteAddress, markKeySaved, openSiteWallet, readSiteWallet, hydrateSiteWallet, sendWithSiteWallet } from "@/lib/factory/site-wallet";
 import { listBoard, listLaunched, loadAccountProfile, loadProfile, saveAccountProfile, saveProfile, type BoardCoin } from "@/lib/factory/board";
 import { profileFields } from "@/lib/factory/proof";
 import { signProof } from "@/lib/factory/proof-client";
@@ -92,7 +92,7 @@ export function AccountPage() {
     let stop = false;
     void Promise.resolve(useFactory.persist.rehydrate()).then(async () => {
       if (stop) return;
-      const site = readSiteWallet();
+      const site = await hydrateSiteWallet();
       const address = site?.address || knownSiteAddress() || "";
       if (site) {
         setSiteKey(site.privateKey);
@@ -291,13 +291,14 @@ export function AccountPage() {
                   setAgreed(false);
                   return;
                 }
-                const opened = openSiteWallet();
-                if (!opened) return;
-                setSiteKey(opened.privateKey);
-                setSiteAddress(opened.address);
-                setWallet(opened.address);
-                setSol(solanaAddress());
-                setCopied("Wallets are on this profile.");
+                void openSiteWallet().then((opened) => {
+                  if (!opened) return;
+                  setSiteKey(opened.privateKey);
+                  setSiteAddress(opened.address);
+                  setWallet(opened.address);
+                  setSol(solanaAddress());
+                  setCopied("Wallets are on this profile.");
+                });
               }}
             >
               {tr("Create wallets")}
@@ -650,14 +651,15 @@ function ReplaceWallet({
                 );
                 if (!sure) return;
               }
-              const imported = importSiteWallet(value);
-              if (!imported) {
-                onFail();
-                return;
-              }
-              setValue("");
-              setOpen(false);
-              onImported(imported);
+              void importSiteWallet(value).then((imported) => {
+                if (!imported) {
+                  onFail();
+                  return;
+                }
+                setValue("");
+                setOpen(false);
+                onImported(imported);
+              });
             }}
           >
             {tr("Import")}

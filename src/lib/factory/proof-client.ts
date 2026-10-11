@@ -1,7 +1,5 @@
-import { privateKeyToAccount } from "viem/accounts";
-import { toHex } from "viem/utils";
 import { readSiteWallet } from "./site-wallet";
-import { solanaAddress } from "./solana";
+import { solanaAddress } from "./solana-address";
 import { signSolanaWithAccount, signWithAccount } from "./wallet-bridge";
 import { proofAddress, proofDigest, proofMessage, type Proof, type ProofAction } from "./proof";
 
@@ -48,6 +46,7 @@ export async function signProof(action: ProofAction, address: string, fields: Re
 
   if (address.startsWith("0x")) {
     if (site && site.address.toLowerCase() === want) {
+      const { privateKeyToAccount } = await import("viem/accounts");
       const signature = await privateKeyToAccount(site.privateKey).signMessage({ message });
       return { ts, signature };
     }
@@ -55,6 +54,7 @@ export async function signProof(action: ProofAction, address: string, fields: Re
     if (viaAccount) return { ts, signature: viaAccount };
     const eth = (window as unknown as { ethereum?: EthProvider }).ethereum;
     if (!eth) throw new Error("Open the wallet that owns this address to sign.");
+    const { toHex } = await import("viem/utils");
     const signature = await eth.request({ method: "personal_sign", params: [toHex(message), address] });
     if (typeof signature !== "string") throw new Error("The wallet did not sign.");
     return { ts, signature };
