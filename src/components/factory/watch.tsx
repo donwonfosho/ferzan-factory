@@ -1,8 +1,10 @@
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { cn } from "@/lib/cn";
+import { accountWallets, useAccountWallets } from "@/lib/factory/wallet-bridge";
+import { dropWatch, listWatch, putWatch, type WatchedCoin } from "@/lib/factory/watchlist";
 
 import { tr } from "@/lib/i18n";
-/** Coins starred in this browser (kept on this device only). */
+/** Coins starred in this browser. A signed-in account also keeps a copy, merged on sign-in. */
 export type Watched = { chain: string; token: string; symbol: string; path: string };
 const KEY = "ferzan-watch";
 let list: Watched[] = [];
@@ -20,7 +22,8 @@ function load() {
     list = [];
   }
 }
-function save(next: Watched[]) {
+function save(next: Watched[], sync = true) {
+  const prev = list;
   list = next.slice(0, 100);
   try {
     window.localStorage.setItem(KEY, JSON.stringify(list));
@@ -28,6 +31,58 @@ function save(next: Watched[]) {
     /* kept for this visit */
   }
   subs.forEach((fn) => fn());
+  if (sync) void pushDiff(prev, list);
+}
+
+async function pushDiff(prev: Watched[], next: Watched[]) {
+  const account = accountWallets();
+  if (!account?.authenticated) return;
+  const token = await account.accessToken();
+  if (!token) return;
+  for (const item of next) {
+    if (prev.some((w) => same(w, item.chain, item.token))) continue;
+    await putWatch({ data: { token, coin: item } }).catch(() => undefined);
+  }
+  for (const item of prev) {
+    if (next.some((w) => same(w, item.chain, item.token))) continue;
+    await dropWatch({ data: { token, chain: item.chain, tokenId: item.token } }).catch(() => undefined);
+  }
+}
+
+function merge(local: Watched[], remote: WatchedCoin[]): Watched[] {
+  const out = [...local];
+  for (const item of remote) {
+    if (!out.some((w) => same(w, item.chain, item.token))) out.push(item);
+  }
+  return out.slice(0, 100);
+}
+
+/** Pulls the account watchlist once per sign-in and unions it with this browser's list. */
+export function WatchSync() {
+  const account = useAccountWallets();
+  const id = account?.userId ?? "";
+  useEffect(() => {
+    if (!id) return;
+    let stop = false;
+    void (async () => {
+      const live = accountWallets();
+      const token = live ? await live.accessToken() : null;
+      if (!token || stop) return;
+      const remote = await listWatch({ data: { token } }).catch(() => [] as WatchedCoin[]);
+      if (stop) return;
+      load();
+      const merged = merge(list, remote);
+      save(merged, false);
+      for (const item of merged) {
+        if (remote.some((w) => same(w, item.chain, item.token))) continue;
+        await putWatch({ data: { token, coin: item } }).catch(() => undefined);
+      }
+    })();
+    return () => {
+      stop = true;
+    };
+  }, [id]);
+  return null;
 }
 export function useWatchlist(): Watched[] {
   return useSyncExternalStore(

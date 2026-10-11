@@ -22,6 +22,7 @@ import { InstallApp } from "./perks";
 import { MobileNav } from "./mobile-nav";
 import { QuickBuyToast } from "./quick-buy";
 import { SearchButton, SearchOverlay } from "./search";
+import { WatchSync } from "./watch";
 
 import { tr } from "@/lib/i18n";
 import { LangPicker } from "./lang";
@@ -94,6 +95,7 @@ export function Shell({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen">
+      <WatchSync />
       <div className="sticky top-0 z-40">
         <StatusBanner />
         <div className="h-px bg-cyan" />

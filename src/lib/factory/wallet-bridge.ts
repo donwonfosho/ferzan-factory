@@ -59,6 +59,10 @@ export type AccountWallets = {
   signEvmMessage?: (message: string) => Promise<string>;
   /** Signs a plain message with the embedded Solana wallet. Optional; proof signing falls back without it. */
   signSolMessage?: (message: Uint8Array) => Promise<Uint8Array>;
+  /** Privy user id when signed in. Null when signed out. */
+  userId: string | null;
+  /** Privy access token for this account, or null when signed out. */
+  accessToken: () => Promise<string | null>;
 };
 
 let account: AccountWallets | null = null;

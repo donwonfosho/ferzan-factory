@@ -158,6 +158,15 @@ function Bridge() {
       login,
       logout,
       who: authenticated ? who : "",
+      userId: authenticated && user?.id ? user.id : null,
+      accessToken: async () => {
+        if (!authenticated) return null;
+        try {
+          return await getAccessToken();
+        } catch {
+          return null;
+        }
+      },
       evmEmbedded: evm?.walletClientType === "privy",
       exportEvm: async () => {
         if (evm) await exportWallet({ address: evm.address });
@@ -189,7 +198,7 @@ function Bridge() {
     });
     // The rest of the site (threads, profile, portfolio) keys on this address.
     if (authenticated && evm) setWallet(evm.address);
-  }, [ready, authenticated, evm, sol, who, login, logout, signMessage, signSolanaMessage, signAndSendTransaction, signTransaction, exportWallet, exportSolanaWallet, setWallet, tronAddress, tonAddress, create, exportExtended, signHash, tonPublicKey, importEvmWallet, importSolanaWallet]);
+  }, [ready, authenticated, evm, sol, who, user, login, logout, getAccessToken, signMessage, signSolanaMessage, signAndSendTransaction, signTransaction, exportWallet, exportSolanaWallet, setWallet, tronAddress, tonAddress, create, exportExtended, signHash, tonPublicKey, importEvmWallet, importSolanaWallet]);
 
   useEffect(() => () => setAccountWallets(null), []);
   return null;
