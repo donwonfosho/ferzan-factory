@@ -372,22 +372,32 @@ export const coinTitle = createServerFn({ method: "POST" })
     const contract = typeof row.contract === "string" ? row.contract.trim().slice(0, 80) : "";
     return { chain, contract };
   })
-  .handler(async ({ data }): Promise<{ name: string; symbol: string } | null> => {
+  .handler(async ({ data }): Promise<{ name: string; symbol: string; image: string } | null> => {
     if (!data.chain || data.contract.length < 8) return null;
     const contract = data.contract.startsWith("0x") ? data.contract.toLowerCase() : data.contract;
     const { getSql } = await import("@/lib/db");
     const sql = await getSql();
-    const rows = await sql<{ name: string; symbol: string }>`
-      select name, symbol from coins
+    const rows = await sql<{ name: string; symbol: string; image: string }>`
+      select name, symbol, image from coins
       where chain = ${data.chain} and contract = ${contract}
       limit 1
     `;
     const row = rows[0];
     if (!row?.symbol) return null;
-    return { name: row.name, symbol: row.symbol };
+    return { name: row.name, symbol: row.symbol, image: row.image };
   });
 
-export function coinShareMeta(coin: { name: string; symbol: string } | null | undefined) {
+const SHARE_IMAGE = "https://ferzan-factory.com/og.jpg";
+
+function shareImage(image: string | undefined): string {
+  const value = image?.trim() ?? "";
+  if (!value || value.startsWith("data:")) return SHARE_IMAGE;
+  if (value.startsWith("https://")) return value.split("#")[0].split("?")[0];
+  if (value.startsWith("/")) return `https://ferzan-factory.com${value.split("#")[0].split("?")[0]}`;
+  return SHARE_IMAGE;
+}
+
+export function coinShareMeta(coin: { name: string; symbol: string; image?: string } | null | undefined) {
   const symbol = coin?.symbol?.trim() ?? "";
   const name = coin?.name?.trim() ?? "";
   const title = symbol ? `$${symbol} on Ferzan` : "Coin on Ferzan";
@@ -398,6 +408,7 @@ export function coinShareMeta(coin: { name: string; symbol: string } | null | un
       { name: "description", content: description },
       { property: "og:title", content: title },
       { property: "og:description", content: description },
+      { property: "og:image", content: shareImage(coin?.image) },
     ],
   };
 }
