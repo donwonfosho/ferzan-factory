@@ -16,7 +16,7 @@ const HEADERS: Record<string, string> = {
     "default-src 'self'; script-src 'self' 'unsafe-inline' https://auth.privy.io https://grok.com https://challenges.cloudflare.com; " +
     "connect-src 'self' https: wss:; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
     "font-src 'self' data: https://fonts.gstatic.com; frame-src https://auth.privy.io https://verify.walletconnect.com https://buy.moonpay.com https://challenges.cloudflare.com; " +
-    "form-action 'self'; frame-ancestors 'self' https://grok.com https://*.grok.com; object-src 'none'; base-uri 'self'",
+    "form-action 'self'; frame-ancestors 'self' https://grok.com https://*.grok.com; object-src 'none'; base-uri 'self'; report-uri /api/csp-report",
   "cross-origin-opener-policy": "same-origin-allow-popups",
   "x-content-type-options": "nosniff",
   "referrer-policy": "strict-origin-when-cross-origin",

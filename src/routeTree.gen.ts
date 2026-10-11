@@ -31,6 +31,7 @@ import { Route as TransparencyRouteImport } from './routes/transparency'
 import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as AdminFeedbackRouteImport } from './routes/admin/feedback'
 import { Route as ApiLaunchesRouteImport } from './routes/api/launches'
+import { Route as ApiCspReportRouteImport } from './routes/api/csp-report'
 import { Route as ApiRelayStatusRouteImport } from './routes/api/relay-status'
 import { Route as CreatorWalletRouteImport } from './routes/creator/$wallet'
 import { Route as PAddressRouteImport } from './routes/p/$address'
@@ -149,6 +150,11 @@ const ApiLaunchesRoute = ApiLaunchesRouteImport.update({
   path: '/api/launches',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiCspReportRoute = ApiCspReportRouteImport.update({
+  id: '/api/csp-report',
+  path: '/api/csp-report',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiRelayStatusRoute = ApiRelayStatusRouteImport.update({
   id: '/api/relay-status',
   path: '/api/relay-status',
@@ -208,6 +214,7 @@ export interface FileRoutesByFullPath {
   '/verify': typeof VerifyRoute
   '/admin/feedback': typeof AdminFeedbackRoute
   '/api/launches': typeof ApiLaunchesRoute
+  '/api/csp-report': typeof ApiCspReportRoute
   '/api/relay-status': typeof ApiRelayStatusRoute
   '/creator/$wallet': typeof CreatorWalletRoute
   '/p/$address': typeof PAddressRoute
@@ -239,6 +246,7 @@ export interface FileRoutesByTo {
   '/verify': typeof VerifyRoute
   '/admin/feedback': typeof AdminFeedbackRoute
   '/api/launches': typeof ApiLaunchesRoute
+  '/api/csp-report': typeof ApiCspReportRoute
   '/api/relay-status': typeof ApiRelayStatusRoute
   '/creator/$wallet': typeof CreatorWalletRoute
   '/p/$address': typeof PAddressRoute
@@ -271,6 +279,7 @@ export interface FileRoutesById {
   '/verify': typeof VerifyRoute
   '/admin/feedback': typeof AdminFeedbackRoute
   '/api/launches': typeof ApiLaunchesRoute
+  '/api/csp-report': typeof ApiCspReportRoute
   '/api/relay-status': typeof ApiRelayStatusRoute
   '/creator/$wallet': typeof CreatorWalletRoute
   '/p/$address': typeof PAddressRoute
@@ -304,6 +313,7 @@ export interface FileRouteTypes {
     | '/verify'
     | '/admin/feedback'
     | '/api/launches'
+    | '/api/csp-report'
     | '/api/relay-status'
     | '/creator/$wallet'
     | '/p/$address'
@@ -335,6 +345,7 @@ export interface FileRouteTypes {
     | '/verify'
     | '/admin/feedback'
     | '/api/launches'
+    | '/api/csp-report'
     | '/api/relay-status'
     | '/creator/$wallet'
     | '/p/$address'
@@ -366,6 +377,7 @@ export interface FileRouteTypes {
     | '/verify'
     | '/admin/feedback'
     | '/api/launches'
+    | '/api/csp-report'
     | '/api/relay-status'
     | '/creator/$wallet'
     | '/p/$address'
@@ -398,6 +410,7 @@ export interface RootRouteChildren {
   VerifyRoute: typeof VerifyRoute
   AdminFeedbackRoute: typeof AdminFeedbackRoute
   ApiLaunchesRoute: typeof ApiLaunchesRoute
+  ApiCspReportRoute: typeof ApiCspReportRoute
   ApiRelayStatusRoute: typeof ApiRelayStatusRoute
   CreatorWalletRoute: typeof CreatorWalletRoute
   PAddressRoute: typeof PAddressRoute
@@ -563,6 +576,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiLaunchesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/csp-report': {
+      id: '/api/csp-report'
+      path: '/api/csp-report'
+      fullPath: '/api/csp-report'
+      preLoaderRoute: typeof ApiCspReportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/relay-status': {
       id: '/api/relay-status'
       path: '/api/relay-status'
@@ -638,6 +658,7 @@ const rootRouteChildren: RootRouteChildren = {
   VerifyRoute: VerifyRoute,
   AdminFeedbackRoute: AdminFeedbackRoute,
   ApiLaunchesRoute: ApiLaunchesRoute,
+  ApiCspReportRoute: ApiCspReportRoute,
   ApiRelayStatusRoute: ApiRelayStatusRoute,
   CreatorWalletRoute: CreatorWalletRoute,
   PAddressRoute: PAddressRoute,
