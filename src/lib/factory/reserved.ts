@@ -1,14 +1,10 @@
 /**
- * Names nobody may list: the FERZAN flagship's own name (lookalikes included) and the coins scammers most
- * often fake. Same rule as the Launch Bot (launch_reserved.py). The official FERZAN is added by the
- * trusted ingest feed, never through this check.
+ * The only name nobody may list is FERZAN, lookalikes included.
+ * Any other name or ticker is fine (ETH, USDC, SOL, TON included).
+ * The official FERZAN is added by the trusted ingest feed, never through this check.
  */
 const LEET: Record<string, string> = { "0": "o", "1": "i", "3": "e", "4": "a", "5": "s", "7": "t", $: "s", "@": "a", "!": "i" };
 const BRAND = "ferzan";
-const TICKERS = new Set([
-  "USD", "USDC", "USDT", "DAI", "PYUSD", "FDUSD", "SOL", "WSOL", "ETH", "WETH", "BTC", "WBTC", "BNB", "WBNB",
-  "TRX", "TON", "AVAX", "POL", "MATIC", "XRP", "DOGE", "ADA",
-]);
 
 function norm(s: string): string {
   return s.toLowerCase().replace(/[01345 7$@!]/g, (c) => LEET[c] ?? "").replace(/[^a-z]/g, "");
@@ -29,8 +25,6 @@ function close(a: string, b: string): boolean {
 
 /** Why this name/ticker may not be listed, or "" when it is fine. */
 export function reservedProblem(name: string, symbol: string): string {
-  const sym = symbol.trim().replace(/^\$/, "").toUpperCase();
-  if (TICKERS.has(sym)) return `The ticker ${sym} is reserved. Pick another one.`;
   for (const field of [name, symbol]) {
     const n = norm(field);
     if (!n) continue;

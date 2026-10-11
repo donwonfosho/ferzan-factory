@@ -22,14 +22,14 @@ export async function ingestLaunch(body: unknown): Promise<{ ok: true; id: strin
   const chain = typeof row.chain === "string" ? row.chain.trim().toLowerCase() : "";
   const contract = typeof row.contract === "string" ? row.contract.trim() : "";
   const givenName = typeof row.name === "string" ? row.name.trim().slice(0, 32) : "";
-  const givenSymbol = typeof row.symbol === "string" ? row.symbol.trim().toUpperCase().slice(0, 8) : "";
+  const givenSymbol = typeof row.symbol === "string" ? row.symbol.trim().toUpperCase().slice(0, 10) : "";
   const creator = typeof row.creator === "string" ? row.creator.trim() : "";
   const supply = typeof row.supply === "string" && /^\d+$/.test(row.supply) ? row.supply : "1000000000";
   const blurb = typeof row.blurb === "string" && row.blurb.trim() ? row.blurb.trim().slice(0, 160) : "Launched in Telegram.";
 
   if (chain === "solana") {
     if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(contract)) return { ok: false, error: "Solana mint looks wrong." };
-    if (givenName.length < 2 || !/^[A-Z0-9]{2,8}$/.test(givenSymbol)) {
+    if (givenName.length < 2 || !/^[A-Z0-9]{1,10}$/.test(givenSymbol)) {
       return { ok: false, error: "Send the name and ticker with a Solana mint." };
     }
     const live = await fetch("https://api.mainnet-beta.solana.com", {
@@ -55,15 +55,15 @@ export async function ingestLaunch(body: unknown): Promise<{ ok: true; id: strin
   }
   let name = givenName;
   let symbol = givenSymbol;
-  if (name.length < 2 || !/^[A-Z0-9]{2,8}$/.test(symbol)) {
+  if (name.length < 2 || !/^[A-Z0-9]{1,10}$/.test(symbol)) {
     try {
       if (name.length < 2) name = (await readErc20String(evm, contract, NAME)).slice(0, 32);
-      if (!/^[A-Z0-9]{2,8}$/.test(symbol)) symbol = (await readErc20String(evm, contract, SYMBOL)).toUpperCase().slice(0, 8);
+      if (!/^[A-Z0-9]{1,10}$/.test(symbol)) symbol = (await readErc20String(evm, contract, SYMBOL)).toUpperCase().slice(0, 10);
     } catch {
       return { ok: false, error: "That contract did not answer with a name and ticker." };
     }
   }
-  if (name.length < 2 || !/^[A-Z0-9]{2,8}$/.test(symbol)) {
+  if (name.length < 2 || !/^[A-Z0-9]{1,10}$/.test(symbol)) {
     return { ok: false, error: "That contract did not answer with a name and ticker." };
   }
   if (mode === "plain") {

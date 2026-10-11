@@ -133,6 +133,8 @@ export type BoardMark = {
   graduated: boolean;
 };
 
+const quoteCache = new Map<string, { at: number; marks: BoardMark[] }>();
+
 export const quoteBoard = createServerFn({ method: "POST" })
   .validator((data: unknown): { rows: { chain: string; contract: string; supply: string }[] } => {
     if (!data || typeof data !== "object") throw new Error("Bad quote.");
@@ -152,15 +154,36 @@ export const quoteBoard = createServerFn({ method: "POST" })
   })
   .handler(async ({ data }): Promise<BoardMark[]> => {
     await (await import("./guard.server")).guardRelay("read");
+    const cacheKey = data.rows
+      .map((coin) => `${coin.chain}:${coin.contract}:${coin.supply}`)
+      .sort()
+      .join("|");
+    const nowMs = Date.now();
+    for (const [key, row] of quoteCache) {
+      if (nowMs - row.at >= 10_000) quoteCache.delete(key);
+    }
+    const hit = quoteCache.get(cacheKey);
+    if (hit) return hit.marks;
     const { getSql } = await import("@/lib/db");
     const { readCurve } = await import("@/lib/factory/deploy");
     const { readSolanaCurve } = await import("@/lib/factory/solana-curve");
     const { spot } = await import("@/lib/factory/curve");
     const { CHAINS: meta } = await import("@/lib/factory/catalog");
     const sql = await getSql();
-    const prints = await sql<{ contract: string; price: string }>`
-      select contract, price from prints where price <> '' order by created_at asc limit 500
-    `;
+    const wanted = [...new Set(data.rows.flatMap((coin) => [coin.contract, coin.contract.toLowerCase()]))];
+    const prints = wanted.length
+      ? await sql.query<{ contract: string; price: string }>(
+          `select contract, price from (
+             select contract, price, created_at,
+                    row_number() over (partition by contract order by created_at desc) as n
+             from prints
+             where price <> '' and contract in (${wanted.map((_, i) => `$${i + 1}`).join(", ")})
+           ) ranked
+           where n <= 16
+           order by created_at asc`,
+          wanted,
+        )
+      : [];
     const history = new Map<string, number[]>();
     for (const print of prints) {
       const price = Number(print.price);
@@ -169,58 +192,60 @@ export const quoteBoard = createServerFn({ method: "POST" })
       list.push(price);
       history.set(print.contract, list);
     }
-    const marks: BoardMark[] = [];
-    for (const coin of data.rows) {
-      let price = 0;
-      let progress = 0;
-      let graduated = false;
-      try {
-        if (coin.chain === "solana") {
-          const state = await readSolanaCurve(coin.contract);
-          if (state) {
-            price = spot(
-              {
-                virtualEth: state.virtualSol,
-                virtualToken: state.virtualToken,
-                graduation: state.graduation,
-                realEth: state.realSol,
-                raisedEth: state.raisedSol,
-                tokensSold: state.tokensSold,
-                graduated: state.graduated,
-                feePlatform: 0n,
-                feeCreator: 0n,
-                feeReferrer: 0n,
-              },
-              9,
-              state.decimals,
-            );
-            graduated = state.graduated || state.pooled;
-            if (state.graduation > 0n) progress = Math.min(100, Number((state.realSol * 10_000n) / state.graduation) / 100);
+    const marks = await Promise.all(
+      data.rows.map(async (coin): Promise<BoardMark> => {
+        let price = 0;
+        let progress = 0;
+        let graduated = false;
+        try {
+          if (coin.chain === "solana") {
+            const state = await readSolanaCurve(coin.contract);
+            if (state) {
+              price = spot(
+                {
+                  virtualEth: state.virtualSol,
+                  virtualToken: state.virtualToken,
+                  graduation: state.graduation,
+                  realEth: state.realSol,
+                  raisedEth: state.raisedSol,
+                  tokensSold: state.tokensSold,
+                  graduated: state.graduated,
+                  feePlatform: 0n,
+                  feeCreator: 0n,
+                  feeReferrer: 0n,
+                },
+                9,
+                state.decimals,
+              );
+              graduated = state.graduated || state.pooled;
+              if (state.graduation > 0n) progress = Math.min(100, Number((state.realSol * 10_000n) / state.graduation) / 100);
+            }
+          } else {
+            const chain = meta[coin.chain as keyof typeof meta];
+            if (chain && coin.chain !== "solana") {
+              const state = await readCurve(coin.chain as "ethereum" | "bsc" | "base" | "robinhood" | "arc", coin.contract);
+              price = spot(state, chain.nativeDecimals, chain.tokenDecimals);
+              graduated = state.graduated;
+              if (state.graduation > 0n) progress = Math.min(100, Number((state.realEth * 10_000n) / state.graduation) / 100);
+            }
           }
-        } else {
-          const chain = meta[coin.chain as keyof typeof meta];
-          if (chain && coin.chain !== "solana") {
-            const state = await readCurve(coin.chain as "ethereum" | "bsc" | "base" | "robinhood" | "arc", coin.contract);
-            price = spot(state, chain.nativeDecimals, chain.tokenDecimals);
-            graduated = state.graduated;
-            if (state.graduation > 0n) progress = Math.min(100, Number((state.realEth * 10_000n) / state.graduation) / 100);
-          }
+        } catch {
+          price = 0;
         }
-      } catch {
-        price = 0;
-      }
-      if (graduated) progress = 100;
-      const past = history.get(coin.contract) ?? history.get(coin.contract.toLowerCase()) ?? [];
-      const supply = Number(coin.supply);
-      const scale = Number.isFinite(supply) && supply > 0 ? supply : 0;
-      const mcap = price > 0 ? price * scale : 0;
-      const spark = (past.length ? past.slice(-16) : price > 0 ? [price] : []).map((point) => point * scale);
-      if (spark.length === 1) spark.push(spark[0]);
-      const first = spark[0] ?? 0;
-      const last = spark.at(-1) ?? 0;
-      const change = first > 0 ? ((last - first) / first) * 100 : 0;
-      marks.push({ contract: coin.contract, price, mcap, change, spark, progress, graduated });
-    }
+        if (graduated) progress = 100;
+        const past = history.get(coin.contract) ?? history.get(coin.contract.toLowerCase()) ?? [];
+        const supply = Number(coin.supply);
+        const scale = Number.isFinite(supply) && supply > 0 ? supply : 0;
+        const mcap = price > 0 ? price * scale : 0;
+        const spark = (past.length ? past.slice(-16) : price > 0 ? [price] : []).map((point) => point * scale);
+        if (spark.length === 1) spark.push(spark[0]);
+        const first = spark[0] ?? 0;
+        const last = spark.at(-1) ?? 0;
+        const change = first > 0 ? ((last - first) / first) * 100 : 0;
+        return { contract: coin.contract, price, mcap, change, spark, progress, graduated };
+      }),
+    );
+    quoteCache.set(cacheKey, { at: Date.now(), marks });
     return marks;
   });
 
@@ -324,7 +349,7 @@ export const publishCoin = createServerFn({ method: "POST" })
     const chain = text(row, "chain", 20);
     const mode = text(row, "mode", 12);
     const name = text(row, "name", 32);
-    const symbol = text(row, "symbol", 8).toUpperCase();
+    const symbol = text(row, "symbol", 10).toUpperCase();
     const supply = text(row, "supply", 40);
     const contract = coinAddress(text(row, "contract", 48));
     const creator = coinAddress(text(row, "creator", 48));
@@ -332,7 +357,7 @@ export const publishCoin = createServerFn({ method: "POST" })
     const { image, blurb } = coinExtras(row);
     if (!CHAINS.has(chain)) throw new Error("That chain is not open.");
     if (mode !== "curve" && mode !== "plain") throw new Error("Launch type looks wrong.");
-    if (name.length < 2 || !/^[A-Z0-9]{2,8}$/.test(symbol)) throw new Error("Name or ticker looks wrong.");
+    if (name.length < 2 || !/^[A-Z0-9]{1,10}$/.test(symbol)) throw new Error("Name or ticker looks wrong.");
     const reserved = reservedProblem(name, symbol);
     if (reserved) throw new Error(reserved);
     if (!/^\d+$/.test(supply)) throw new Error("Supply looks wrong.");
@@ -439,10 +464,10 @@ export const listCoinTrades = createServerFn({ method: "POST" })
       select side, native_wei, who, price, created_at::text as created_at
       from prints
       where contract = ${data.contract}
-      order by created_at asc
+      order by created_at desc
       limit 180
     `;
-    return rows.map((row) => ({
+    return [...rows].reverse().map((row) => ({
       side: row.side,
       amountWei: row.native_wei,
       who: row.who,

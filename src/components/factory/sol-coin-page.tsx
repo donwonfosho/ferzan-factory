@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { setPollInterval } from "@/lib/factory/poll";
 import { buildSolSwap, getSolCoin, type SolCoin } from "@/lib/factory/sol-coin";
 import { solanaExplorerMint, solanaExplorerTx } from "@/lib/factory/solana";
 import { formatPrice, formatSmart, formatUsdPrice, parseDecimal } from "@/lib/factory/units";
@@ -91,8 +92,7 @@ export function SolCoinPage({ mint }: { mint: string }) {
 
   useEffect(() => {
     void load();
-    const timer = window.setInterval(() => void load(), 20_000);
-    return () => window.clearInterval(timer);
+    return setPollInterval(() => void load(), 20_000);
   }, [load]);
 
   // Live: reload a moment after any trade on this coin, so the chart and curve move right away.

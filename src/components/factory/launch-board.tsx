@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { setPollInterval } from "@/lib/factory/poll";
 import { siteCoinHref } from "@/lib/factory/bot-curve";
 import { listTelegram, type TelegramChain, type TelegramCoin, type TelegramSort } from "@/lib/factory/telegram-feed";
 import { cn } from "@/lib/cn";
@@ -128,11 +129,11 @@ export function LaunchBoard({ chain, onChain }: { chain: "all" | MarkChain; onCh
     setListNote("");
     setMore(false);
     const first = window.setTimeout(() => void pull(), q ? 300 : 0);
-    const timer = window.setInterval(() => void pull(), live ? 45_000 : 15_000);
+    const stopPoll = setPollInterval(() => void pull(), live ? 45_000 : 15_000);
     return () => {
       stop = true;
       window.clearTimeout(first);
-      window.clearInterval(timer);
+      stopPoll();
     };
   }, [sort, apiChain, q, live]);
 

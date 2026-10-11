@@ -5,7 +5,8 @@ import { CHAINS, COMMUNITY_URL, X_URL } from "@/lib/factory/catalog";
 import { creatorLabel, owns } from "@/lib/factory/engine";
 import { useFactory } from "@/lib/factory/store";
 import { readSiteWallet } from "@/lib/factory/site-wallet";
-import { solanaAddress } from "@/lib/factory/solana";
+import { solanaAddress } from "@/lib/factory/solana-address";
+import { setPollInterval } from "@/lib/factory/poll";
 import type { ChainId } from "@/lib/factory/types";
 import { formatSmart } from "@/lib/factory/units";
 import { cn } from "@/lib/cn";
@@ -281,32 +282,37 @@ function labelUnnamedControls() {
   }
 }
 
-function LaunchBar() {
-  const path = useRouterState({ select: (s) => s.location.pathname });
-  const pulse = usePulse();
+function LaunchCountdown({ at }: { at: number }) {
   const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const t = window.setInterval(() => setNow(Date.now()), 1000);
-    return () => window.clearInterval(t);
-  }, []);
-  if (path === "/" || pulse?.ferzan?.live) return null;
-  const at = pulse?.ferzan?.launchAt ? pulse.ferzan.launchAt * 1000 : LAUNCH_AT_MS;
+  useEffect(() => setPollInterval(() => setNow(Date.now()), 1000), []);
   const left = Math.max(0, at - now);
   const d = Math.floor(left / 86_400_000);
   const h = Math.floor((left % 86_400_000) / 3_600_000);
   const m = Math.floor((left % 3_600_000) / 60_000);
   return (
+    <>
+      <Link to="/ferzan" className="min-w-[12rem] flex-1 font-semibold leading-5 text-fg">
+        {left === 0 ? tr("Opening any moment") : tr(`FERZAN launches ${LAUNCH_LABEL}`)}
+      </Link>
+      <span className="flex shrink-0 items-center gap-3">
+        {left === 0 ? null : <span className="tabular-nums font-semibold text-cyan">{d}d {h}h {m}m</span>}
+        <Link to="/how-to-buy" className="font-semibold text-cyan">
+          {tr("How to buy")}
+        </Link>
+      </span>
+    </>
+  );
+}
+
+function LaunchBar() {
+  const path = useRouterState({ select: (s) => s.location.pathname });
+  const pulse = usePulse();
+  if (path === "/" || pulse?.ferzan?.live) return null;
+  const at = pulse?.ferzan?.launchAt ? pulse.ferzan.launchAt * 1000 : LAUNCH_AT_MS;
+  return (
     <div className="relative z-30 isolate border-b border-line bg-surface px-4 py-2 text-sm text-fg [transform:translateZ(0)]">
       <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-x-3 gap-y-1">
-        <Link to="/ferzan" className="min-w-[12rem] flex-1 font-semibold leading-5 text-fg">
-          {left === 0 ? tr("Opening any moment") : tr(`FERZAN launches ${LAUNCH_LABEL}`)}
-        </Link>
-        <span className="flex shrink-0 items-center gap-3">
-          {left === 0 ? null : <span className="tabular-nums font-semibold text-cyan">{d}d {h}h {m}m</span>}
-          <Link to="/how-to-buy" className="font-semibold text-cyan">
-            {tr("How to buy")}
-          </Link>
-        </span>
+        <LaunchCountdown at={at} />
       </div>
     </div>
   );

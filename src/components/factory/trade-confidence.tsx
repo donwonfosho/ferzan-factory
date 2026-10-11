@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import { solanaRelay } from "@/lib/factory/solana";
+import { setPollInterval } from "@/lib/factory/poll";
 import { formatSmart } from "@/lib/factory/units";
 import { tr } from "@/lib/i18n";
 
@@ -121,22 +121,25 @@ export function watchSolana(id: string, signature: string, explorer: string) {
   items = items.map((item) => (item.id === id ? { ...item, explorer, status: "pending" } : item));
   emit();
   let n = 0;
-  const timer = window.setInterval(() => {
+  let stop = () => {};
+  const tick = () => {
     n += 1;
     if (n > 40) {
-      window.clearInterval(timer);
+      stop();
       return;
     }
-    void solanaRelay({ data: { method: "status", signature } })
+    void import("@/lib/factory/solana")
+      .then(({ solanaRelay }) => solanaRelay({ data: { method: "status", signature } }))
       .then((row) => {
         const status = row && typeof row === "object" && "status" in row ? (row as { status?: string }).status : "";
         if (status !== "confirmed" && status !== "failed") return;
-        window.clearInterval(timer);
+        stop();
         items = items.map((item) => (item.id === id ? { ...item, status } : item));
         emit();
       })
       .catch(() => undefined);
-  }, 3000);
+  };
+  stop = setPollInterval(tick, 3000);
 }
 
 /** Stays on screen until the visitor dismisses it. */

@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { setPollInterval } from "@/lib/factory/poll";
 import { CHAINS } from "@/lib/factory/catalog";
 import { listBoard, listPrints, quoteBoard, type BoardCoin, type BoardMark, type BoardPrint } from "@/lib/factory/board";
 import type { ChainId } from "@/lib/factory/types";
@@ -40,10 +41,10 @@ export function HotList({ chain = "all" }: { chain?: string }) {
       }
     }
     void pull();
-    const timer = window.setInterval(() => void pull(), 8000);
+    const stopPoll = setPollInterval(() => void pull(), 8000);
     return () => {
       stop = true;
-      window.clearInterval(timer);
+      stopPoll();
     };
   }, [chain]);
 

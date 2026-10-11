@@ -1,6 +1,7 @@
 /** Live floor sections. Revision 2: the previous script name is stuck as a missing file on grok.me. */
 import { Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+import { setPollInterval } from "@/lib/factory/poll";
 import { listTelegram, type TelegramCoin } from "@/lib/factory/telegram-feed";
 import { cn } from "@/lib/cn";
 import { coinHref } from "./launch-board";
@@ -20,8 +21,7 @@ function useNow(ms = 1000) {
   useEffect(() => {
     const tick = () => setNow(Date.now());
     tick();
-    const t = window.setInterval(tick, ms);
-    return () => window.clearInterval(t);
+    return setPollInterval(tick, ms);
   }, [ms]);
   return now;
 }
@@ -143,10 +143,10 @@ export function KingOfTheHill() {
       setKing(top);
     }
     void pull();
-    const t = window.setInterval(() => void pull(), 15_000);
+    const stopPoll = setPollInterval(() => void pull(), 15_000);
     return () => {
       stop = true;
-      window.clearInterval(t);
+      stopPoll();
     };
   }, []);
 

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { setPollInterval } from "@/lib/factory/poll";
 import { getPulse, type Graduation, type Pulse, type TapeItem } from "@/lib/factory/pulse";
 import { siteCoinHref } from "@/lib/factory/bot-curve";
 import { cn } from "@/lib/cn";
@@ -9,7 +10,7 @@ import { useLive } from "@/lib/factory/live";
 import { tr } from "@/lib/i18n";
 /* One shared poll for everything live on the page (tape, graduation banner, FERZAN hero). */
 let pulse: Pulse | null = null;
-let timer: number | null = null;
+let stopPoll: (() => void) | null = null;
 const subs = new Set<() => void>();
 async function pull() {
   const next = await getPulse().catch(() => null);
@@ -20,15 +21,15 @@ async function pull() {
 }
 function subscribe(fn: () => void) {
   subs.add(fn);
-  if (timer === null && typeof window !== "undefined") {
+  if (stopPoll === null && typeof window !== "undefined") {
     void pull();
-    timer = window.setInterval(() => void pull(), 8_000);
+    stopPoll = setPollInterval(() => void pull(), 8_000);
   }
   return () => {
     subs.delete(fn);
-    if (subs.size === 0 && timer !== null) {
-      window.clearInterval(timer);
-      timer = null;
+    if (subs.size === 0 && stopPoll) {
+      stopPoll();
+      stopPoll = null;
     }
   };
 }

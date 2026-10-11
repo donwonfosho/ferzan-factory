@@ -1158,6 +1158,7 @@ const dict: Record<string, string> = {
   "Your cuts": "你的分成",
   "Your first buy": "你的首次买入",
   "Your key is yours": "私钥属于你",
+  "Your launch was already sent from your wallet. Do NOT launch again. Send us this request id: {0}": "你的发射已经从你的钱包发出。不要再次发射。把这个请求编号发给我们：{0}",
   "Your position": "你的持仓",
   "Your responsibility": "你的责任",
   "Your trades on Ferzan": "你在 Ferzan 上的交易",

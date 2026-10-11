@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { setPollInterval } from "@/lib/factory/poll";
 import { buildTronTrade, getTronCurve, quoteTronCurve, TRON_ADDRESS, type TronCurveState } from "@/lib/factory/tron-curve";
 import { tronLinkAppLink, tronWallet } from "@/lib/factory/tron-ton-wallets";
 import { formatPrice, formatSmart, formatUsdPrice, parseDecimal } from "@/lib/factory/units";
@@ -99,8 +100,7 @@ export function TronCurvePage({ curve }: { curve: string }) {
 
   useEffect(() => {
     void load();
-    const timer = window.setInterval(() => void load(), 15_000);
-    return () => window.clearInterval(timer);
+    return setPollInterval(() => void load(), 15_000);
   }, [load]);
 
   const reloadTimer = useRef<number | null>(null);

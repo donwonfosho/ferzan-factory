@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { setPollInterval } from "@/lib/factory/poll";
 import { listBoard, type BoardCoin } from "@/lib/factory/board";
 import { CHAINS } from "@/lib/factory/catalog";
 import { readPrefs } from "@/lib/factory/prefs";
@@ -36,10 +37,10 @@ export function LaunchWatch() {
     }
 
     void pull();
-    const timer = window.setInterval(() => void pull(), 20000);
+    const stopPoll = setPollInterval(() => void pull(), 20000);
     return () => {
       stop = true;
-      window.clearInterval(timer);
+      stopPoll();
     };
   }, []);
 

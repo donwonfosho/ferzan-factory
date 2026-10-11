@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { setPollInterval } from "@/lib/factory/poll";
 import { CHAINS } from "@/lib/factory/catalog";
 import {
   SEL,
@@ -147,8 +148,7 @@ export function BotCoinPage({ chain, curve }: { chain: BotCurveChain; curve: str
 
   useEffect(() => {
     void load();
-    const timer = window.setInterval(() => void load(), 15_000);
-    return () => window.clearInterval(timer);
+    return setPollInterval(() => void load(), 15_000);
   }, [load]);
 
   // Live: reload a moment after any trade on this coin, so the chart and curve move right away.

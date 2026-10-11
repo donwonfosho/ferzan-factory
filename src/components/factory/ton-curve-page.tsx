@@ -1,5 +1,6 @@
 import "@/lib/factory/buffer-polyfill";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { setPollInterval } from "@/lib/factory/poll";
 import { buildTonTrade, getTonCurve, quoteTonCurve, type TonCurveState } from "@/lib/factory/ton-curve";
 import { tonWallet } from "@/lib/factory/tron-ton-wallets";
 import { formatPrice, formatSmart, formatUsdPrice, parseDecimal } from "@/lib/factory/units";
@@ -100,8 +101,7 @@ export function TonCurvePage({ curve }: { curve: string }) {
 
   useEffect(() => {
     void load();
-    const timer = window.setInterval(() => void load(), 15_000);
-    return () => window.clearInterval(timer);
+    return setPollInterval(() => void load(), 15_000);
   }, [load]);
 
   const reloadTimer = useRef<number | null>(null);

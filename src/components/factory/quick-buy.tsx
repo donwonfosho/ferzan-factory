@@ -2,7 +2,6 @@ import { useState, useSyncExternalStore, type MouseEvent } from "react";
 import { quickBuy, quickTarget, setQuickAmount, UNIT_OF, useQuickAmounts, validAmount, type QuickUnit } from "@/lib/factory/quick-buy";
 import { WalletNeeded } from "@/lib/factory/wallet-bridge";
 import { explorerTx, type EvmChainId } from "@/lib/factory/deploy";
-import { solanaExplorerTx } from "@/lib/factory/solana";
 import { beginTx, watchSolana } from "./trade-confidence";
 import { cn } from "@/lib/cn";
 
@@ -78,10 +77,10 @@ export function QuickBuyButton({
       show(tr("Buying {0} {1}…", amount, unit));
       dock = beginTx(tr("Buy"));
       const tx = await quickBuy(target, amount, (m) => show(tr(m)), (hash) => {
-        const href = target.chain === "solana" ? solanaExplorerTx(hash) : explorerTx(target.chain as EvmChainId, hash);
+        const href = target.chain === "solana" ? `https://solscan.io/tx/${hash}` : explorerTx(target.chain as EvmChainId, hash);
         dock?.hash(href);
       });
-      const href = target.chain === "solana" ? solanaExplorerTx(tx) : explorerTx(target.chain as EvmChainId, tx);
+      const href = target.chain === "solana" ? `https://solscan.io/tx/${tx}` : explorerTx(target.chain as EvmChainId, tx);
       if (target.chain === "solana") {
         watchSolana(dock.id, tx, href);
         show(tr("Sent. Waiting for Solana to confirm."), "busy", href);

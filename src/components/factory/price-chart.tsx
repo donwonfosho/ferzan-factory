@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { setPollInterval } from "@/lib/factory/poll";
 import { CHAINS } from "@/lib/factory/catalog";
 import { spot } from "@/lib/factory/curve";
 import { listFills } from "@/lib/factory/market";
@@ -76,10 +77,10 @@ export function PriceChart({
       }
     }
     void pull();
-    const timer = window.setInterval(() => void pull(), 8000);
+    const stopPoll = setPollInterval(() => void pull(), 8000);
     return () => {
       stop = true;
-      window.clearInterval(timer);
+      stopPoll();
     };
   }, [contract, chain, createdAt]);
 

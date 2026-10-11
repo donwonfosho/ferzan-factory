@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { setPollInterval } from "@/lib/factory/poll";
 import { CHAINS } from "@/lib/factory/catalog";
 import { spot, quoteBuy, quoteSell } from "@/lib/factory/curve";
 import { recordTrade } from "@/lib/factory/board";
@@ -70,10 +71,10 @@ export function ChainPanel({ chain, address, symbol }: { chain: EvmChainId; addr
       }
     }
     void pull();
-    const timer = window.setInterval(() => void pull(), 8000);
+    const stopPoll = setPollInterval(() => void pull(), 8000);
     return () => {
       stop = true;
-      window.clearInterval(timer);
+      stopPoll();
     };
   }, [chain, address, refresh]);
 
@@ -126,10 +127,10 @@ export function ChainPanel({ chain, address, symbol }: { chain: EvmChainId; addr
       }
     }
     void pull();
-    const timer = window.setInterval(() => void pull(), 8000);
+    const stopPoll = setPollInterval(() => void pull(), 8000);
     return () => {
       stop = true;
-      window.clearInterval(timer);
+      stopPoll();
     };
   }, [chain, address, wallet, refresh]);
 
@@ -147,10 +148,10 @@ export function ChainPanel({ chain, address, symbol }: { chain: EvmChainId; addr
       );
     }
     pull();
-    const timer = window.setInterval(pull, 12000);
+    const stopPoll = setPollInterval(pull, 12000);
     return () => {
       stop = true;
-      window.clearInterval(timer);
+      stopPoll();
     };
   }, [chain, wallet, onSite, busy]);
 

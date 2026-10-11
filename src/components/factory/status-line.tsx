@@ -1,4 +1,5 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
+import { setPollInterval } from "@/lib/factory/poll";
 import { STATUS_BANNER_TEXT } from "@/lib/factory/beta";
 import { getSiteStatus, type SiteStatus } from "@/lib/factory/site-status";
 import { tr, useLang } from "@/lib/i18n";
@@ -9,7 +10,7 @@ const FAIL: SiteStatus = { reach: "fail", status: "degraded", updated: 0, compon
 
 let current: SiteStatus | null = null;
 const subs = new Set<() => void>();
-let timer: number | null = null;
+let stopPoll: (() => void) | null = null;
 
 function publish(next: SiteStatus) {
   current = next;
@@ -26,15 +27,15 @@ async function pull() {
 
 function subscribe(fn: () => void) {
   subs.add(fn);
-  if (timer === null && typeof window !== "undefined") {
+  if (stopPoll === null && typeof window !== "undefined") {
     void pull();
-    timer = window.setInterval(() => void pull(), 20_000);
+    stopPoll = setPollInterval(() => void pull(), 20_000);
   }
   return () => {
     subs.delete(fn);
-    if (subs.size === 0 && timer !== null) {
-      window.clearInterval(timer);
-      timer = null;
+    if (subs.size === 0 && stopPoll) {
+      stopPoll();
+      stopPoll = null;
     }
   };
 }

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { setPollInterval } from "@/lib/factory/poll";
 import { Link } from "@tanstack/react-router";
 import { LAUNCH_AT_MS } from "@/lib/factory/launch";
 import { OnlyOnFerzan } from "./floor-live";
@@ -38,10 +39,7 @@ const FEE_STEPS = [
 
 function useNow(): number {
   const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const t = window.setInterval(() => setNow(Date.now()), 1000);
-    return () => window.clearInterval(t);
-  }, []);
+  useEffect(() => setPollInterval(() => setNow(Date.now()), 1000), []);
   return now;
 }
 

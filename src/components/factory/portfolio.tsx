@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { setPollInterval } from "@/lib/factory/poll";
 import {
   buildSolFeeClaim,
   getPortfolio,
@@ -7,7 +8,6 @@ import {
   type SolFeePool,
   type WalletPortfolio,
 } from "@/lib/factory/telegram-feed";
-import { solanaExplorerTx } from "@/lib/factory/solana";
 import { solanaWallet } from "@/lib/factory/wallet-bridge";
 import { WalletBalances } from "./gas-step";
 import { coinHref } from "./launch-board";
@@ -59,10 +59,10 @@ export function usePortfolio(evm: string | null, sol: string | null): { data: Wa
     }
     setData(null);
     void pull();
-    const timer = window.setInterval(() => void pull(), 30_000);
+    const stopPoll = setPollInterval(() => void pull(), 30_000);
     return () => {
       stop = true;
-      window.clearInterval(timer);
+      stopPoll();
     };
   }, [evm, sol]);
   return { data, failed };
@@ -264,7 +264,7 @@ export function AccountRewards({ evm, sol }: { evm: string | null; sol: string |
           </Button>
         ) : null}
         {tx ? (
-          <a className="mt-2 block text-sm font-semibold text-cyan" href={solanaExplorerTx(tx)} target="_blank" rel="noopener noreferrer">
+          <a className="mt-2 block text-sm font-semibold text-cyan" href={`https://solscan.io/tx/${tx}`} target="_blank" rel="noopener noreferrer">
             {tr("View transaction")}
           </a>
         ) : null}

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { setPollInterval } from "@/lib/factory/poll";
 import { Link } from "@tanstack/react-router";
 import { getCompete, type CallerRow, type Compete, type ProfitRow, type VolumeRow } from "@/lib/factory/compete";
 import { cn } from "@/lib/cn";
@@ -100,12 +101,21 @@ function CallerList({ rows }: { rows: CallerRow[] }) {
   );
 }
 
-/** Weekly competition: volume and profit boards, plus the callers board. Prizes switch on after FERZAN graduates. */
+function WeekStatus({ data, prev }: { data: Compete | null | undefined; prev: boolean }) {
+  const [now, setNow] = useState(() => Date.now() / 1000);
+  useEffect(() => setPollInterval(() => setNow(Date.now() / 1000), 1000), []);
+  if (!data) return null;
+  const status = data.practice
+    ? tr("Practice round (last 7 days). Week 1 starts at the FERZAN launch in {0}.", left(data.startsAt - now))
+    : prev
+      ? tr("Week {0} final results.", data.week)
+      : tr("Week {0} · ends in {1}", data.week, left(data.end - now));
+  return <p className="mt-2 text-sm font-semibold text-cyan tabular-nums">{status}</p>;
+}
 export function CompetePage() {
   const [tab, setTab] = useState<Tab>("volume");
   const [prev, setPrev] = useState(false);
   const [data, setData] = useState<Compete | null | undefined>(undefined);
-  const [now, setNow] = useState(() => Date.now() / 1000);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -121,34 +131,22 @@ export function CompetePage() {
         .then((r) => !stop && setData(r))
         .catch(() => !stop && setData(null));
     void pull();
-    const id = window.setInterval(() => void pull(), 60_000);
+    const stopPoll = setPollInterval(() => void pull(), 60_000);
     return () => {
       stop = true;
-      window.clearInterval(id);
+      stopPoll();
     };
   }, [prev]);
 
-  useEffect(() => {
-    const id = window.setInterval(() => setNow(Date.now() / 1000), 1000);
-    return () => window.clearInterval(id);
-  }, []);
-
   const d = data;
   const rows = d ? (tab === "volume" ? d.volume : tab === "profit" ? d.profit : d.callers) : [];
-  const status = !d
-    ? ""
-    : d.practice
-      ? tr("Practice round (last 7 days). Week 1 starts at the FERZAN launch in {0}.", left(d.startsAt - now))
-      : prev
-        ? tr("Week {0} final results.", d.week)
-        : tr("Week {0} · ends in {1}", d.week, left(d.end - now));
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">
       <div>
         <h1 className="text-4xl">{tr("Weekly competition")}</h1>
         <p className="mt-2 text-muted">{tr("Top traders and top callers on every Ferzan coin, every chain. A new week starts every Friday at 4:00 PM ET.")}</p>
-        {status ? <p className="mt-2 text-sm font-semibold text-cyan tabular-nums">{status}</p> : null}
+        <WeekStatus data={d} prev={prev} />
       </div>
 
       <div className={cn("ticket text-sm", d?.prizesLive && "shadow-border-hover")}>

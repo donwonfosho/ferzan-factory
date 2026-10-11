@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { CHAINS } from "@/lib/factory/catalog";
 import { siteBalance } from "@/lib/factory/site-wallet";
-import { solBalance } from "@/lib/factory/solana";
+import { setPollInterval } from "@/lib/factory/poll";
 import type { EvmChainId } from "@/lib/factory/deploy";
 import { readTokenBalances } from "@/lib/factory/relay";
 import { useFactory } from "@/lib/factory/store";
@@ -11,6 +11,11 @@ import { Button } from "./ui";
 import { FundButton } from "./fund-wallet";
 
 import { tr } from "@/lib/i18n";
+
+async function readSolBalance(address: string): Promise<bigint> {
+  const { solBalance } = await import("@/lib/factory/solana");
+  return solBalance(address);
+}
 export function GasStep({ address, chain = "base" }: { address: string; chain?: EvmChainId | "solana" }) {
   const [copied, setCopied] = useState(false);
   const [wei, setWei] = useState<bigint | null>(null);
@@ -21,17 +26,17 @@ export function GasStep({ address, chain = "base" }: { address: string; chain?: 
     let stop = false;
     async function read() {
       try {
-        const next = solana ? await solBalance(address) : await siteBalance(chain, address);
+        const next = solana ? await readSolBalance(address) : await siteBalance(chain, address);
         if (!stop) setWei(next);
       } catch {
         if (!stop) setWei(null);
       }
     }
     void read();
-    const timer = window.setInterval(() => void read(), 12000);
+    const stopPoll = setPollInterval(() => void read(), 12000);
     return () => {
       stop = true;
-      window.clearInterval(timer);
+      stopPoll();
     };
   }, [address, chain, solana]);
 
@@ -106,7 +111,7 @@ export function WalletBalances({ evm, sol }: { evm: string; sol: string | null }
       );
       if (sol) {
         try {
-          const lamports = await solBalance(sol);
+          const lamports = await readSolBalance(sol);
           if (!stop) {
             setNative((prev) => ({ ...prev, solana: lamports.toString() }));
             setFailed((prev) => ({ ...prev, solana: false }));
@@ -139,10 +144,10 @@ export function WalletBalances({ evm, sol }: { evm: string; sol: string | null }
       if (!stop) setTokens(found);
     }
     void pull();
-    const timer = window.setInterval(() => void pull(), 12000);
+    const stopPoll = setPollInterval(() => void pull(), 12000);
     return () => {
       stop = true;
-      window.clearInterval(timer);
+      stopPoll();
     };
   }, [book, evm, sol]);
 

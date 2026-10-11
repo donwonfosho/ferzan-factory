@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { setPollInterval } from "@/lib/factory/poll";
 import { addComment, listComments, reportComment, type Comment } from "@/lib/factory/social";
 import { moderate } from "@/lib/factory/moderation";
 import { signProof } from "@/lib/factory/proof-client";
@@ -30,8 +31,8 @@ export function CoinComments({ chain, token, creator }: { chain: string; token: 
   useEffect(() => {
     setItems(null);
     void pull();
-    const id = window.setInterval(() => void pull(), 20_000);
-    return () => window.clearInterval(id);
+    const stopPoll = setPollInterval(() => void pull(), 20_000);
+    return () => stopPoll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chain, token]);
   useLive((e) => {

@@ -1147,6 +1147,7 @@ const dict: Record<string, string> = {
   "Your cuts": "Tus partes",
   "Your first buy": "Tu primera compra",
   "Your key is yours": "Tu clave es tuya",
+  "Your launch was already sent from your wallet. Do NOT launch again. Send us this request id: {0}": "Tu lanzamiento ya se envió desde tu billetera. NO lances otra vez. Envíanos este id de solicitud: {0}",
   "Your position": "Tu posición",
   "Your responsibility": "Tu responsabilidad",
   "Your trades on Ferzan": "Tus operaciones en Ferzan",

@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { setPollInterval } from "@/lib/factory/poll";
 import { CHAINS, PLACES } from "@/lib/factory/catalog";
 import { listBoard, quoteBoard, type BoardCoin, type BoardMark } from "@/lib/factory/board";
 import type { ChainId } from "@/lib/factory/types";
@@ -163,10 +164,10 @@ function EarlierCoins() {
       }
     }
     void pull();
-    const poll = window.setInterval(() => void pull(), 30_000);
+    const stopPoll = setPollInterval(() => void pull(), 30_000);
     return () => {
       stop = true;
-      window.clearInterval(poll);
+      stopPoll();
     };
   }, [open]);
 

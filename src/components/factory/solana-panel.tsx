@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { setPollInterval } from "@/lib/factory/poll";
 import { quoteBuy, quoteSell, spot } from "@/lib/factory/curve";
 import { buySolanaCurve, migrateSolanaCurve, readSolanaCurve, readSolanaHeld, sellSolanaCurve, type SolanaCurve } from "@/lib/factory/solana-curve";
 import { solanaAddress, solanaExplorerTx } from "@/lib/factory/solana";
@@ -65,10 +66,10 @@ export function SolanaPanel({ mint, symbol }: { mint: string; symbol: string }) 
       }
     }
     void pull();
-    const timer = window.setInterval(() => void pull(), 8000);
+    const stopPoll = setPollInterval(() => void pull(), 8000);
     return () => {
       stop = true;
-      window.clearInterval(timer);
+      stopPoll();
     };
   }, [mint, tx]);
 

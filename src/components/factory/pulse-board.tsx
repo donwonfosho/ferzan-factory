@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { setPollInterval } from "@/lib/factory/poll";
 import { listTelegram, type TelegramChain, type TelegramCoin, type TelegramSort } from "@/lib/factory/telegram-feed";
 import { useLive, useLiveConnected, sameCoin } from "@/lib/factory/live";
 import { cn } from "@/lib/cn";
@@ -84,8 +85,8 @@ function Column({ sort, title, hint, chain, hidden, now }: { sort: TelegramSort;
     seen.current = false;
     setNote("");
     void pull();
-    const id = window.setInterval(() => void pull(), live ? 45_000 : 12_000);
-    return () => window.clearInterval(id);
+    const stopPoll = setPollInterval(() => void pull(), live ? 45_000 : 12_000);
+    return () => stopPoll();
   }, [pull, live]);
 
   const soon = useCallback(
@@ -149,10 +150,7 @@ export function PulseBoard() {
   const [tab, setTab] = useState(0);
   const [now, setNow] = useState(() => Date.now());
   const live = useLiveConnected();
-  useEffect(() => {
-    const id = window.setInterval(() => setNow(Date.now()), 5_000);
-    return () => window.clearInterval(id);
-  }, []);
+  useEffect(() => setPollInterval(() => setNow(Date.now()), 5_000), []);
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { setPollInterval } from "@/lib/factory/poll";
 import { getTransparency, type Transparency } from "@/lib/factory/trust";
 import { useLive, useLiveConnected } from "@/lib/factory/live";
 import { cn } from "@/lib/cn";
@@ -42,10 +43,10 @@ export function TransparencyPage() {
         })
         .catch(() => !stop && setT((x) => (x === undefined ? null : x)));
     void pull();
-    const id = window.setInterval(pull, 60_000);
+    const stopPoll = setPollInterval(pull, 60_000);
     return () => {
       stop = true;
-      window.clearInterval(id);
+      stopPoll();
     };
   }, []);
 

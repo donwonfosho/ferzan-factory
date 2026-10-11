@@ -5,7 +5,6 @@
  * otherwise the Privy sign-in opens.
  */
 import { useSyncExternalStore } from "react";
-import { Transaction, VersionedTransaction } from "@solana/web3.js";
 import { provider as injectedProvider, switchChain, type EvmChainId } from "./deploy";
 import { sendSignedSolana } from "./sol-coin";
 
@@ -144,7 +143,7 @@ export async function evmWallet(chain: EvmChainId): Promise<{ address: string; p
 
 type PhantomLike = {
   connect: () => Promise<{ publicKey: { toString(): string } }>;
-  signAndSendTransaction?: (tx: Transaction | VersionedTransaction) => Promise<{ signature: string }>;
+  signAndSendTransaction?: (tx: unknown) => Promise<{ signature: string }>;
 };
 
 function phantom(): PhantomLike | null {
@@ -173,7 +172,8 @@ export async function solanaWallet(): Promise<{ address: string; signAndSend: (t
   return {
     address: res.publicKey.toString(),
     signAndSend: async (bytes) => {
-      let tx: Transaction | VersionedTransaction;
+      const { Transaction, VersionedTransaction } = await import("@solana/web3.js");
+      let tx: InstanceType<typeof Transaction> | InstanceType<typeof VersionedTransaction>;
       try {
         tx = Transaction.from(bytes);
       } catch {

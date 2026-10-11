@@ -192,7 +192,6 @@ export function OwnWalletLaunch() {
     if (typeof sent !== "string") throw new Error(tr("The wallet did not send the launch."));
     setHash(sent);
     setBusy(tr("Sent. Waiting for the chain to confirm."));
-    await waitEvm(sent);
     return sent;
   }
 
@@ -220,6 +219,8 @@ export function OwnWalletLaunch() {
     if (evm && Number(startMinutes) > 0 && Number(devBuy) > 0) {
       return setError(tr("A first buy needs trading to open right away. Clear the delay or the first buy."));
     }
+    let sent = false;
+    let requestId = "";
     try {
       track("launch_started");
       setBusy(tr("Connect your wallet."));
@@ -244,6 +245,7 @@ export function OwnWalletLaunch() {
           mode: isPlainLaunch(chain) && plain ? "plain" : "",
         },
       });
+      requestId = built.requestId;
       let txHash: string;
       let mint = "";
       if (built.kind === "tron") {
@@ -283,12 +285,15 @@ export function OwnWalletLaunch() {
               : tr("Approve in your wallet: {0} {1} launch fee + gas.", formatSmart(fee, 18), meta.native),
         );
         txHash = await signEvm(built, account);
+        sent = true;
+        await waitEvm(txHash);
       } else {
         setBusy(tr("Approve in your wallet. {0}", built.costText));
         mint = built.mint;
         txHash = await signSolana(built);
         setBusy(tr("Sent. Waiting for Solana to confirm."));
       }
+      sent = true;
       setBusy(plain || chain === "ton" ? tr("Waiting for the chain to confirm the coin. This can take a minute or two.") : tr("Confirmed. Listing it everywhere."));
       let done: { token: string; curve: string; url: string } | null = null;
       for (let attempt = 0; attempt < (plain || chain === "ton" ? 4 : 1); attempt += 1) {
@@ -309,8 +314,10 @@ export function OwnWalletLaunch() {
       const msg = err instanceof Error ? err.message : "The launch did not go through.";
       if (err instanceof WalletNeeded) {
         setError(err.message);
-      } else if (/user (rejected|denied|rejects)|declined|rejected the request|4001/i.test(msg)) {
+      } else if (!sent && /user (rejected|denied|rejects)|declined|rejected the request|4001/i.test(msg)) {
         setError(tr("You cancelled in the wallet. Nothing was launched."));
+      } else if (sent) {
+        setError(`${tr("Your launch was already sent from your wallet. Do NOT launch again. Send us this request id: {0}", requestId)} ${tr(msg)}`);
       } else {
         setError(tr(msg));
       }
@@ -692,7 +699,7 @@ export function OwnWalletLaunch() {
           </p>
         ) : null}
         {busy ? <p className="text-sm text-cyan">{tr(busy)}</p> : null}
-        {hash && busy ? (
+        {hash ? (
           <a
             className="text-sm text-cyan"
             href={txLink(chain, hash)}

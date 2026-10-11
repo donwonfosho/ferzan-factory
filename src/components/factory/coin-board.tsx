@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { setPollInterval } from "@/lib/factory/poll";
 import { CHAINS } from "@/lib/factory/catalog";
 import { addPost, listCoinTrades, listPosts, type BoardPost, type BoardTrade } from "@/lib/factory/board";
 import { postBody, proofAddress } from "@/lib/factory/proof";
@@ -40,10 +41,10 @@ export function CoinTape({ contract, chain, createdAt, supply }: { contract: str
       }
     }
     void pull();
-    const timer = window.setInterval(() => void pull(), 8000);
+    const stopPoll = setPollInterval(() => void pull(), 8000);
     return () => {
       stop = true;
-      window.clearInterval(timer);
+      stopPoll();
     };
   }, [contract, chain]);
 
@@ -110,10 +111,10 @@ export function CoinThread({ contract, chain }: { contract: string; chain: strin
       }
     }
     void pull();
-    const timer = window.setInterval(() => void pull(), 8000);
+    const stopPoll = setPollInterval(() => void pull(), 8000);
     return () => {
       stop = true;
-      window.clearInterval(timer);
+      stopPoll();
     };
   }, [contract]);
 
