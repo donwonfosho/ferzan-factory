@@ -21,6 +21,7 @@ async function accountId(token: string): Promise<string> {
   const appId = process.env.VITE_PRIVY_APP_ID || "cmuitovv501qx0cl6wnj2qvvt";
   const res = await fetch("https://auth.privy.io/api/v1/users/me", {
     headers: { Authorization: `Bearer ${token}`, "privy-app-id": appId },
+    signal: AbortSignal.timeout(6000),
   });
   if (!res.ok) throw new Error("Sign in again.");
   const body = (await res.json()) as { id?: unknown };
@@ -57,6 +58,13 @@ export const putWatch = createServerFn({ method: "POST" })
     const id = await accountId(data.token);
     const { getSql } = await import("@/lib/db");
     const sql = await getSql();
+    const rows = await sql<{ n: number; have: number }>`
+      select count(*)::int as n,
+             count(*) filter (where chain = ${data.coin.chain} and token = ${data.coin.token})::int as have
+      from watchlist
+      where account = ${id}
+    `;
+    if (Number(rows[0]?.n ?? 0) >= 200 && Number(rows[0]?.have ?? 0) === 0) throw new Error("Your watchlist is full.");
     await sql`
       insert into watchlist (account, chain, token, symbol, path)
       values (${id}, ${data.coin.chain}, ${data.coin.token}, ${data.coin.symbol}, ${data.coin.path})

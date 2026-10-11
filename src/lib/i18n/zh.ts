@@ -1166,6 +1166,7 @@ const dict: Record<string, string> = {
   "Your wallet shows the exact total before you sign.": "签名前，你的钱包会显示准确的总额。",
   "Your wallets now come with your Ferzan account (sign in on the Manage account page). This section is only for an older wallet kept in this browser: export its key, or restore one to move its funds.": "你的钱包现在随 Ferzan 账户提供（在“管理账户”页面登录）。本区域仅用于这个浏览器中保存的旧钱包：导出它的私钥，或恢复一个以转移其资金。",
   "Your watchlist": "你的自选",
+  "Your watchlist is full.": "你的自选已满。",
   "add the": "添加",
   "app": "应用",
   "bad address": "地址无效",

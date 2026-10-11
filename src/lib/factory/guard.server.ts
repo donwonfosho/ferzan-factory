@@ -74,6 +74,11 @@ async function visitorKey(bucket: RelayBucket, ip: string): Promise<string> {
 /** Call first in every relay handler. Throws on cross-site calls or when the visitor is over budget. */
 export async function guardRelay(bucket: RelayBucket): Promise<void> {
   assertSameSiteRequest();
+  await guardRelayBudget(bucket);
+}
+
+/** The visitor budget only, with no same-site check. Used by the CSP report endpoint. */
+export async function guardRelayBudget(bucket: RelayBucket): Promise<void> {
   const ip = visitor();
   // Without the visitor address everyone unknown shares ONE budget (a generous multiple of a single
   // visitor's), so a request that hides its address is still limited and can't use the relay without

@@ -5,10 +5,13 @@ const KEY = "ferzan-site-wallet-v1";
 const ADDR = "ferzan-site-wallet-addr-v1";
 const ACK = "ferzan-key-ack-v1";
 let memoryKey: `0x${string}` | null = null;
+let memoryAddress: `0x${string}` | null = null;
+let hydrating: Promise<SiteWallet | null> | null = null;
 
 export type SiteWallet = { address: `0x${string}`; privateKey: `0x${string}` };
 
 function remember(address: string) {
+  if (/^0x[a-fA-F0-9]{40}$/.test(address)) memoryAddress = address as `0x${string}`;
   if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(ADDR, address);
@@ -43,6 +46,7 @@ function storeKey(privateKey: `0x${string}`, address: `0x${string}`) {
 }
 
 export function knownSiteAddress(): string | null {
+  if (memoryAddress) return memoryAddress;
   if (typeof window === "undefined") return null;
   try {
     const saved = window.localStorage.getItem(ADDR);
@@ -66,7 +70,16 @@ async function deriveAddress(privateKey: `0x${string}`): Promise<`0x${string}`> 
 }
 
 /** Fills in the saved address the first time a key has no address stored yet. viem loads only then. */
-export async function hydrateSiteWallet(): Promise<SiteWallet | null> {
+export function hydrateSiteWallet(): Promise<SiteWallet | null> {
+  if (!hydrating) {
+    hydrating = fillSiteWallet().finally(() => {
+      hydrating = null;
+    });
+  }
+  return hydrating;
+}
+
+async function fillSiteWallet(): Promise<SiteWallet | null> {
   const ready = readSiteWallet();
   if (ready) return ready;
   const privateKey = savedKey();

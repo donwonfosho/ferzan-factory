@@ -152,6 +152,10 @@ async function cachedPublic<T>(key: string, load: () => Promise<T>): Promise<T> 
   return value;
 }
 
+function invalidatePublic(key: string) {
+  publicReads.delete(key);
+}
+
 export const quoteBoard = createServerFn({ method: "POST" })
   .validator((data: unknown): { rows: { chain: string; contract: string; supply: string }[] } => {
     if (!data || typeof data !== "object") throw new Error("Bad quote.");
@@ -477,7 +481,16 @@ export const recordTrade = createServerFn({ method: "POST" })
         ? await verify.solanaTradePrints(data.hash)
         : await verify.evmTradePrints(data.chain as RelayChain, data.hash);
     let recorded = 0;
-    for (const print of prints) if (await writePrint(data.chain, print)) recorded += 1;
+    for (const print of prints) {
+      if (await writePrint(data.chain, print)) {
+        recorded += 1;
+        invalidatePublic(`trades:${print.contract}`);
+      }
+    }
+    if (recorded) {
+      invalidatePublic("hot");
+      invalidatePublic("prints");
+    }
     return { ok: true, recorded };
   });
 
@@ -617,6 +630,7 @@ export const addPost = createServerFn({ method: "POST" })
       insert into posts (contract, chain, author, body)
       values (${data.contract}, ${data.chain}, ${data.author}, ${data.body})
     `;
+    invalidatePublic(`posts:${data.contract}`);
     return { ok: true };
   });
 

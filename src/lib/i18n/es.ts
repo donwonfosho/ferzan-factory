@@ -1155,6 +1155,7 @@ const dict: Record<string, string> = {
   "Your wallet shows the exact total before you sign.": "Tu billetera muestra el total exacto antes de firmar.",
   "Your wallets now come with your Ferzan account (sign in on the Manage account page). This section is only for an older wallet kept in this browser: export its key, or restore one to move its funds.": "Tus billeteras ahora vienen con tu cuenta de Ferzan (inicia sesión en la página Administrar cuenta). Esta sección es solo para una billetera antigua guardada en este navegador: exporta su clave o restaura una para mover sus fondos.",
   "Your watchlist": "Tu lista de seguimiento",
+  "Your watchlist is full.": "Tu lista de seguimiento está llena.",
   "add the": "agrega la",
   "bad address": "dirección no válida",
   "bad amount": "cantidad no válida",

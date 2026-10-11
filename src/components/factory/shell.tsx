@@ -23,10 +23,12 @@ import { MobileNav } from "./mobile-nav";
 import { QuickBuyToast } from "./quick-buy";
 import { SearchButton, SearchOverlay } from "./search";
 import { WatchSync } from "./watch";
-
 import { tr } from "@/lib/i18n";
 import { LangPicker } from "./lang";
 import { captureEvmRef, captureRef } from "@/lib/factory/compete";
+
+/** Starts the saved-key address fill once, before the first child reads the wallet. */
+let siteWalletStarted = false;
 /** Reading pages stay a narrow column; every other page uses the wide container. */
 const NARROW_PATHS = ["/docs", "/terms", "/about", "/transparency", "/how-to-buy", "/press", "/changelog", "/verify"];
 const LINKS = [
@@ -40,6 +42,10 @@ const LINKS = [
 ] as const;
 
 export function Shell({ children }: { children: ReactNode }) {
+  if (!siteWalletStarted && typeof window !== "undefined") {
+    siteWalletStarted = true;
+    void hydrateSiteWallet();
+  }
   const path = useRouterState({ select: (s) => s.location.pathname });
   const href = useRouterState({ select: (s) => s.location.href });
   const launches = useFactory((s) => s.launches);
@@ -51,10 +57,10 @@ export function Shell({ children }: { children: ReactNode }) {
   const account = useAccountWallets();
 
   useEffect(() => {
+    const siteReady = hydrateSiteWallet();
     captureRef();
     const done = useFactory.persist.rehydrate();
-    void Promise.resolve(done).then(async () => {
-      const site = await hydrateSiteWallet();
+    void Promise.all([siteReady, Promise.resolve(done)]).then(async ([site]) => {
       const current = useFactory.getState().wallet;
       if (site && !current) useFactory.getState().setWallet(site.address);
       if (!site) {

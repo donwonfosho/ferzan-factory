@@ -1,5 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+const MAX_BODY = 4_096;
+const SEEN_MS = 10 * 60_000;
+const seen = new Map<string, number>();
+
 /**
  * Browser CSP reports for the report-only policy. Stores the blocked URL and the directive only.
  * Query strings are dropped. The page address and the policy text are not kept.
@@ -8,19 +12,52 @@ export const Route = createFileRoute("/api/csp-report")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        try {
+          await (await import("@/lib/factory/guard.server")).guardRelayBudget("read");
+        } catch {
+          return new Response(null, { status: 429 });
+        }
+        const declared = request.headers.get("content-length");
+        if (declared !== null && Number(declared) > MAX_BODY) return new Response(null, { status: 413 });
+        let raw = "";
+        try {
+          raw = await request.text();
+        } catch {
+          return new Response(null, { status: 204 });
+        }
+        if (raw.length > MAX_BODY) return new Response(null, { status: 413 });
         let body: unknown;
         try {
-          body = await request.json();
+          body = JSON.parse(raw);
         } catch {
           return new Response(null, { status: 204 });
         }
         const report = readReport(body);
-        if (report) await sendReport(report.blocked, report.directive);
+        if (report && firstReport(report.blocked, report.directive)) await sendReport(report.blocked, report.directive);
         return new Response(null, { status: 204 });
       },
     },
   },
 });
+
+function firstReport(blocked: string, directive: string): boolean {
+  const now = Date.now();
+  for (const [key, at] of seen) {
+    if (now - at >= SEEN_MS) seen.delete(key);
+  }
+  const pair = `${blockedHost(blocked)}\n${directive}`;
+  if (seen.has(pair)) return false;
+  seen.set(pair, now);
+  return true;
+}
+
+function blockedHost(blocked: string): string {
+  try {
+    return new URL(blocked).host || blocked;
+  } catch {
+    return blocked;
+  }
+}
 
 function readReport(body: unknown): { blocked: string; directive: string } | null {
   const row = reportRow(body);
@@ -74,14 +111,8 @@ async function sendReport(blocked: string, directive: string): Promise<void> {
   }
   try {
     const Sentry = await import("@sentry/node");
-    const client = Sentry.getClient();
-    const opts = client?.getOptions();
-    const previous = opts?.sampleRate;
-    if (!client) Sentry.init({ dsn, sampleRate: 1, tracesSampleRate: 0 });
-    else if (opts) opts.sampleRate = 1;
+    if (!Sentry.getClient()) Sentry.init({ dsn, tracesSampleRate: 0 });
     Sentry.captureMessage("csp", { level: "warning", extra: { blocked, directive } });
-    await Sentry.flush(1500);
-    if (opts && previous !== undefined) opts.sampleRate = previous;
   } catch {
     console.info(`csp ${directive} ${blocked}`);
   }
