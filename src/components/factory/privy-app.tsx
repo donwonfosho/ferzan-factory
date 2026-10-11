@@ -200,7 +200,7 @@ export default function PrivyApp() {
     <PrivyProvider
       appId={PRIVY_APP_ID}
       config={{
-        loginMethods: ["email", "google", "twitter", "wallet"],
+        loginMethods: ["email", "google", "twitter", "telegram", "wallet"],
         appearance: { theme: "dark", accentColor: "#39F3C3", walletChainType: "ethereum-and-solana" },
         embeddedWallets: {
           ethereum: { createOnLogin: "users-without-wallets" },
