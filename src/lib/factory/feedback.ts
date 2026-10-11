@@ -10,7 +10,11 @@ const CATEGORY = new Set(["bug", "idea", "other", "scam", "impersonation", "offe
 const COIN = /^(0x[0-9a-fA-F]{40}|[1-9A-HJ-NP-Za-km-z]{32,48}|[EUk]Q[A-Za-z0-9_-]{46}|T[1-9A-HJ-NP-Za-km-z]{33})$/;
 
 function clean(value: unknown, max: number): string {
-  return String(value ?? "").replace(/[\u0000-\u001f]/g, " ").replace(/\s+/g, " ").trim().slice(0, max);
+  return String(value ?? "")
+    .replace(new RegExp(`[${String.fromCharCode(0)}-${String.fromCharCode(31)}]`, "g"), " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, max);
 }
 
 function looksLikeSecret(text: string): boolean {

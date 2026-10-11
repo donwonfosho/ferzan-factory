@@ -112,8 +112,14 @@ export function SearchOverlay() {
             value={q}
             onChange={(e) => setQ(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "ArrowDown") (e.preventDefault(), setSel((s) => Math.min(list.length - 1, s + 1)));
-              if (e.key === "ArrowUp") (e.preventDefault(), setSel((s) => Math.max(0, s - 1)));
+              if (e.key === "ArrowDown") {
+                e.preventDefault();
+                setSel((s) => Math.min(list.length - 1, s + 1));
+              }
+              if (e.key === "ArrowUp") {
+                e.preventDefault();
+                setSel((s) => Math.max(0, s - 1));
+              }
               if (e.key === "Enter") go(list[sel]);
             }}
             placeholder={tr("Ticker, name or contract address")}

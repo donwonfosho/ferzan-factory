@@ -4,9 +4,18 @@ import { SolCoinPage } from "@/components/factory/sol-coin-page";
 import { TonCurvePage } from "@/components/factory/ton-curve-page";
 import { TronCurvePage } from "@/components/factory/tron-curve-page";
 import { BOT_CURVE_CHAINS, type BotCurveChain } from "@/lib/factory/bot-curve";
+import { coinShareMeta, coinTitle } from "@/lib/factory/board";
 
 import { tr } from "@/lib/i18n";
 export const Route = createFileRoute("/coin/$chain/$curve")({
+  loader: async ({ params }) => {
+    try {
+      return await coinTitle({ data: { chain: params.chain, contract: params.curve } });
+    } catch {
+      return null;
+    }
+  },
+  head: ({ loaderData }) => coinShareMeta(loaderData),
   component: BotCoinRoute,
 });
 

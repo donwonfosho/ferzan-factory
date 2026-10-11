@@ -93,6 +93,7 @@ export const listBoard = createServerFn({ method: "POST" })
     return { chain, sort, q };
   })
   .handler(async ({ data }): Promise<BoardCoin[]> => {
+    return cachedPublic(`board:${data.chain}:${data.sort}:${data.q}`, async () => {
     const { getSql } = await import("@/lib/db");
     const sql = await getSql();
     const chain = data.chain === "all" ? "" : data.chain;
@@ -121,6 +122,7 @@ export const listBoard = createServerFn({ method: "POST" })
       limit 50
     `;
     return rows.map(mapCoin);
+    });
   });
 
 export type BoardMark = {
@@ -134,6 +136,21 @@ export type BoardMark = {
 };
 
 const quoteCache = new Map<string, { at: number; marks: BoardMark[] }>();
+
+/** Short cache for the public reads every open tab polls. Expired rows are dropped on each read. */
+const publicReads = new Map<string, { at: number; value: unknown }>();
+
+async function cachedPublic<T>(key: string, load: () => Promise<T>): Promise<T> {
+  const now = Date.now();
+  for (const [entry, row] of publicReads) {
+    if (now - row.at >= 5_000) publicReads.delete(entry);
+  }
+  const hit = publicReads.get(key);
+  if (hit) return hit.value as T;
+  const value = await load();
+  publicReads.set(key, { at: Date.now(), value });
+  return value;
+}
 
 export const quoteBoard = createServerFn({ method: "POST" })
   .validator((data: unknown): { rows: { chain: string; contract: string; supply: string }[] } => {
@@ -250,6 +267,7 @@ export const quoteBoard = createServerFn({ method: "POST" })
   });
 
 export const listHot = createServerFn({ method: "GET" }).handler(async (): Promise<BoardCoin[]> => {
+  return cachedPublic("hot", async () => {
   const { getSql } = await import("@/lib/db");
   const sql = await getSql();
   const rows = await sql<{
@@ -271,9 +289,11 @@ export const listHot = createServerFn({ method: "GET" }).handler(async (): Promi
     limit 20
   `;
   return rows.map(mapCoin);
+  });
 });
 
 export const listPrints = createServerFn({ method: "GET" }).handler(async (): Promise<BoardPrint[]> => {
+  return cachedPublic("prints", async () => {
   const { getSql } = await import("@/lib/db");
   const sql = await getSql();
   const rows = await sql<{
@@ -307,6 +327,7 @@ export const listPrints = createServerFn({ method: "GET" }).handler(async (): Pr
     image: row.image,
     supply: row.supply,
   }));
+  });
 });
 
 export const getCoin = createServerFn({ method: "POST" })
@@ -342,6 +363,44 @@ export const getCoin = createServerFn({ method: "POST" })
     if (!row) return null;
     return mapCoin(row);
   });
+
+/** Name and ticker for a coin page, when the board already lists that contract. */
+export const coinTitle = createServerFn({ method: "POST" })
+  .validator((data: unknown): { chain: string; contract: string } => {
+    const row = clean(data);
+    const chain = typeof row.chain === "string" ? row.chain.trim().slice(0, 20) : "";
+    const contract = typeof row.contract === "string" ? row.contract.trim().slice(0, 80) : "";
+    return { chain, contract };
+  })
+  .handler(async ({ data }): Promise<{ name: string; symbol: string } | null> => {
+    if (!data.chain || data.contract.length < 8) return null;
+    const contract = data.contract.startsWith("0x") ? data.contract.toLowerCase() : data.contract;
+    const { getSql } = await import("@/lib/db");
+    const sql = await getSql();
+    const rows = await sql<{ name: string; symbol: string }>`
+      select name, symbol from coins
+      where chain = ${data.chain} and contract = ${contract}
+      limit 1
+    `;
+    const row = rows[0];
+    if (!row?.symbol) return null;
+    return { name: row.name, symbol: row.symbol };
+  });
+
+export function coinShareMeta(coin: { name: string; symbol: string } | null | undefined) {
+  const symbol = coin?.symbol?.trim() ?? "";
+  const name = coin?.name?.trim() ?? "";
+  const title = symbol ? `$${symbol} on Ferzan` : "Coin on Ferzan";
+  const description = name && symbol ? `${name} ($${symbol}) on Ferzan Factory.` : "A coin on Ferzan Factory.";
+  return {
+    meta: [
+      { title },
+      { name: "description", content: description },
+      { property: "og:title", content: title },
+      { property: "og:description", content: description },
+    ],
+  };
+}
 
 export const publishCoin = createServerFn({ method: "POST" })
   .validator((data: unknown) => {
@@ -452,6 +511,7 @@ export const listCoinTrades = createServerFn({ method: "POST" })
     return { contract };
   })
   .handler(async ({ data }): Promise<BoardTrade[]> => {
+    return cachedPublic(`trades:${data.contract}`, async () => {
     const { getSql } = await import("@/lib/db");
     const sql = await getSql();
     const rows = await sql<{
@@ -474,6 +534,7 @@ export const listCoinTrades = createServerFn({ method: "POST" })
       price: row.price,
       createdAt: row.created_at,
     }));
+    });
   });
 
 export type BoardPost = {
@@ -490,6 +551,7 @@ export const listPosts = createServerFn({ method: "POST" })
     return { contract };
   })
   .handler(async ({ data }): Promise<BoardPost[]> => {
+    return cachedPublic(`posts:${data.contract}`, async () => {
     const { getSql } = await import("@/lib/db");
     const sql = await getSql();
     const rows = await sql<{ id: string; author: string; body: string; created_at: string }>`
@@ -505,6 +567,7 @@ export const listPosts = createServerFn({ method: "POST" })
       body: row.body,
       createdAt: row.created_at,
     }));
+    });
   });
 
 export const addPost = createServerFn({ method: "POST" })

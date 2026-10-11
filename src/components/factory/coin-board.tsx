@@ -121,7 +121,7 @@ export function CoinThread({ contract, chain }: { contract: string; chain: strin
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    let author = wallet;
+    const author = wallet;
     if (!author || (!author.startsWith("0x") && !/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(author))) {
       setError(tr("Create a wallet on Account before you post. Opening the site does not create one."));
       return;

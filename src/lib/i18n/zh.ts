@@ -984,6 +984,7 @@ const dict: Record<string, string> = {
   "The extension was closed. The profile wallet is unchanged.": "插件已关闭，资料钱包没有变化。",
   "The first daily run has not happened yet. It shows up here with its transactions as soon as it does.": "第一次每日执行还没有发生。一旦发生，就会附带交易显示在这里。",
   "The launch failed on chain. Nothing was created.": "发射在链上失败，没有创建任何东西。",
+  "The launch failed on chain. Nothing was created. You can try again.": "发射在链上失败，没有创建任何东西。可以再试一次。",
   "The launch fee is still high. It keeps falling in the first minutes after launch and settles at 1%.": "发射费仍然很高，会在发射后的最初几分钟内持续下降，最后稳定在 1%。",
   "The launch fee looks wrong.": "发射费不对。",
   "The launch service did not answer. Try again in a minute.": "发射服务没有响应，请一分钟后再试。",

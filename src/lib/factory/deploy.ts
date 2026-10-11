@@ -472,7 +472,7 @@ export async function readErc20String(chain: EvmChainId, address: string, select
   if (!Number.isFinite(len) || len <= 0 || len > 64) return "";
   const data = hex.slice(start + 64, start + 64 + len * 2);
   const bytes = data.match(/.{2}/g)?.map((byte) => Number.parseInt(byte, 16)) ?? [];
-  return new TextDecoder().decode(new Uint8Array(bytes)).replace(/\u0000/g, "");
+  return new TextDecoder().decode(new Uint8Array(bytes)).replaceAll(String.fromCharCode(0), "");
 }
 
 const BALANCE_OF = "0x70a08231";

@@ -174,7 +174,7 @@ export function OwnWalletLaunch() {
     for (let i = 0; i < 72; i += 1) {
       const receipt = await getReceipt({ data: { chain: chain as EvmChainId, hash: hashValue } }).catch(() => null);
       if (receipt) {
-        if (receipt.status !== "0x1") throw new Error(tr("The launch failed on chain. Nothing was created."));
+        if (receipt.status !== "0x1") throw new Error("The launch failed on chain. Nothing was created. You can try again.");
         return;
       }
       await new Promise((resolve) => setTimeout(resolve, 2500));
@@ -312,8 +312,11 @@ export function OwnWalletLaunch() {
       setLaunched({ chain, name: cleanName, symbol: cleanSymbol, token: done.token, curve: done.curve, url: done.url, hash: txHash });
     } catch (err) {
       const msg = err instanceof Error ? err.message : "The launch did not go through.";
+      const failedOnChain = msg === "The launch failed on chain. Nothing was created. You can try again.";
       if (err instanceof WalletNeeded) {
         setError(err.message);
+      } else if (failedOnChain) {
+        setError(tr("The launch failed on chain. Nothing was created. You can try again."));
       } else if (!sent && /user (rejected|denied|rejects)|declined|rejected the request|4001/i.test(msg)) {
         setError(tr("You cancelled in the wallet. Nothing was launched."));
       } else if (sent) {

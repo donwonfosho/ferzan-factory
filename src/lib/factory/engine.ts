@@ -308,7 +308,7 @@ export function stampPrimary(floor: Floor, input: PrimaryInput, now = Date.now()
     feeReferrer: 0n,
   };
   const price = input.mode === "curve" ? spot(curve, chain.nativeDecimals, chain.tokenDecimals) : 0;
-  let launch = blank({
+  const launch = blank({
     id,
     kind: "primary",
     chain: input.chain,

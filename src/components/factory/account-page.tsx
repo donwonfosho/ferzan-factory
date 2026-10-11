@@ -139,7 +139,7 @@ export function AccountPage() {
     setCopied(tr("This profile's wallet is the signer again."));
   }
 
-  async function useExtension() {
+  async function connectExtension() {
     const eth = (window as unknown as { ethereum?: EthereumProvider }).ethereum;
     if (!eth) {
       setCopied(tr("No extension in this browser. The key on this profile stays the signer."));
@@ -349,7 +349,7 @@ export function AccountPage() {
               {tr("Use profile wallet")}
             </Button>
           ) : null}
-          <Button type="button" variant="ghost" onClick={() => void useExtension()}>
+          <Button type="button" variant="ghost" onClick={() => void connectExtension()}>
             {tr("Use an extension")}
           </Button>
         </div>

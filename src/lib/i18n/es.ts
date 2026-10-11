@@ -977,6 +977,7 @@ const dict: Record<string, string> = {
   "The extension was closed. The profile wallet is unchanged.": "La extensión se cerró. La billetera del perfil no cambió.",
   "The first daily run has not happened yet. It shows up here with its transactions as soon as it does.": "La primera ejecución diaria aún no ha ocurrido. Aparecerá aquí con sus transacciones en cuanto ocurra.",
   "The launch failed on chain. Nothing was created.": "El lanzamiento falló en la cadena. No se creó nada.",
+  "The launch failed on chain. Nothing was created. You can try again.": "El lanzamiento falló en la cadena. No se creó nada. Puedes intentarlo de nuevo.",
   "The launch fee is still high. It keeps falling in the first minutes after launch and settles at 1%.": "La comisión de lanzamiento sigue alta. Sigue bajando en los primeros minutos tras el lanzamiento y se estabiliza en 1%.",
   "The launch fee looks wrong.": "La comisión de lanzamiento no es válida.",
   "The launch service did not answer. Try again in a minute.": "El servicio de lanzamiento no respondió. Inténtalo en un minuto.",

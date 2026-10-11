@@ -38,7 +38,7 @@ function decodeString(hex: unknown): string {
   const len = Number(BigInt("0x" + s.slice(64, 128)));
   const bytes = s.slice(128, 128 + len * 2);
   try {
-    return Buffer.from(bytes, "hex").toString("utf8").replace(/[^\x20-\x7e -￿]/g, "").slice(0, 40);
+    return Buffer.from(bytes, "hex").toString("utf8").replace(/[^\x20-\x7e\u00a0-\uffff]/g, "").slice(0, 40);
   } catch {
     return "";
   }
