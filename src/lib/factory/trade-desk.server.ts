@@ -15,7 +15,7 @@ class DeskStatus extends Error {
   }
 }
 
-const BANNED = new Set(["bridge", "privy", "secret", "token", "access_token", "accessToken", "authorization", "telegram_user_id", "telegramUserId"]);
+const BANNED = new Set(["bridge", "privy", "privy_id", "secret", "token", "access_token", "accessToken", "authorization", "telegram_user_id", "telegramUserId"]);
 
 function clip(value: unknown, depth = 0): unknown {
   if (value === null || typeof value === "boolean") return value;
@@ -70,9 +70,9 @@ function toUserError(err: DeskStatus): Error {
 }
 
 async function post(endpoint: string, idToken: string, fields: Record<string, unknown>): Promise<unknown> {
-  const body: Record<string, unknown> = { privy: idToken };
+  const body: Record<string, unknown> = { privy_id: idToken };
   for (const [key, value] of Object.entries(fields)) {
-    if (key === "privy" || key === "bridge" || value === undefined) continue;
+    if (key === "privy" || key === "privy_id" || key === "bridge" || value === undefined) continue;
     body[key] = value;
   }
   let res: Response;
