@@ -9,7 +9,7 @@ import {
 } from "@solana/web3.js";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import { Buffer } from "buffer";
-import { TREASURY } from "./catalog";
+import { TREASURY, SOLANA_RPC } from "./catalog";
 import { SOLANA_CURVE_PROGRAM } from "./contracts";
 import { keypairFromSite, solanaRelay } from "./solana";
 import { readSiteWallet } from "./site-wallet";
@@ -476,7 +476,7 @@ const signSolanaDeploy = createServerFn({ method: "POST" })
       throw new Error("The program key does not match.");
     }
     const elf = await readFile("public/ferzan-curve.so");
-    const rpc = new Connection("https://api.mainnet-beta.solana.com", "confirmed");
+    const rpc = new Connection(SOLANA_RPC, "confirmed");
     const buffer = new SolKeyPub(data.buffer);
     const info = await rpc.getAccountInfo(buffer, "confirmed");
     if (!info || info.data.length !== 37 + elf.length || !info.data.subarray(37).equals(elf)) {

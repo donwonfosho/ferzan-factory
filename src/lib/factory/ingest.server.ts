@@ -1,5 +1,6 @@
 import { getSql } from "@/lib/db";
 import { readCurve, readErc20String, type EvmChainId } from "@/lib/factory/deploy";
+import { SOLANA_RPC } from "./catalog";
 
 const EVM = new Set<EvmChainId>(["ethereum", "bsc", "base", "robinhood", "arc"]);
 const NAME = "0x06fdde03";
@@ -32,7 +33,7 @@ export async function ingestLaunch(body: unknown): Promise<{ ok: true; id: strin
     if (givenName.length < 2 || !/^[A-Z0-9]{1,10}$/.test(givenSymbol)) {
       return { ok: false, error: "Send the name and ticker with a Solana mint." };
     }
-    const live = await fetch("https://api.mainnet-beta.solana.com", {
+    const live = await fetch(SOLANA_RPC, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getAccountInfo", params: [contract, { encoding: "base64" }] }),

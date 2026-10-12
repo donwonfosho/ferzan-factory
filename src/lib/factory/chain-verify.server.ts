@@ -4,6 +4,7 @@
  * recordTrade (what did this transaction really trade?).
  */
 import { chainRpc, type RelayChain } from "./relay";
+import { SOLANA_RPC } from "./catalog";
 
 /** keccak256("Trade(address,bool,uint256,uint256,address)"), emitted by the site curve (contracts/FerzanCurve.sol). */
 const TRADE_TOPIC = "0xffbf3942a32ceb2aabfe4f2596228deead369ce3b97102bb8734075fe3510af5";
@@ -13,8 +14,6 @@ const SOLANA_TRADE_PROGRAMS = new Set([
   "G7n5XBB7pjvKS7JfC6esgQGGAyPku5cposdiHfVAUxnJ",
   "dbcij3LWUppWqq96dh6gJWwBifmcGfLSB5D4DuSMaqN",
 ]);
-
-const SOLANA_RPC = "https://api.mainnet-beta.solana.com";
 
 export const EVM_CHAINS = new Set<RelayChain>(["ethereum", "bsc", "base", "robinhood", "arc"]);
 
