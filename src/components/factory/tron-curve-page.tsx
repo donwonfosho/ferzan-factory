@@ -4,6 +4,7 @@ import { buildTronTrade, getTronCurve, quoteTronCurve, TRON_ADDRESS, type TronCu
 import { tronLinkAppLink, tronWallet } from "@/lib/factory/tron-ton-wallets";
 import { formatPrice, formatSmart, formatUsdPrice, parseDecimal } from "@/lib/factory/units";
 import { useLive, sameCoin } from "@/lib/factory/live";
+import { useAccountWallets } from "@/lib/factory/wallet-bridge";
 import { cn } from "@/lib/cn";
 import { Button, TextInput } from "./ui";
 import { CurveGraphic } from "./chart-pro";
@@ -77,6 +78,7 @@ export function TronCurvePage({ curve }: { curve: string }) {
   const [quoted, setQuoted] = useState<{ out: bigint; refund: bigint } | null>(null);
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
+  const signedIn = useAccountWallets();
   const [lastTx, setLastTx] = useState("");
   const [copied, setCopied] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
@@ -307,7 +309,18 @@ export function TronCurvePage({ curve }: { curve: string }) {
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-start">
         <div className="min-w-0 space-y-4">
       <div className="ticket fz-panel">
-        <TvChart candles={state.candles} tf={tf} onTf={setTf} native="TRX" toCap={state.price > 0 ? state.mcapUsd / state.price : 0} />
+        <TvChart
+          candles={state.candles}
+          trades={state.trades}
+          wallet={account || (signedIn?.authenticated ? (signedIn.tronAddress ?? "") : "")}
+          creator={state.creator}
+          targetRaw={state.gradTarget}
+          targetDecimals={6}
+          tf={tf}
+          onTf={setTf}
+          native="TRX"
+          toCap={state.price > 0 ? state.mcapUsd / state.price : 0}
+        />
       </div>
 
       <CurveGraphic

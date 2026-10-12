@@ -351,6 +351,11 @@ export function BotCoinPage({ chain, curve }: { chain: BotCurveChain; curve: str
       <div className="ticket fz-panel">
         <TvChart
           candles={state.candles}
+          trades={state.trades}
+          wallet={pnlWallet}
+          creator={state.creator}
+          targetRaw={state.gradTarget}
+          targetDecimals={18}
           tf={tf}
           onTf={setTf}
           native={state.native}

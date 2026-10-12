@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { IChartApi, ISeriesApi, MouseEventParams, UTCTimestamp } from "lightweight-charts";
+import type { IChartApi, IPriceLine, ISeriesApi, ISeriesMarkersPluginApi, MouseEventParams, SeriesMarker, Time, UTCTimestamp } from "lightweight-charts";
 import { tr } from "@/lib/i18n";
 import { CandleChart } from "./chart-pro";
 
 type Candle = [number, number, number, number, number, number];
 type Charts = typeof import("lightweight-charts");
 type Bar = { time: UTCTimestamp; open: number; high: number; low: number; close: number; vol: number };
+
+export type ChartTrade = { ts: number; buy: boolean; native: number; tokens: number; trader: string };
 
 export const CHART_TIMEFRAMES = [
   { tf: 60, label: "1m" },
@@ -26,12 +28,26 @@ export function TvChart({
   onTf,
   native,
   toCap,
+  trades,
+  wallet,
+  creator,
+  targetRaw,
+  targetDecimals,
+  wallets = true,
 }: {
   candles: Candle[];
   tf: number;
   onTf: (tf: number) => void;
   native: string;
   toCap?: number;
+  trades?: ChartTrade[];
+  wallet?: string;
+  creator?: string;
+  /** Graduation target as the chain's raw integer, plus its decimals. */
+  targetRaw?: string;
+  targetDecimals?: number;
+  /** False on a chain whose trade feed has no wallet. */
+  wallets?: boolean;
 }) {
   const [lib, setLib] = useState<Charts | null>(null);
   const [failed, setFailed] = useState(false);
@@ -50,6 +66,8 @@ export function TvChart({
     };
   }, []);
 
+  const noWallets = wallets === false || ((trades?.length ?? 0) > 0 && !(trades ?? []).some((t) => t.trader));
+
   return (
     <div>
       <div className="mb-2 flex gap-2 overflow-x-auto">
@@ -62,10 +80,22 @@ export function TvChart({
       {failed ? (
         <CandleChart candles={candles} tf={tf} native={native} toCap={toCap} />
       ) : lib ? (
-        <LibraryChart lib={lib} candles={candles} tf={tf} native={native} toCap={toCap} onFail={() => setFailed(true)} />
+        <LibraryChart
+          lib={lib}
+          candles={candles}
+          tf={tf}
+          native={native}
+          toCap={toCap}
+          trades={wallets === false ? [] : (trades ?? [])}
+          wallet={wallet ?? ""}
+          creator={creator ?? ""}
+          target={chartNative(targetRaw ?? "", targetDecimals ?? 0)}
+          onFail={() => setFailed(true)}
+        />
       ) : (
         <div className="h-[280px] sm:h-[340px]" aria-busy="true" />
       )}
+      {noWallets ? <p className="mt-2 text-xs text-muted">{tr("Your trades are not shown on this chain yet")}</p> : null}
     </div>
   );
 }
@@ -101,12 +131,33 @@ function sma20(rows: Bar[]) {
   return out;
 }
 
+function chartNative(raw: string, decimals: number): number {
+  if (!/^\d+$/.test(raw) || decimals < 0 || decimals > 18) return 0;
+  const v = BigInt(raw);
+  const scale = 10n ** BigInt(decimals);
+  return Number(v / scale) + Number(v % scale) / Number(scale);
+}
+
+function sameWallet(a: string, b: string) {
+  if (!a || !b) return false;
+  if (a.startsWith("0x") || a.startsWith("0X") || b.startsWith("0x") || b.startsWith("0X")) return a.toLowerCase() === b.toLowerCase();
+  return a === b;
+}
+
+function tradeSec(ts: number) {
+  return ts > 1e12 ? Math.floor(ts / 1000) : Math.floor(ts);
+}
+
 function LibraryChart({
   lib,
   candles,
   tf,
   native,
   toCap,
+  trades,
+  wallet,
+  creator,
+  target,
   onFail,
 }: {
   lib: Charts;
@@ -114,24 +165,49 @@ function LibraryChart({
   tf: number;
   native: string;
   toCap?: number;
+  trades: ChartTrade[];
+  wallet: string;
+  creator: string;
+  target: number;
   onFail: () => void;
 }) {
   const frame = useRef<HTMLDivElement>(null);
   const host = useRef<HTMLDivElement>(null);
-  const api = useRef<{ chart: IChartApi; series: ISeriesApi<"Candlestick">; volume: ISeriesApi<"Histogram">; sma: ISeriesApi<"Line"> } | null>(null);
+  const api = useRef<{
+    chart: IChartApi;
+    series: ISeriesApi<"Candlestick">;
+    volume: ISeriesApi<"Histogram">;
+    sma: ISeriesApi<"Line">;
+    markers: ISeriesMarkersPluginApi<Time>;
+    priceLine: IPriceLine | null;
+  } | null>(null);
   const failRef = useRef(onFail);
   const fitKey = useRef("");
+  const tipRef = useRef(new Map<number, string>());
   failRef.current = onFail;
   const [mode, setMode] = useState<"price" | "cap">("price");
   const [log, setLog] = useState(false);
   const [smaOn, setSmaOn] = useState(false);
   const [full, setFull] = useState(false);
   const [hover, setHover] = useState<{ o: number; h: number; l: number; c: number; vol: number } | null>(null);
+  const [tip, setTip] = useState("");
   const capOk = (toCap ?? 0) > 0;
   const k = mode === "cap" && capOk ? (toCap as number) : 1;
   const rows = useMemo(() => barsOf(candles, k), [candles, k]);
   const logOk = rows.length > 0 && rows.every((row) => row.low > 0);
   const label = (v: number) => (mode === "cap" && capOk ? `$${fmt(v)}` : fmt(v));
+  const avg = useMemo(() => {
+    let spent = 0;
+    let got = 0;
+    for (const t of trades) {
+      if (!wallet || !sameWallet(t.trader, wallet) || !t.buy || !(t.native > 0) || !(t.tokens > 0)) continue;
+      spent += t.native;
+      got += t.tokens;
+    }
+    return got > 0 ? spent / got : 0;
+  }, [trades, wallet]);
+  const lastNative = rows.length ? rows[rows.length - 1].close / (k || 1) : 0;
+  const pnl = wallet && avg > 0 && lastNative > 0 ? ((lastNative - avg) / avg) * 100 : null;
 
   useEffect(() => {
     const el = host.current;
@@ -180,13 +256,17 @@ function LibraryChart({
       const vol = param.seriesData.get(volume);
       if (!bar || !("open" in bar)) {
         setHover(null);
+        setTip("");
         return;
       }
       const amount = vol && "value" in vol ? vol.value : 0;
+      const time = typeof param.time === "number" ? param.time : null;
       setHover({ o: bar.open, h: bar.high, l: bar.low, c: bar.close, vol: amount });
+      setTip(time === null ? "" : (tipRef.current.get(time) ?? ""));
     };
     chart.subscribeCrosshairMove(onMove);
-    api.current = { chart, series, volume, sma };
+    const markers = lib.createSeriesMarkers(series, []);
+    api.current = { chart, series, volume, sma, markers, priceLine: null };
     return () => {
       chart.remove();
       api.current = null;
@@ -212,10 +292,52 @@ function LibraryChart({
         live.chart.timeScale().fitContent();
         fitKey.current = key;
       }
+      const times = new Set(rows.map((row) => row.time));
+      const whale = target > 0 ? target * 0.05 : 0;
+      const marks: SeriesMarker<Time>[] = [];
+      const tips = new Map<number, string>();
+      for (const t of trades) {
+        if (!t.trader) continue;
+        const bucket = (Math.floor(tradeSec(t.ts) / tf) * tf) as UTCTimestamp;
+        if (!times.has(bucket)) continue;
+        const mine = Boolean(wallet) && sameWallet(t.trader, wallet);
+        const dev = Boolean(creator) && sameWallet(t.trader, creator);
+        const big = t.buy && whale > 0 && t.native > whale;
+        if (!mine && !dev && !big) continue;
+        marks.push({
+          time: bucket,
+          position: t.buy ? "belowBar" : "aboveBar",
+          shape: dev ? "circle" : mine ? (t.buy ? "arrowUp" : "arrowDown") : "square",
+          color: dev ? "#e6c15a" : t.buy ? "#3ee0e6" : "#e07a68",
+          text: mine ? (t.buy ? "B" : "S") : dev ? "C" : "",
+          size: big ? 2 : 1,
+        });
+        if (mine && t.native > 0) {
+          const line = `${t.buy ? "B" : "S"} ${fmt(t.native)} ${native}`;
+          const prev = tips.get(bucket);
+          tips.set(bucket, prev ? `${prev} · ${line}` : line);
+        }
+      }
+      live.markers.setMarkers(marks);
+      tipRef.current = tips;
+      if (live.priceLine) {
+        live.series.removePriceLine(live.priceLine);
+        live.priceLine = null;
+      }
+      if (avg > 0) {
+        live.priceLine = live.series.createPriceLine({
+          price: avg * k,
+          color: "#e6c15a",
+          lineWidth: 1,
+          lineStyle: lib.LineStyle.Dashed,
+          axisLabelVisible: true,
+          title: tr("Avg buy"),
+        });
+      }
     } catch {
       failRef.current();
     }
-  }, [rows, smaOn, log, logOk, lib, mode, capOk, tf]);
+  }, [rows, smaOn, log, logOk, lib, mode, capOk, tf, trades, wallet, creator, target, avg, k, native]);
 
   useEffect(() => {
     const on = () => setFull(document.fullscreenElement === frame.current);
@@ -261,9 +383,13 @@ function LibraryChart({
             O <span className="text-fg">{label(hover.o)}</span> H <span className="text-fg">{label(hover.h)}</span> L <span className="text-fg">{label(hover.l)}</span> C{" "}
             <span className={hover.c >= hover.o ? "text-cyan" : "text-sell"}>{label(hover.c)}</span>
             {hover.vol > 0 ? tr(" · vol {0} {1}", fmt(hover.vol), native) : ""}
+            {tip ? <span className="text-fg"> · {tip}</span> : null}
           </span>
         ) : last ? (
-          <span className="text-fg">{label(last.close)}</span>
+          <span>
+            <span className="text-fg">{label(last.close)}</span>
+            {pnl !== null ? <span className={pnl >= 0 ? "text-cyan" : "text-sell"}>{tr(" · Your P/L {0}%", `${pnl >= 0 ? "+" : ""}${pnl.toFixed(1)}`)}</span> : null}
+          </span>
         ) : (
           tr("Not enough trades for a chart yet.")
         )}

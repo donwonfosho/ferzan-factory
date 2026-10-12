@@ -256,7 +256,7 @@ export function SolCoinPage({ mint }: { mint: string }) {
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-start">
         <div className="min-w-0 space-y-4">
       <div className="ticket fz-panel">
-        <TvChart candles={coin.candles} tf={tf} onTf={setTf} native="SOL" toCap={coin.price > 0 ? coin.mcapUsd / coin.price : 0} />
+        <TvChart candles={coin.candles} tf={tf} onTf={setTf} native="SOL" toCap={coin.price > 0 ? coin.mcapUsd / coin.price : 0} wallets={false} />
       </div>
 
       <ShareCoin chain="solana" token={coin.mint} symbol={coin.symbol} />

@@ -5,6 +5,7 @@ import { buildTonTrade, getTonCurve, quoteTonCurve, type TonCurveState } from "@
 import { tonWallet } from "@/lib/factory/tron-ton-wallets";
 import { formatPrice, formatSmart, formatUsdPrice, parseDecimal } from "@/lib/factory/units";
 import { useLive, sameCoin } from "@/lib/factory/live";
+import { useAccountWallets } from "@/lib/factory/wallet-bridge";
 import { cn } from "@/lib/cn";
 import { Button, TextInput } from "./ui";
 import { CurveGraphic } from "./chart-pro";
@@ -80,6 +81,7 @@ export function TonCurvePage({ curve }: { curve: string }) {
   const [error, setError] = useState("");
   const [sentOnce, setSentOnce] = useState(false);
   const [copied, setCopied] = useState(false);
+  const signedIn = useAccountWallets();
   const formRef = useRef<HTMLFormElement>(null);
   const seen = useRef("");
 
@@ -272,7 +274,18 @@ export function TonCurvePage({ curve }: { curve: string }) {
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-start">
         <div className="min-w-0 space-y-4">
       <div className="ticket fz-panel">
-        <TvChart candles={state.candles} tf={tf} onTf={setTf} native="TON" toCap={state.price > 0 ? state.mcapUsd / state.price : 0} />
+        <TvChart
+          candles={state.candles}
+          trades={state.trades}
+          wallet={account || (signedIn?.authenticated ? (signedIn.tonAddress ?? "") : "")}
+          creator={state.creator}
+          targetRaw={state.gradTarget}
+          targetDecimals={9}
+          tf={tf}
+          onTf={setTf}
+          native="TON"
+          toCap={state.price > 0 ? state.mcapUsd / state.price : 0}
+        />
       </div>
 
       <CurveGraphic
