@@ -68,7 +68,8 @@ function bannerSentence(key: "degraded" | "down" | "fail"): string {
 function formatUpdated(unix: number, lang: string): string {
   const d = new Date(unix * 1000);
   if (Number.isNaN(d.getTime())) return "";
-  const locale = lang === "zh" ? "zh-CN" : lang === "es" ? "es" : "en-US";
+  const locale =
+    lang === "zh" ? "zh-CN" : lang === "es" ? "es" : lang === "pt" ? "pt" : lang === "ru" ? "ru" : lang === "tr" ? "tr" : lang === "vi" ? "vi" : "en-US";
   return new Intl.DateTimeFormat(locale, {
     month: "short",
     day: "numeric",

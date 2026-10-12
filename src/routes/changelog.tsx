@@ -13,6 +13,12 @@ export const Route = createFileRoute("/changelog")({
 
 const ENTRIES = [
   {
+    date: "October 11, 2026",
+    items: [
+      "Portuguese, Russian, Turkish and Vietnamese are available. Those four are machine translated.",
+    ],
+  },
+  {
     date: "October 10, 2026",
     items: [
       "Add funds and cash out: a card or Apple Pay in, and a cash-out link on the chains that have one.",

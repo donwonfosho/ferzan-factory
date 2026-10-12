@@ -1,16 +1,22 @@
 /**
- * Site languages: English (built in), 中文 and Español (loaded on demand).
+ * Site languages: English (built in). 中文, Español, Português, Русский, Türkçe
+ * and Tiếng Việt load on demand. Portuguese, Russian, Turkish and Vietnamese
+ * are machine translated.
  * `tr("English text", ...args)` returns the text in the visitor's language; {0}, {1}… are filled from args.
  * The English text is the key, so anything without a translation simply shows in English.
  * The page first renders in English (server and first paint), then switches: see <LangRoot/>.
  */
 import { useSyncExternalStore } from "react";
 
-export type Lang = "en" | "zh" | "es";
+export type Lang = "en" | "zh" | "es" | "pt" | "ru" | "tr" | "vi";
 export const LANGS: { id: Lang; label: string; short: string }[] = [
   { id: "en", label: "English", short: "EN" },
   { id: "zh", label: "中文", short: "中文" },
   { id: "es", label: "Español", short: "ES" },
+  { id: "pt", label: "Português", short: "PT" },
+  { id: "ru", label: "Русский", short: "RU" },
+  { id: "tr", label: "Türkçe", short: "TR" },
+  { id: "vi", label: "Tiếng Việt", short: "VI" },
 ];
 const KEY = "ferzan-lang";
 
@@ -33,6 +39,10 @@ export function getLang(): Lang {
 async function loadDict(lang: Lang): Promise<Record<string, string>> {
   if (lang === "zh") return (await import("./zh")).default;
   if (lang === "es") return (await import("./es")).default;
+  if (lang === "pt") return (await import("./pt")).default;
+  if (lang === "ru") return (await import("./ru")).default;
+  if (lang === "tr") return (await import("./tr")).default;
+  if (lang === "vi") return (await import("./vi")).default;
   return {};
 }
 
@@ -52,18 +62,23 @@ export async function setLang(lang: Lang, remember = true): Promise<void> {
   subs.forEach((fn) => fn());
 }
 
+const LANG_IDS: readonly Lang[] = ["en", "zh", "es", "pt", "ru", "tr", "vi"];
+
+function asLang(value: string | null | undefined): Lang | null {
+  return LANG_IDS.find((id) => id === value) ?? null;
+}
+
 /** The saved choice, else the browser's language, else English. */
 export function preferredLang(): Lang {
   try {
-    const saved = window.localStorage.getItem(KEY);
-    if (saved === "en" || saved === "zh" || saved === "es") return saved;
+    const saved = asLang(window.localStorage.getItem(KEY));
+    if (saved) return saved;
   } catch {
     /* ignore */
   }
   const nav = (typeof navigator !== "undefined" ? navigator.languages?.[0] || navigator.language : "") || "";
-  if (/^zh/i.test(nav)) return "zh";
-  if (/^es/i.test(nav)) return "es";
-  return "en";
+  const code = nav.toLowerCase().split("-")[0];
+  return asLang(code) ?? "en";
 }
 
 export function useLang(): Lang {

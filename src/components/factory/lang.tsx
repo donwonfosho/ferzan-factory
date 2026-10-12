@@ -8,7 +8,7 @@ export function LangRoot({ children }: { children: ReactNode }) {
   const lang = useLang();
   useEffect(() => {
     const link = new URLSearchParams(window.location.search).get("lang");
-    if (link === "en" || link === "zh" || link === "es") {
+    if (link === "en" || link === "zh" || link === "es" || link === "pt" || link === "ru" || link === "tr" || link === "vi") {
       void setLang(link); // a link like ?lang=zh opens in that language and remembers it
       return;
     }
