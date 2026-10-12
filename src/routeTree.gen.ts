@@ -15,6 +15,7 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as BotsRouteImport } from './routes/bots'
 import { Route as BridgeRouteImport } from './routes/bridge'
 import { Route as ChangelogRouteImport } from './routes/changelog'
+import { Route as CompareRouteImport } from './routes/compare'
 import { Route as CompeteRouteImport } from './routes/compete'
 import { Route as DocsRouteImport } from './routes/docs'
 import { Route as FerzanRouteImport } from './routes/ferzan'
@@ -27,6 +28,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as PressRouteImport } from './routes/press'
 import { Route as PromotedRouteImport } from './routes/promoted'
 import { Route as PulseRouteImport } from './routes/pulse'
+import { Route as StatusRouteImport } from './routes/status'
 import { Route as TerminalRouteImport } from './routes/terminal'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TransparencyRouteImport } from './routes/transparency'
@@ -75,6 +77,11 @@ const BridgeRoute = BridgeRouteImport.update({
 const ChangelogRoute = ChangelogRouteImport.update({
   id: '/changelog',
   path: '/changelog',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CompareRoute = CompareRouteImport.update({
+  id: '/compare',
+  path: '/compare',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CompeteRoute = CompeteRouteImport.update({
@@ -135,6 +142,11 @@ const PromotedRoute = PromotedRouteImport.update({
 const PulseRoute = PulseRouteImport.update({
   id: '/pulse',
   path: '/pulse',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StatusRoute = StatusRouteImport.update({
+  id: '/status',
+  path: '/status',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TerminalRoute = TerminalRouteImport.update({
@@ -240,6 +252,7 @@ export interface FileRoutesByFullPath {
   '/bots': typeof BotsRoute
   '/bridge': typeof BridgeRoute
   '/changelog': typeof ChangelogRoute
+  '/compare': typeof CompareRoute
   '/compete': typeof CompeteRoute
   '/docs': typeof DocsRoute
   '/ferzan': typeof FerzanRoute
@@ -252,6 +265,7 @@ export interface FileRoutesByFullPath {
   '/press': typeof PressRoute
   '/promoted': typeof PromotedRoute
   '/pulse': typeof PulseRoute
+  '/status': typeof StatusRoute
   '/terminal': typeof TerminalRoute
   '/terms': typeof TermsRoute
   '/transparency': typeof TransparencyRoute
@@ -279,6 +293,7 @@ export interface FileRoutesByTo {
   '/bots': typeof BotsRoute
   '/bridge': typeof BridgeRoute
   '/changelog': typeof ChangelogRoute
+  '/compare': typeof CompareRoute
   '/compete': typeof CompeteRoute
   '/docs': typeof DocsRoute
   '/ferzan': typeof FerzanRoute
@@ -291,6 +306,7 @@ export interface FileRoutesByTo {
   '/press': typeof PressRoute
   '/promoted': typeof PromotedRoute
   '/pulse': typeof PulseRoute
+  '/status': typeof StatusRoute
   '/terminal': typeof TerminalRoute
   '/terms': typeof TermsRoute
   '/transparency': typeof TransparencyRoute
@@ -319,6 +335,7 @@ export interface FileRoutesById {
   '/bots': typeof BotsRoute
   '/bridge': typeof BridgeRoute
   '/changelog': typeof ChangelogRoute
+  '/compare': typeof CompareRoute
   '/compete': typeof CompeteRoute
   '/docs': typeof DocsRoute
   '/ferzan': typeof FerzanRoute
@@ -331,6 +348,7 @@ export interface FileRoutesById {
   '/press': typeof PressRoute
   '/promoted': typeof PromotedRoute
   '/pulse': typeof PulseRoute
+  '/status': typeof StatusRoute
   '/terminal': typeof TerminalRoute
   '/terms': typeof TermsRoute
   '/transparency': typeof TransparencyRoute
@@ -360,6 +378,7 @@ export interface FileRouteTypes {
     | '/bots'
     | '/bridge'
     | '/changelog'
+    | '/compare'
     | '/compete'
     | '/docs'
     | '/ferzan'
@@ -372,6 +391,7 @@ export interface FileRouteTypes {
     | '/press'
     | '/promoted'
     | '/pulse'
+    | '/status'
     | '/terminal'
     | '/terms'
     | '/transparency'
@@ -399,6 +419,7 @@ export interface FileRouteTypes {
     | '/bots'
     | '/bridge'
     | '/changelog'
+    | '/compare'
     | '/compete'
     | '/docs'
     | '/ferzan'
@@ -411,6 +432,7 @@ export interface FileRouteTypes {
     | '/press'
     | '/promoted'
     | '/pulse'
+    | '/status'
     | '/terminal'
     | '/terms'
     | '/transparency'
@@ -438,6 +460,7 @@ export interface FileRouteTypes {
     | '/bots'
     | '/bridge'
     | '/changelog'
+    | '/compare'
     | '/compete'
     | '/docs'
     | '/ferzan'
@@ -450,6 +473,7 @@ export interface FileRouteTypes {
     | '/press'
     | '/promoted'
     | '/pulse'
+    | '/status'
     | '/terminal'
     | '/terms'
     | '/transparency'
@@ -478,6 +502,7 @@ export interface RootRouteChildren {
   BotsRoute: typeof BotsRoute
   BridgeRoute: typeof BridgeRoute
   ChangelogRoute: typeof ChangelogRoute
+  CompareRoute: typeof CompareRoute
   CompeteRoute: typeof CompeteRoute
   DocsRoute: typeof DocsRoute
   FerzanRoute: typeof FerzanRoute
@@ -490,6 +515,7 @@ export interface RootRouteChildren {
   PressRoute: typeof PressRoute
   PromotedRoute: typeof PromotedRoute
   PulseRoute: typeof PulseRoute
+  StatusRoute: typeof StatusRoute
   TerminalRoute: typeof TerminalRoute
   TermsRoute: typeof TermsRoute
   TransparencyRoute: typeof TransparencyRoute
@@ -552,6 +578,13 @@ declare module '@tanstack/react-router' {
       path: '/changelog'
       fullPath: '/changelog'
       preLoaderRoute: typeof ChangelogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/compare': {
+      id: '/compare'
+      path: '/compare'
+      fullPath: '/compare'
+      preLoaderRoute: typeof CompareRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/compete': {
@@ -636,6 +669,13 @@ declare module '@tanstack/react-router' {
       path: '/pulse'
       fullPath: '/pulse'
       preLoaderRoute: typeof PulseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/status': {
+      id: '/status'
+      path: '/status'
+      fullPath: '/status'
+      preLoaderRoute: typeof StatusRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/terminal': {
@@ -792,6 +832,7 @@ const rootRouteChildren: RootRouteChildren = {
   BotsRoute: BotsRoute,
   BridgeRoute: BridgeRoute,
   ChangelogRoute: ChangelogRoute,
+  CompareRoute: CompareRoute,
   CompeteRoute: CompeteRoute,
   DocsRoute: DocsRoute,
   FerzanRoute: FerzanRoute,
@@ -804,6 +845,7 @@ const rootRouteChildren: RootRouteChildren = {
   PressRoute: PressRoute,
   PromotedRoute: PromotedRoute,
   PulseRoute: PulseRoute,
+  StatusRoute: StatusRoute,
   TerminalRoute: TerminalRoute,
   TermsRoute: TermsRoute,
   TransparencyRoute: TransparencyRoute,

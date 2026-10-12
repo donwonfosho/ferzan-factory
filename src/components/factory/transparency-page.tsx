@@ -182,10 +182,9 @@ export function TransparencyPage() {
       <section className="ticket space-y-3">
         <h2 className="text-xl">{tr("Where the fees go")}</h2>
         <ul className="list-disc space-y-1 pl-5 text-sm text-muted">
-          <li>{tr("Every trade on a Ferzan curve pays 1%.")}</li>
-          <li>{tr("Half goes to the coin's creator on every trade, for as long as it trades.")}</li>
-          <li>{tr("The other half goes to Ferzan, or 40% to Ferzan and 10% to whoever referred the buyer.")}</li>
-          <li>{tr("The older curves launched directly on the website split the 1% differently: 60% treasury, 30% creator and 10% to the referrer. The split is also shown on each coin's page.")}</li>
+          <li>{tr("Every trade on a new launch pays 1%.")}</li>
+          <li>{tr("On every new launch, half goes to the coin's creator and half to Ferzan (or 40% to Ferzan and 10% to a referrer).")}</li>
+          <li>{tr("A few older coins on the site's first contracts split it 60% Ferzan, 30% creator, 10% referrer. The split is also shown on each coin's page.")}</li>
           <li>{tr("On Solana, 30% of Ferzan's share buys FERZAN every day and burns it (above). The rest goes to the Ferzan multisig.")}</li>
         </ul>
         {t.multisig ? (

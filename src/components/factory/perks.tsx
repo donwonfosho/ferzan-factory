@@ -162,8 +162,8 @@ export function ReferralCard({ evm, sol: solWallet }: { evm: string | null; sol:
         </button>
       </div>
       {earned > 0 ? <p className="mt-3 text-sm">{tr("{0} from referrals", compactUsd(earned))}</p> : null}
-      <p className="mt-3 text-sm text-muted">{tr("Website curves: 60% treasury, 30% creator, 10% referrer or treasury.")}</p>
-      <p className="mt-1 text-sm text-muted">{tr("Telegram curves with a referral: 50% creator, 40% platform, 10% referrer.")}</p>
+      <p className="mt-3 text-sm text-muted">{tr("Older website curves (first contracts, no longer used for new launches): 60% treasury, 30% creator, 10% referrer or treasury.")}</p>
+      <p className="mt-1 text-sm text-muted">{tr("New launches (Launch Bot curves) with a referral: 50% creator, 40% platform, 10% referrer.")}</p>
     </section>
   );
 }

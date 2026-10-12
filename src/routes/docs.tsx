@@ -51,9 +51,9 @@ export function DocsPage() {
         </Item>
         <Item n="4" title={tr("The 1% fee")}>
           <ul className="list-disc space-y-1 pl-5">
-            <li>{tr("Website curves: 60% treasury, 30% creator, 10% referrer or treasury.")}</li>
-            <li>{tr("Telegram curves: 50% creator, 50% platform.")}</li>
-            <li>{tr("Telegram curves with a referral: 50% creator, 40% platform, 10% referrer.")}</li>
+            <li>{tr("Older website curves (first contracts, no longer used for new launches): 60% treasury, 30% creator, 10% referrer or treasury.")}</li>
+            <li>{tr("New launches (Launch Bot curves): 50% creator, 50% platform.")}</li>
+            <li>{tr("New launches (Launch Bot curves) with a referral: 50% creator, 40% platform, 10% referrer.")}</li>
           </ul>
         </Item>
         <Item n="5" title={tr("Graduation")}>
@@ -118,9 +118,9 @@ export function DocsPage() {
         </Faq>
         <Faq q={tr("What are the fees?")}>
           <ul className="list-disc space-y-1 pl-5">
-            <li>{tr("Website curves: 60% treasury, 30% creator, 10% referrer or treasury.")}</li>
-            <li>{tr("Telegram curves: 50% creator, 50% platform.")}</li>
-            <li>{tr("Telegram curves with a referral: 50% creator, 40% platform, 10% referrer.")}</li>
+            <li>{tr("Older website curves (first contracts, no longer used for new launches): 60% treasury, 30% creator, 10% referrer or treasury.")}</li>
+            <li>{tr("New launches (Launch Bot curves): 50% creator, 50% platform.")}</li>
+            <li>{tr("New launches (Launch Bot curves) with a referral: 50% creator, 40% platform, 10% referrer.")}</li>
           </ul>
         </Faq>
         <Faq q={tr("When does FERZAN launch?")}>{tr("Friday, November 13, 2026 at 4:00 PM ET.")}</Faq>

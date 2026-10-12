@@ -31,7 +31,7 @@ import { captureEvmRef, captureRef } from "@/lib/factory/compete";
 /** Starts the saved-key address fill once, before the first child reads the wallet. */
 let siteWalletStarted = false;
 /** Reading pages stay a narrow column; every other page uses the wide container. */
-const NARROW_PATHS = ["/docs", "/terms", "/about", "/transparency", "/how-to-buy", "/press", "/changelog", "/verify"];
+const NARROW_PATHS = ["/docs", "/terms", "/about", "/transparency", "/how-to-buy", "/press", "/changelog", "/verify", "/compare", "/status"];
 const LINKS = [
   { to: "/", label: "Floor" },
   { to: "/pulse", label: "Pulse" },
@@ -228,8 +228,8 @@ export function Shell({ children }: { children: ReactNode }) {
         <div className="mb-6">
           <p className="font-semibold text-fg">{tr("Fees")}</p>
           <ul className="mt-2 list-disc space-y-1 pl-5">
-            <li>{tr("Site curves: 1% on every trade. 60% treasury, 30% creator, 10% to a referrer when a buyer names a wallet.")}</li>
-            <li>{tr("Telegram curves: 1% on every trade. 50% creator, 50% platform, or 50% creator, 40% platform, 10% referrer when a buyer came from a referral link.")}</li>
+            <li>{tr("Older website curves (first contracts, no longer used for new launches): 1% on every trade. 60% treasury, 30% creator, 10% to a referrer when a buyer names a wallet.")}</li>
+            <li>{tr("New launches (Launch Bot curves): 1% on every trade. 50% creator, 50% platform, or 50% creator, 40% platform, 10% referrer when a buyer came from a referral link.")}</li>
           </ul>
         </div>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -257,6 +257,7 @@ export function Shell({ children }: { children: ReactNode }) {
             <p className="font-semibold text-fg">{tr("Learn")}</p>
             <ul className="mt-2 space-y-1">
               <li><Link to="/docs" className="text-cyan">{tr("Docs")}</Link></li>
+              <li><Link to="/compare" className="text-cyan">{tr("Ferzan vs the rest")}</Link></li>
               <li><Link to="/verify" className="text-cyan">{tr("Verify")}</Link></li>
               <li><Link to="/how-to-buy" className="text-cyan">{tr("How to buy FERZAN")}</Link></li>
               <li><Link to="/press" className="text-cyan">{tr("Press")}</Link></li>

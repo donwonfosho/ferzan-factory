@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { BOT_LAUNCH_CHAINS, LAUNCH_CHAIN_META } from "@/lib/factory/bot-launch";
 import { BRIDGE_FEE_BPS } from "@/lib/factory/bridge-buy";
 import { NETWORK, launchFeeText, useLaunchFees } from "./launch-preview";
@@ -14,7 +15,7 @@ export function FeeTable() {
         <dt className="text-muted">{tr("Trading with the Trade Bot")}</dt>
         <dd>{tr("0.5% per trade. Snipes and auto-snipe are 1%. The rate drops as your volume grows: 0.40% after $5k, 0.35% after $25k and 0.25% after $100k. The bot shows the exact fee on each trade.")}</dd>
         <dt className="text-muted">{tr("Trading on a Ferzan curve")}</dt>
-        <dd>{tr("1% per trade. Half goes to the coin's creator and half to Ferzan, or 40% to Ferzan and 10% to a referrer.")}</dd>
+        <dd>{tr("1% per trade. On every new launch, half goes to the coin's creator and half to Ferzan (or 40% to Ferzan and 10% to a referrer). A few older coins on the site's first contracts split it 60% Ferzan, 30% creator, 10% referrer.")}</dd>
         <dt className="text-muted">{tr("Bridge and buy")}</dt>
         <dd>{tr("{0}% Ferzan fee, shown in the quote.", String(BRIDGE_FEE_BPS / 100))}</dd>
         <dt className="text-muted">{tr("FERZAN launch")}</dt>
@@ -48,6 +49,9 @@ export function FeeTable() {
         </table>
       </div>
       <p className="mt-2 text-sm text-muted">{tr("Ferzan earns from the 1% trading fee on curve coins. The launch fee above is whatever that chain's factory charges right now.")}</p>
+      <p className="mt-3">
+        <Link to="/compare" className="text-sm text-cyan">{tr("Ferzan vs the rest")}</Link>
+      </p>
     </section>
   );
 }

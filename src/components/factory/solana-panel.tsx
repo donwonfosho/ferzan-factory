@@ -238,7 +238,7 @@ export function SolanaPanel({ mint, symbol }: { mint: string; symbol: string }) 
       {state.maxBuy > 0n ? (
         <p className="text-sm text-muted">{tr("Wallet cap")}{" "}{formatSmart(state.maxBuy, 9)}{" "}{tr("SOL. It stays until graduation.")}</p>
       ) : null}
-      <p className="text-sm text-muted">{tr("1% fee. The creator cut is paid into their Solana wallet on the trade. Treasury’s 0.60% is not buying Ferzan yet.")}</p>
+      <p className="text-sm text-muted">{tr("This coin is on Ferzan's first contract: 1% fee. The creator cut is paid into their Solana wallet on the trade. Treasury’s 0.60% is not buying Ferzan yet.")}</p>
       {sol ? <GasStep address={sol} chain="solana" /> : null}
       <div className="grid grid-cols-2 gap-2">
         <button type="button" className={cn("min-h-11 font-semibold", side === "buy" ? "bg-cyan text-cyan-ink" : "bg-bg text-muted shadow-border")} onClick={() => setSide("buy")}>
@@ -340,7 +340,7 @@ export function SolanaPanel({ mint, symbol }: { mint: string; symbol: string }) 
           {tr("Trade on Raydium")}
         </a>
       ) : null}
-      <p className="text-xs text-muted">{tr("Fees are paid in the same transaction. 60% treasury, 30% creator, 10% referrer on buys. Sells pay no referrer.")}</p>
+      <p className="text-xs text-muted">{tr("This coin is on Ferzan's first contract: fees are paid in the same transaction. 60% treasury, 30% creator, 10% referrer on buys. Sells pay no referrer.")}</p>
     </form>
     </KeyLock>
   );

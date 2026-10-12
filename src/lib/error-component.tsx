@@ -1,29 +1,42 @@
+import { Link } from "@tanstack/react-router";
 import type { ErrorComponentProps } from "@tanstack/react-router";
-import { TriangleAlert } from "lucide-react";
+import { useEffect } from "react";
 
-const FALLBACK_MESSAGE = "An unexpected error occurred. Try reloading the page.";
+import { tr } from "@/lib/i18n";
 
-function errorMessage(error: unknown): string {
-  if (error instanceof Error && error.message) return error.message;
-  if (typeof error === "string" && error) return error;
-  return FALLBACK_MESSAGE;
+const DSN = import.meta.env.VITE_SENTRY_DSN;
+
+function report(error: unknown) {
+  if (typeof DSN !== "string" || !DSN) return;
+  void import("@sentry/react")
+    .then((Sentry) => {
+      if (!Sentry.getClient()) {
+        void import("@/lib/factory/sentry").then((mod) => mod.startBrowserSentry(DSN));
+      }
+      Sentry.captureException(error);
+    })
+    .catch(() => {
+      /* reporting is optional */
+    });
 }
 
 export function AppErrorComponent({ error }: ErrorComponentProps) {
+  useEffect(() => {
+    report(error);
+  }, [error]);
   return (
-    <main
-      className={
-        "flex min-h-screen flex-col items-center justify-center gap-3 px-6 text-center " +
-        "bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50"
-      }
-    >
-      <span className="text-red-500" aria-hidden="true">
-        <TriangleAlert className="size-10" strokeWidth={2} />
-      </span>
-      <h1 className="text-lg font-semibold">Something went wrong</h1>
-      <p className="max-w-md text-sm break-words text-zinc-500 dark:text-zinc-400">
-        {errorMessage(error)}
-      </p>
-    </main>
+    <div className="term-page mx-auto max-w-lg px-4 py-16">
+      <div className="term-card">
+        <p className="term-label">{tr("Error")}</p>
+        <h1 className="mt-2 text-3xl text-[#f4f7f7]">{tr("Something broke on this page")}</h1>
+        <p className="mt-3 text-sm text-[#93a4a7]">{tr("Reload the page. If it keeps happening, the status page says whether the site is up.")}</p>
+        <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+          <button type="button" className="btn-cyan" onClick={() => window.location.reload()}>
+            {tr("Reload")}
+          </button>
+          <Link to="/status" className="btn-line">{tr("Status")}</Link>
+        </div>
+      </div>
+    </div>
   );
 }

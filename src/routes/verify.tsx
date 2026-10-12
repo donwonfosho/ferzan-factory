@@ -152,15 +152,16 @@ function VerifyPage() {
       <h2 className="mt-8 text-2xl">{tr("How fees are enforced")}</h2>
       <div className="mt-3 space-y-3 text-sm">
         <p>
-          {tr("On a website curve the contract takes a 1% fee inside the trade. The EVM contract the curve factories deploy credits 60% of that fee to the treasury, 30% to the creator, and 10% to the referrer. If the referrer address is empty, that 10% is credited to the treasury. Each recipient withdraws with claim(). The Solana curve program takes the same 1% and pays the same split in the trade. If there is no referrer, that share goes to the treasury.")}
+          {tr("New launches use Launch Bot curves: 50% creator, 50% platform, paid on each trade.")}{" "}
+          {tr("Older website curves: the contract takes a 1% fee inside the trade. The EVM contract the curve factories deploy credits 60% of that fee to the treasury, 30% to the creator, and 10% to the referrer. If the referrer address is empty, that 10% is credited to the treasury. Each recipient withdraws with claim(). The Solana curve program takes the same 1% and pays the same split in the trade. If there is no referrer, that share goes to the treasury.")}
         </p>
         <ul className="list-disc space-y-1 pl-5">
-          <li>{tr("Website curves: 60% treasury, 30% creator, 10% referrer or treasury.")}</li>
-          <li>{tr("Telegram curves: 50% creator, 50% platform.")}</li>
-          <li>{tr("Telegram curves with a referral: 50% creator, 40% platform, 10% referrer.")}</li>
+          <li>{tr("Older website curves (first contracts, no longer used for new launches): 60% treasury, 30% creator, 10% referrer or treasury.")}</li>
+          <li>{tr("New launches (Launch Bot curves): 50% creator, 50% platform.")}</li>
+          <li>{tr("New launches (Launch Bot curves) with a referral: 50% creator, 40% platform, 10% referrer.")}</li>
         </ul>
         <p>
-          {tr("Telegram curve trades on this site use that Telegram split. It is not the website curve contract, and this site has no separate Telegram factory address to list.")}
+          {tr("New launches (Launch Bot curves) on this site use that split. It is not the older website curve contract, and this site has no separate Launch Bot factory address to list.")}
         </p>
         <p>
           {tr("The bridge is not that 1% fee. The quote adds a 0.25% Ferzan fee and pays it to the EVM treasury through Relay or deBridge.")}

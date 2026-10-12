@@ -4,9 +4,9 @@ import { formatSmart } from "@/lib/factory/units";
 import { tr } from "@/lib/i18n";
 
 /** Same sentences as /docs. Do not reword them here. */
-export const FEE_SITE = "Website curves: 60% treasury, 30% creator, 10% referrer or treasury.";
-export const FEE_TG = "Telegram curves: 50% creator, 50% platform.";
-export const FEE_TG_REF = "Telegram curves with a referral: 50% creator, 40% platform, 10% referrer.";
+export const FEE_SITE = "Older website curves (first contracts, no longer used for new launches): 60% treasury, 30% creator, 10% referrer or treasury.";
+export const FEE_TG = "New launches (Launch Bot curves): 50% creator, 50% platform.";
+export const FEE_TG_REF = "New launches (Launch Bot curves) with a referral: 50% creator, 40% platform, 10% referrer.";
 
 export type TradePreviewProps = {
   amountIn?: string;

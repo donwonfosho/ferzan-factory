@@ -394,7 +394,7 @@ export function ChainPanel({ chain, address, symbol }: { chain: EvmChainId; addr
         <p className="text-sm text-muted">{tr("Buys are held until")}{" "}{new Date(Number(wall.startAt) * 1000).toLocaleString()}.</p>
       ) : null}
       <p className="text-sm text-muted">
-        {tr("1% fee. Creator keeps 0.30% and can claim it. Referrer 0.10%. Treasury 0.60% is the Ferzan buyback bucket. That buy is not running yet.")}
+        {tr("This coin is on Ferzan's first contract: 1% fee. Creator keeps 0.30% and can claim it. Referrer 0.10%. Treasury 0.60% is the Ferzan buyback bucket. That buy is not running yet.")}
       </p>
       {pool ? (
         <p className="text-sm text-muted">

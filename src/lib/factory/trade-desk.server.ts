@@ -65,6 +65,7 @@ function toUserError(err: DeskStatus): Error {
   if (err.status === 401) return new Error("Sign in again");
   if (err.status === 403) return new Error(err.detail || "The terminal is not open for this account.");
   if (err.status === 404) return new Error(err.detail || "Not found.");
+  if (err.status === 409) return new Error(err.detail || "You already have a cash out waiting.");
   if (err.status === 429) return new Error(err.detail || "Too many requests. Wait a minute and try again.");
   return new Error(err.detail || "The terminal did not answer. Try again.");
 }

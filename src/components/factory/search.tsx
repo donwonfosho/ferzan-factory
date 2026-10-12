@@ -9,7 +9,14 @@ import { Mark } from "./ui";
 import { tr } from "@/lib/i18n";
 let isOpen = false;
 const subs = new Set<() => void>();
-export function openSearch(v = true) {
+export function openSearch(v = true, query?: string) {
+  if (typeof query === "string" && query.trim()) {
+    try {
+      window.sessionStorage.setItem("ferzan-search", query.trim());
+    } catch {
+      /* the overlay still opens */
+    }
+  }
   isOpen = v;
   subs.forEach((fn) => fn());
 }
@@ -62,8 +69,18 @@ export function SearchOverlay() {
   }, []);
 
   useEffect(() => {
-    if (open) window.setTimeout(() => input.current?.focus(), 30);
-    else {
+    if (open) {
+      try {
+        const seeded = window.sessionStorage.getItem("ferzan-search") ?? "";
+        if (seeded) {
+          window.sessionStorage.removeItem("ferzan-search");
+          setQ(seeded);
+        }
+      } catch {
+        /* start empty */
+      }
+      window.setTimeout(() => input.current?.focus(), 30);
+    } else {
       setQ("");
       setHits(null);
     }

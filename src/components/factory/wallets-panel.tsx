@@ -24,6 +24,22 @@ function text(value: unknown): string {
   return typeof value === "string" ? value : "";
 }
 
+const EVM_ADDRESS = /^0x[0-9a-fA-F]{40}$/;
+
+/** Stop a top-up before it is signed if the Trading Wallet address is not a real address. */
+async function deskAddressOk(chain: "sol" | "base" | "ethereum" | "bsc", address: string): Promise<boolean> {
+  if (chain === "sol") {
+    try {
+      const { PublicKey } = await import("@solana/web3.js");
+      const key = new PublicKey(address);
+      return Boolean(key.toBase58());
+    } catch {
+      return false;
+    }
+  }
+  return EVM_ADDRESS.test(address);
+}
+
 export function WalletChip({ chain, address, onCopied }: { chain: string; address: string; onCopied: (msg: string) => void }) {
   const dot = chain === "SOL" ? "#14f195" : chain === "TON" ? "#0098ea" : "#8b9cff";
   const short = address.length > 10 ? `${address.slice(0, 4)}…${address.slice(-4)}` : address;
@@ -77,6 +93,7 @@ export function WalletsPanel({ me: given, onRefresh }: { me?: Rec | null; onRefr
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
   const [link, setLink] = useState("");
+  const [botHref, setBotHref] = useState("");
   const [tick, setTick] = useState(0);
 
   const addresses = rec(me?.addresses);
@@ -224,9 +241,14 @@ export function WalletsPanel({ me: given, onRefresh }: { me?: Rec | null; onRefr
     setBusy(true);
     setMsg("");
     setLink("");
+    setBotHref("");
     try {
       if (topChain === "sol") {
         if (!solDesk) throw new Error(tr("This chain has no Trading Wallet yet."));
+        if (!(await deskAddressOk("sol", solDesk))) {
+          setMsg(tr("The Trading Wallet address looks wrong. Nothing was sent."));
+          return;
+        }
         const lamports = parseDecimal(topAmount, 9);
         if (!lamports || lamports <= 0n) throw new Error(tr("Type how much to send."));
         if (lamports > BigInt(Number.MAX_SAFE_INTEGER)) throw new Error(tr("Type how much to send."));
@@ -245,6 +267,10 @@ export function WalletsPanel({ me: given, onRefresh }: { me?: Rec | null; onRefr
         setMsg(tr("Sent. {0}", signature));
       } else {
         if (!evmDesk) throw new Error(tr("This chain has no Trading Wallet yet."));
+        if (!(await deskAddressOk(topChain, evmDesk))) {
+          setMsg(tr("The Trading Wallet address looks wrong. Nothing was sent."));
+          return;
+        }
         const value = parseDecimal(topAmount, 18);
         if (!value || value <= 0n) throw new Error(tr("Type how much to send."));
         const { address, provider } = await evmWallet(topChain);
@@ -269,6 +295,7 @@ export function WalletsPanel({ me: given, onRefresh }: { me?: Rec | null; onRefr
     setBusy(true);
     setMsg("");
     setLink("");
+    setBotHref("");
     try {
       const token = await account?.identityToken();
       if (!token) throw new Error(tr("Sign in again."));
@@ -277,8 +304,10 @@ export function WalletsPanel({ me: given, onRefresh }: { me?: Rec | null; onRefr
       const raw = await deskCashout({ data: { token, chain: cashChain, amount } });
       const row = rec(JSON.parse(raw) as unknown);
       const href = https(row.tx) || https(row.url) || https(row.link) || https(row.explorer);
-      const line = text(row.detail) || text(row.status) || text(row.message) || text(row.result);
+      const line = text(row.detail) || text(row.message) || text(row.result) || text(row.status);
+      const opened = https(row.bot_link) || bot;
       setLink(href);
+      if (line) setBotHref(opened);
       setMsg(line || tr("Queued"));
       setConfirm(false);
       refresh();
@@ -420,6 +449,11 @@ export function WalletsPanel({ me: given, onRefresh }: { me?: Rec | null; onRefr
         </div>
       ) : null}
       {msg ? <p className="text-sm">{msg}</p> : null}
+      {botHref ? (
+        <a className="btn-cyan inline-flex" href={botHref} target="_blank" rel="noopener noreferrer">
+          {tr("Open the Trade Bot")}
+        </a>
+      ) : null}
       {link ? (
         <a className="text-sm text-cyan" href={link} target="_blank" rel="noopener noreferrer">
           {tr("View on explorer")}

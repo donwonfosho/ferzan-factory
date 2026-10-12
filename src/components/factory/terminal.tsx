@@ -58,6 +58,55 @@ function feeText(me: Rec): string {
   return `${shown}%`;
 }
 
+/** Hard-coded step labels. The current step comes from fee_bps; the next step comes from next_tier. */
+const FEE_LADDER = [
+  { bps: 50, label: "0.50%" },
+  { bps: 40, label: "0.40%", at: 5_000, atLabel: "$5k" },
+  { bps: 35, label: "0.35%", at: 25_000, atLabel: "$25k" },
+  { bps: 25, label: "0.25%", at: 100_000, atLabel: "$100k" },
+] as const;
+
+function num(value: unknown): number | null {
+  const n = typeof value === "number" ? value : typeof value === "string" && value.trim() ? Number(value) : NaN;
+  return Number.isFinite(n) ? n : null;
+}
+
+function pctLabel(bps: number): string {
+  const pct = bps / 100;
+  return `${Number.isInteger(pct) ? pct.toFixed(2) : pct.toFixed(2)}%`;
+}
+
+function FeeLadder({ me }: { me: Rec }) {
+  if (me.fee_exempt === true) return <p className="mt-3 text-sm text-[#9fe9f2]">{tr("Fee exempt")}</p>;
+  const bps = num(me.fee_bps);
+  if (bps === null) return null;
+  const next = rec(me.next_tier);
+  const nextAt = num(next.at);
+  const nextBps = num(next.fee_bps) ?? num(next.bps);
+  const volume = num(me.volume30) ?? 0;
+  const current = FEE_LADDER.some((step) => step.bps === bps) ? bps : null;
+  const gap = nextAt !== null && nextAt > volume ? nextAt - volume : null;
+  const nextLabel = nextBps !== null ? pctLabel(nextBps) : (current !== null ? FEE_LADDER.find((step) => step.bps < current)?.label : "") ?? "";
+  return (
+    <div className="mt-3">
+      <ol className="flex flex-wrap items-center gap-x-1 gap-y-1 text-xs text-[#93a4a7]">
+        {FEE_LADDER.map((step, i) => (
+          <li key={step.bps} className="flex items-center gap-1">
+            {i ? <span aria-hidden>→</span> : null}
+            <span className={step.bps === current ? "rounded-full bg-[#143f4a] px-2 py-0.5 font-semibold text-[#9fe9f2]" : ""}>
+              {step.label}
+              {"at" in step ? <span className="font-normal text-[#93a4a7]"> {tr("at {0}", step.atLabel)}</span> : null}
+            </span>
+          </li>
+        ))}
+      </ol>
+      {gap !== null && nextLabel ? (
+        <p className="mt-2 text-xs text-[#93a4a7]">{tr("{0} more volume to reach {1}", money(gap), nextLabel)}</p>
+      ) : null}
+    </div>
+  );
+}
+
 function pnlPct(row: Rec): number | null {
   if (typeof row.pnl_pct === "number" && Number.isFinite(row.pnl_pct)) return row.pnl_pct;
   if (typeof row.pnl === "number" && typeof row.value === "number" && row.value !== 0) return (row.pnl / row.value) * 100;
@@ -414,6 +463,7 @@ export function TerminalPage() {
             {money(me.volume30) ? <span className="term-chip min-h-0 py-1">{tr("30 day volume")} {money(me.volume30)}</span> : null}
             {profit !== null ? <span className="term-chip min-h-0 py-1">{tr("Profit")} {money(profit)}</span> : null}
           </div>
+          <FeeLadder me={me} />
           <div className="mt-3 flex flex-wrap gap-2">
             {text(deskAddresses.sol) ? <WalletChip chain="SOL" address={text(deskAddresses.sol)} onCopied={copied} /> : null}
             {text(deskAddresses.evm) ? <WalletChip chain="EVM" address={text(deskAddresses.evm)} onCopied={copied} /> : null}
