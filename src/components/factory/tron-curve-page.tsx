@@ -306,7 +306,7 @@ export function TronCurvePage({ curve }: { curve: string }) {
             ? tr("This curve is full. Its SunSwap pool opens in a moment.")
             : tr("{0} of {1} {2} raised.", formatSmart(BigInt(state.real), DEC), formatSmart(BigInt(state.gradTarget), DEC), "TRX")}
       </p>
-      <RiskPanel chain="tron" token={state.token} progress={state.progress} curveOpen={!state.graduated && !state.complete} />
+      <RiskPanel chain="tron" token={state.token} progress={state.progress} curveOpen={!state.graduated && !state.complete} launchedAt={state.start} />
       <CoinStream chain="tron" token={state.token} curve={curve} creator={state.creator} signer={account || (signedIn?.authenticated ? (signedIn.tronAddress ?? "") : "")} />
       <VerifiedCreator chain="tron" coin={curve} creator={state.creator} />
       <EmbedCode chain="tron" id={curve} creator={state.creator} />
