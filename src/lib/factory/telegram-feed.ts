@@ -16,6 +16,9 @@ export type TelegramCoin = {
   graduated: boolean;
   mcapUsd: number;
   vol24Usd: number;
+  /** Set only when the launch API sends a number for that window. */
+  vol5Usd: number | null;
+  vol1hUsd: number | null;
   trades: number;
   launchedTs: number;
   url: string;
@@ -46,9 +49,9 @@ const CHAINS = new Set<string>(["", "base", "bsc", "ethereum", "robinhood", "sol
 const PERIODS = new Set<string>(["7d", "30d", "all"]);
 const cache = new Map<string, { at: number; value: unknown }>();
 
-async function getJson(path: string): Promise<unknown> {
+async function getJson(path: string, ttl = 15_000): Promise<unknown> {
   const hit = cache.get(path);
-  if (hit && Date.now() - hit.at < 15_000) return hit.value;
+  if (hit && Date.now() - hit.at < ttl) return hit.value;
   const res = await fetch(`${FERZAN_API}${path}`, {
     headers: { accept: "application/json" },
     signal: AbortSignal.timeout(8_000),
@@ -68,6 +71,14 @@ const httpsUrl = (v: unknown): string => {
 };
 const record = (v: unknown): Record<string, unknown> => (v && typeof v === "object" ? (v as Record<string, unknown>) : {});
 
+function usdOrNull(it: Record<string, unknown>, keys: string[]): number | null {
+  for (const key of keys) {
+    const value = it[key];
+    if (typeof value === "number" && Number.isFinite(value) && value >= 0) return value;
+  }
+  return null;
+}
+
 function toCoin(raw: unknown): TelegramCoin {
   const it = record(raw);
   const stats = record(it.creator_stats);
@@ -82,6 +93,8 @@ function toCoin(raw: unknown): TelegramCoin {
     graduated: it.graduated === true,
     mcapUsd: num(it.mcap_usd),
     vol24Usd: num(it.vol24_usd),
+    vol5Usd: usdOrNull(it, ["vol5_usd", "vol_5m_usd", "vol5m_usd"]),
+    vol1hUsd: usdOrNull(it, ["vol1h_usd", "vol_1h_usd", "vol1_usd"]),
     trades: num(it.trades),
     launchedTs: num(it.launched_ts),
     url: httpsUrl(it.url),
@@ -109,6 +122,34 @@ export const listTelegram = createServerFn({ method: "GET" })
       const body = record(await getJson(`/launches?sort=${data.sort}&limit=30${data.chain ? `&chain=${data.chain}` : ""}${search}`));
       const items = Array.isArray(body.items) ? body.items : [];
       return items.map(toCoin).filter((coin) => coin.token && coin.url && coin.symbol);
+    } catch {
+      throw new Error("Busy right now");
+    }
+  });
+
+/** Newest launches plus graduated ones, for the Pulse tabs. Cached for 5 seconds. */
+export const listPulseCoins = createServerFn({ method: "GET" })
+  .validator((data: unknown): { chain: TelegramChain } => {
+    const row = record(data);
+    const chain = typeof row.chain === "string" && CHAINS.has(row.chain) ? (row.chain as TelegramChain) : "";
+    return { chain };
+  })
+  .handler(async ({ data }): Promise<TelegramCoin[]> => {
+    try {
+      const chain = data.chain ? `&chain=${data.chain}` : "";
+      const fresh = record(await getJson(`/launches?sort=new&limit=50${chain}`, 5_000));
+      const done = record(await getJson(`/launches?sort=graduated&limit=50${chain}`, 5_000));
+      const items = [...(Array.isArray(fresh.items) ? fresh.items : []), ...(Array.isArray(done.items) ? done.items : [])];
+      const seen = new Set<string>();
+      const out: TelegramCoin[] = [];
+      for (const raw of items) {
+        const coin = toCoin(raw);
+        const key = `${coin.chain}:${coin.token}`;
+        if (!coin.token || !coin.symbol || seen.has(key)) continue;
+        seen.add(key);
+        out.push(coin);
+      }
+      return out;
     } catch {
       throw new Error("Busy right now");
     }
