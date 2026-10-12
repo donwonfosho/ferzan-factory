@@ -31,7 +31,7 @@ import { captureEvmRef, captureRef } from "@/lib/factory/compete";
 /** Starts the saved-key address fill once, before the first child reads the wallet. */
 let siteWalletStarted = false;
 /** Reading pages stay a narrow column; every other page uses the wide container. */
-const NARROW_PATHS = ["/docs", "/terms", "/about", "/transparency", "/how-to-buy", "/press", "/changelog", "/verify", "/compare", "/status"];
+const NARROW_PATHS = ["/docs", "/terms", "/privacy", "/about", "/transparency", "/how-to-buy", "/press", "/changelog", "/verify", "/compare", "/status"];
 const LINKS = [
   { to: "/", label: "Floor" },
   { to: "/pulse", label: "Pulse" },
@@ -348,6 +348,7 @@ export function Shell({ children }: { children: ReactNode }) {
               <li><Link to="/about" className="text-cyan">{tr("About")}</Link></li>
               <li><Link to="/transparency" className="text-cyan">{tr("Transparency")}</Link></li>
               <li><Link to="/terms" className="text-cyan">{tr("Terms")}</Link></li>
+              <li><Link to="/privacy" className="text-cyan">{tr("Privacy")}</Link></li>
               <li>
                 <button type="button" className="text-cyan" onClick={() => openFeedback()}>
                   {tr("Report a bug / Feedback")}

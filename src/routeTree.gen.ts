@@ -26,6 +26,7 @@ import { Route as LaunchRouteImport } from './routes/launch'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as PressRouteImport } from './routes/press'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PromotedRouteImport } from './routes/promoted'
 import { Route as PulseRouteImport } from './routes/pulse'
 import { Route as StatusRouteImport } from './routes/status'
@@ -132,6 +133,11 @@ const LoginRoute = LoginRouteImport.update({
 const PressRoute = PressRouteImport.update({
   id: '/press',
   path: '/press',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PromotedRoute = PromotedRouteImport.update({
@@ -263,6 +269,7 @@ export interface FileRoutesByFullPath {
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/press': typeof PressRoute
+  '/privacy': typeof PrivacyRoute
   '/promoted': typeof PromotedRoute
   '/pulse': typeof PulseRoute
   '/status': typeof StatusRoute
@@ -304,6 +311,7 @@ export interface FileRoutesByTo {
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/press': typeof PressRoute
+  '/privacy': typeof PrivacyRoute
   '/promoted': typeof PromotedRoute
   '/pulse': typeof PulseRoute
   '/status': typeof StatusRoute
@@ -346,6 +354,7 @@ export interface FileRoutesById {
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/press': typeof PressRoute
+  '/privacy': typeof PrivacyRoute
   '/promoted': typeof PromotedRoute
   '/pulse': typeof PulseRoute
   '/status': typeof StatusRoute
@@ -389,6 +398,7 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/login'
     | '/press'
+    | '/privacy'
     | '/promoted'
     | '/pulse'
     | '/status'
@@ -430,6 +440,7 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/login'
     | '/press'
+    | '/privacy'
     | '/promoted'
     | '/pulse'
     | '/status'
@@ -471,6 +482,7 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/login'
     | '/press'
+    | '/privacy'
     | '/promoted'
     | '/pulse'
     | '/status'
@@ -513,6 +525,7 @@ export interface RootRouteChildren {
   LeaderboardRoute: typeof LeaderboardRoute
   LoginRoute: typeof LoginRoute
   PressRoute: typeof PressRoute
+  PrivacyRoute: typeof PrivacyRoute
   PromotedRoute: typeof PromotedRoute
   PulseRoute: typeof PulseRoute
   StatusRoute: typeof StatusRoute
@@ -655,6 +668,13 @@ declare module '@tanstack/react-router' {
       path: '/press'
       fullPath: '/press'
       preLoaderRoute: typeof PressRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/promoted': {
@@ -843,6 +863,7 @@ const rootRouteChildren: RootRouteChildren = {
   LeaderboardRoute: LeaderboardRoute,
   LoginRoute: LoginRoute,
   PressRoute: PressRoute,
+  PrivacyRoute: PrivacyRoute,
   PromotedRoute: PromotedRoute,
   PulseRoute: PulseRoute,
   StatusRoute: StatusRoute,

@@ -18,11 +18,15 @@ const SECTIONS: { title: string; body: string }[] = [
   },
   {
     title: "You are using a screen, not a broker",
-    body: "Ferzan Factory is a website for signing your own transactions. It does not hold your funds, control the tokens people create, or endorse those tokens. The chains do the work. We do not police every coin.",
+    body: "The website is a screen for signing your own transactions; your website wallet is non-custodial. Separately, our optional Telegram Trade Bot holds trading wallets for you (encrypted keys) and places the trades you order or the automatic rules you set; withdrawals need your confirmation in Telegram. We do not make trading decisions for you, control the tokens people create, or endorse them.",
   },
   {
-    title: "Your key is yours",
-    body: "The wallet on your profile stays in this browser. We cannot recover it. Anyone with the exported key can spend the wallet. Trades cannot be reversed.",
+    title: "Your website wallet",
+    body: "Your website wallet is created and secured by our sign-in provider Privy. You can export its key. Anyone with the key can spend the wallet. We cannot reverse trades.",
+  },
+  {
+    title: "Buying crypto with a card or Apple Pay",
+    body: "Card and Apple Pay purchases are provided by MoonPay, not by Ferzan Factory. MoonPay's terms and privacy policy apply, and MoonPay handles identity checks and payments. Crypto you buy goes to your own website wallet.",
   },
   {
     title: "The software is unaudited",
@@ -53,6 +57,7 @@ const SECTIONS: { title: string; body: string }[] = [
 export function TermsBody() {
   return (
     <div className="space-y-6">
+      <p className="text-sm text-muted">{tr("Operated by [legal company name]. Contact: [support email].")}</p>
       {SECTIONS.map((section) => (
         <section key={section.title}>
           <h2 className="text-lg font-semibold">{tr(section.title)}</h2>
@@ -66,6 +71,7 @@ export function TermsBody() {
         </a>
         {tr(". These terms are the rules for using the site. They are not a substitute for your own lawyer.")}
       </p>
+      <p className="text-sm text-muted">{tr("Governing law: [state/country].")}</p>
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { PRIVY_APP_ID, useAccountWallets } from "@/lib/factory/wallet-bridge";
 import { CHAINS } from "@/lib/factory/catalog";
@@ -81,6 +82,11 @@ export function AccountCard() {
         <button type="button" className="btn-cyan mt-4 w-full" onClick={() => account.login()}>
           {tr("Sign in or create account")}
         </button>
+        <p className="mt-3 text-sm text-muted">
+          <Link to="/terms" className="text-cyan">{tr("Terms")}</Link>
+          {" · "}
+          <Link to="/privacy" className="text-cyan">{tr("Privacy")}</Link>
+        </p>
       </div>
     );
   }
