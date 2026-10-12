@@ -103,9 +103,23 @@ export function WalletsPanel({ me: given, onRefresh }: { me?: Rec | null; onRefr
   const [tick, setTick] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const alive = useRef(true);
+  const topRef = useRef<HTMLFormElement>(null);
+  const cashRef = useRef<HTMLDivElement>(null);
+  const topAmountRef = useRef<HTMLInputElement>(null);
+  const cashAmountRef = useRef<HTMLInputElement>(null);
   useEffect(() => () => {
     alive.current = false;
   }, []);
+  useEffect(() => {
+    if (!topOpen) return;
+    topRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    topAmountRef.current?.focus();
+  }, [topOpen]);
+  useEffect(() => {
+    if (!cashOpen) return;
+    cashRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    if (!confirm) cashAmountRef.current?.focus();
+  }, [cashOpen, confirm]);
 
   const addresses = rec(me?.addresses);
   const solDesk = text(addresses.sol);
@@ -437,6 +451,7 @@ export function WalletsPanel({ me: given, onRefresh }: { me?: Rec | null; onRefr
       </div>
       {topOpen && ready ? (
         <form
+          ref={topRef}
           className="term-card grid gap-3"
           onSubmit={(e) => {
             e.preventDefault();
@@ -453,14 +468,14 @@ export function WalletsPanel({ me: given, onRefresh }: { me?: Rec | null; onRefr
             ))}
           </div>
           <div className="flex gap-2">
-            <input className="min-w-0 flex-1 bg-[#111c40] px-3 tabular-nums" inputMode="decimal" value={topAmount} placeholder={tr("Amount")} onChange={(e) => setTopAmount(e.target.value)} aria-label={tr("Amount")} />
+            <input ref={topAmountRef} className="min-w-0 flex-1 bg-[#111c40] px-3 tabular-nums" inputMode="decimal" value={topAmount} placeholder={tr("Amount")} onChange={(e) => setTopAmount(e.target.value)} aria-label={tr("Amount")} />
             <button type="button" className="term-chip" onClick={() => void maxTop()}>{tr("Max")}</button>
           </div>
           <button type="submit" className="term-go" disabled={busy}>{tr("Send")}</button>
         </form>
       ) : null}
       {cashOpen && showCash ? (
-        <div className="term-card grid gap-3">
+        <div ref={cashRef} className="term-card grid gap-3">
           <p className="term-label">{tr("Cash out to My Wallet")}</p>
           {confirm ? (
             <>
@@ -481,7 +496,7 @@ export function WalletsPanel({ me: given, onRefresh }: { me?: Rec | null; onRefr
                 ))}
               </div>
               <div className="flex gap-2">
-                <input className="min-w-0 flex-1 bg-[#111c40] px-3 tabular-nums" inputMode="decimal" value={cashAmount} placeholder={tr("Amount")} onChange={(e) => setCashAmount(e.target.value)} aria-label={tr("Amount")} />
+                <input ref={cashAmountRef} className="min-w-0 flex-1 bg-[#111c40] px-3 tabular-nums" inputMode="decimal" value={cashAmount} placeholder={tr("Amount")} onChange={(e) => setCashAmount(e.target.value)} aria-label={tr("Amount")} />
                 <button type="button" className="term-chip" onClick={() => setCashAmount("max")}>{tr("Max")}</button>
               </div>
               <button type="button" className="term-go" disabled={busy || !cashAmount.trim()} onClick={() => setConfirm(true)}>{tr("Cash out to My Wallet")}</button>

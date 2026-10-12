@@ -138,6 +138,11 @@ export async function cashoutSelf(idToken: string, chain: string, amount: string
   return post("cashout_self", idToken, { chain, amount });
 }
 
+/** Broadcast a signed SOL top-up. The desk checks the transaction and returns its own error text. */
+export async function topupSol(idToken: string, signedB64: string): Promise<unknown> {
+  return post("topup_sol", idToken, { signed_tx_b64: signedB64 });
+}
+
 /** Tell the desk about a site watchlist change. Silent when Telegram is not linked or the desk does not answer. */
 export async function syncCoinWatch(
   accessToken: string,

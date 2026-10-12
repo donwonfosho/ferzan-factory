@@ -351,16 +351,16 @@ export const deskTopupSol = createServerFn({ method: "POST" })
       throw new Error("Transaction looks wrong. Nothing was sent.");
     }
     assertSolTopup(tx, from, to);
-    const res = await fetch("https://launch.ferzaneco.com/api/sol-fees/send", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ signed_tx_b64: data.signedB64 }),
-      signal: AbortSignal.timeout(45_000),
-    }).catch(() => null);
-    if (!res) throw new Error("Solana did not answer. Try again.");
-    const out = (await res.json().catch(() => ({}))) as Record<string, unknown>;
-    if (!res.ok) throw new Error(typeof out.detail === "string" ? out.detail.slice(0, 200) : `Sending failed (${res.status}).`);
-    const signature = typeof out.signature === "string" ? out.signature : "";
+    const { topupSol } = await import("./trade-desk.server");
+    let raw: unknown;
+    try {
+      raw = await topupSol(data.token, data.signedB64);
+    } catch (err) {
+      const message = err instanceof Error && err.message ? err.message : "Nothing was sent.";
+      throw new Error(message);
+    }
+    const out = rec(raw);
+    const signature = String(out.signature);
     if (!/^[1-9A-HJ-NP-Za-km-z]{64,88}$/.test(signature)) throw new Error("Solana did not return a signature.");
     return { signature };
   });
