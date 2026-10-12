@@ -117,7 +117,7 @@ export function PromoteForm() {
         sentNow = true;
         setHash(sent);
       }
-      await submitBoost({ data: { chain, coin: quote.coin, hours, hash: sent } });
+      await submitBoost({ data: { chain, coin: quote.coin, hours, hash: sent, quote: quote.quote } });
       setNote(tr("Promoted. It shows at the top of Pulse until it ends."));
     } catch (err) {
       const message = err instanceof Error ? err.message : tr("The send failed.");

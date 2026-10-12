@@ -151,8 +151,9 @@ export const setCoinStream = createServerFn({ method: "POST" })
       const { proofMessage, proofDigest } = await import("./proof");
       const message = proofMessage("stream", data.wallet, await proofDigest(fields), data.proof.ts);
       const age = Date.now() - data.proof.ts;
-      if (age > 5 * 60_000 || age < -60_000 || !(await verifyTon(data.wallet, message, data.proof.signature))) {
-        throw new Error("The signature does not match this wallet.");
+      if (age > 5 * 60_000 || age < -60_000) throw new Error("The signature does not match this wallet.");
+      if (!(await verifyTon(data.wallet, message, data.proof.signature))) {
+        throw new Error("Set the stream from the Ferzan account that launched this coin.");
       }
     } else if (data.chain === "tron") {
       const { proofMessage, proofDigest } = await import("./proof");

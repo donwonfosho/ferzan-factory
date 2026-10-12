@@ -6,6 +6,7 @@ const USD: Record<Hours, number> = { 6: 10, 24: 30, 72: 75 };
 const CHAINS = new Set(["ethereum", "bsc", "base", "robinhood", "arc", "solana"]);
 const ID = /^(0x[0-9a-fA-F]{40}|[1-9A-HJ-NP-Za-km-z]{32,44})$/;
 const FRESH_MS = 3 * 60 * 60 * 1000;
+const QUOTE_MS = 30 * 60 * 1000;
 
 export type BoostQuote = {
   chain: string;
@@ -18,6 +19,8 @@ export type BoostQuote = {
   nativeText: string;
   nativeSymbol: string;
   treasury: string;
+  /** Signed price, checked at submit so a later price move cannot refuse a correct payment. */
+  quote: string;
 };
 
 export type BoostView = {
@@ -56,6 +59,12 @@ function coinOf(chain: string, value: unknown): string {
   return chain === "solana" ? id : id.toLowerCase();
 }
 
+function quoteOf(value: unknown): string {
+  const quote = typeof value === "string" ? value.trim() : "";
+  if (!/^v1\.\d{10,16}\.\d{1,40}\.[0-9a-f]{64}$/.test(quote)) throw new Error("That quote is not valid. Refresh the price and try again.");
+  return quote;
+}
+
 function hashOf(chain: string, value: unknown): string {
   const hash = typeof value === "string" ? value.trim() : "";
   if (chain === "solana") {
@@ -77,6 +86,33 @@ function rawFromUsd(usd: number, price: number, decimals: number): bigint {
   if (price8 <= 0n) throw new Error("The price is not available. Try again.");
   const num = BigInt(Math.round(usd * 1e8)) * 10n ** BigInt(decimals);
   return (num + price8 - 1n) / price8;
+}
+
+function quoteSecret(): string {
+  const value = (process.env.FERZAN_BOOST_SECRET ?? "").trim();
+  if (!value) throw new Error("Boosts are not open yet.");
+  return value;
+}
+
+async function signQuote(chain: string, coin: string, hours: Hours, nativeRaw: string): Promise<string> {
+  const { createHmac } = await import("node:crypto");
+  const expires = Date.now() + QUOTE_MS;
+  const msg = `v1|${chain}|${coin}|${hours}|${nativeRaw}|${expires}`;
+  const sig = createHmac("sha256", quoteSecret()).update(msg).digest("hex");
+  return `v1.${expires}.${nativeRaw}.${sig}`;
+}
+
+async function readQuote(chain: string, coin: string, hours: Hours, quote: string): Promise<bigint> {
+  const { createHmac, timingSafeEqual } = await import("node:crypto");
+  const [, expiresText, nativeRaw, sig] = quote.split(".");
+  const expires = Number(expiresText);
+  const msg = `v1|${chain}|${coin}|${hours}|${nativeRaw}|${expires}`;
+  const expect = createHmac("sha256", quoteSecret()).update(msg).digest();
+  const got = Buffer.from(sig, "hex");
+  if (got.length !== expect.length || !timingSafeEqual(got, expect)) throw new Error("That quote is not valid. Refresh the price and try again.");
+  if (!Number.isFinite(expires) || expires > Date.now() + QUOTE_MS + 60_000) throw new Error("That quote is not valid. Refresh the price and try again.");
+  if (expires < Date.now()) throw new Error("That quote expired. Refresh the price and try again.");
+  return BigInt(nativeRaw);
 }
 
 async function findCoin(chain: string, coin: string): Promise<CoinRow> {
@@ -111,10 +147,10 @@ async function quoteFor(chain: ChainId, hours: Hours): Promise<{ raw: bigint; te
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function paidOnChain(chain: ChainId, hash: string): Promise<bigint> {
-  const { TREASURY } = await import("./catalog");
+  const { TREASURY, SOLANA_RPC } = await import("./catalog");
   if (chain === "solana") {
     const { Connection } = await import("@solana/web3.js");
-    const rpc = new Connection("https://api.mainnet-beta.solana.com", "confirmed");
+    const rpc = new Connection(SOLANA_RPC, "confirmed");
     type SolIx = { program?: string; parsed?: { type?: string; info?: { destination?: string; lamports?: number } } };
     type SolTx = {
       meta: { err: unknown; innerInstructions?: { instructions: SolIx[] }[] } | null;
@@ -175,7 +211,7 @@ export const previewBoost = createServerFn({ method: "POST" })
     const quote = await quoteFor(data.chain, data.hours);
     return {
       chain: data.chain,
-      coin: coin.contract,
+      coin: data.coin,
       name: coin.name,
       symbol: coin.symbol,
       hours: data.hours,
@@ -184,22 +220,23 @@ export const previewBoost = createServerFn({ method: "POST" })
       nativeText: quote.text,
       nativeSymbol: quote.symbol,
       treasury: quote.treasury,
+      quote: await signQuote(data.chain, data.coin, data.hours, quote.raw.toString()),
     };
   });
 
 export const submitBoost = createServerFn({ method: "POST" })
-  .validator((data: unknown): { chain: ChainId; coin: string; hours: Hours; hash: string } => {
+  .validator((data: unknown): { chain: ChainId; coin: string; hours: Hours; hash: string; quote: string } => {
     if (!data || typeof data !== "object") throw new Error("That coin looks wrong.");
-    const row = data as { chain?: unknown; coin?: unknown; hours?: unknown; hash?: unknown };
+    const row = data as { chain?: unknown; coin?: unknown; hours?: unknown; hash?: unknown; quote?: unknown };
     const chain = chainOf(row.chain);
-    return { chain, coin: coinOf(chain, row.coin), hours: hoursOf(row.hours), hash: hashOf(chain, row.hash) };
+    return { chain, coin: coinOf(chain, row.coin), hours: hoursOf(row.hours), hash: hashOf(chain, row.hash), quote: quoteOf(row.quote) };
   })
   .handler(async ({ data }): Promise<{ ok: true; endsAt: string }> => {
     await (await import("./guard.server")).guardRelay("send");
     const coin = await findCoin(data.chain, data.coin);
-    const quote = await quoteFor(data.chain, data.hours);
+    const quoted = await readQuote(data.chain, data.coin, data.hours, data.quote);
     const paid = await paidOnChain(data.chain, data.hash);
-    const min = (quote.raw * 95n) / 100n;
+    const min = (quoted * 95n) / 100n;
     if (paid < min) throw new Error("That payment is short of this tier.");
     const { getSql } = await import("@/lib/db");
     const sql = await getSql();

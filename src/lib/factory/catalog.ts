@@ -77,6 +77,8 @@ export const BOTS: BotMeta[] = [
 
 export const COMMUNITY_URL = "https://t.me/Ferzan_Chat";
 export const X_URL = "https://x.com/ferzanfactory";
+/** Solana JSON-RPC used by the relay. The public api.mainnet-beta host rate-limits. */
+export const SOLANA_RPC = "https://solana-rpc.publicnode.com";
 
 export const PLACES = [
   {

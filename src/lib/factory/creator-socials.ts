@@ -72,8 +72,19 @@ async function listedCoin(chain: string, coin: string): Promise<{ contract: stri
     where chain = ${chain} and lower(contract) = ${coin.toLowerCase()}
     limit 1
   `;
-  if (!rows[0]) throw new Error("That coin is not listed.");
-  return rows[0];
+  if (rows[0]?.creator) return rows[0];
+  if (chain === "ton" || chain === "tron") {
+    const res = await fetch(`https://launch.ferzaneco.com/api/curve-chart/${encodeURIComponent(coin)}?tf=300`, {
+      headers: { accept: "application/json" },
+      signal: AbortSignal.timeout(8000),
+    }).catch(() => null);
+    if (res?.ok) {
+      const body = (await res.json()) as { creator?: unknown };
+      if (typeof body.creator === "string" && body.creator.trim().length >= 20) return { contract: coin, creator: body.creator.trim() };
+    }
+    throw new Error("Not available on TON and Tron yet.");
+  }
+  throw new Error("That coin is not listed.");
 }
 
 export const listSocials = createServerFn({ method: "GET" })

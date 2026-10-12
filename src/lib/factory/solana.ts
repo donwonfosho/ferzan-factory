@@ -12,9 +12,8 @@ import {
   getAssociatedTokenAddressSync,
 } from "@solana/spl-token";
 import { readSiteWallet } from "./site-wallet";
+import { SOLANA_RPC } from "./catalog";
 import { Buffer } from "buffer";
-
-const RPC = "https://api.mainnet-beta.solana.com";
 void bufferReady;
 
 type SolanaRequest =
@@ -78,7 +77,7 @@ export const solanaRelay = createServerFn({ method: "POST" })
     await guard.guardRelay(data.method === "send" ? "send" : "read");
     if (data.method === "send") await guard.assertAllowedSolanaTx(data.raw);
     const { Connection, PublicKey } = await import("@solana/web3.js");
-    const rpc = new Connection(RPC, "confirmed");
+    const rpc = new Connection(SOLANA_RPC, "confirmed");
     if (data.method === "balance") {
       const lamports = await rpc.getBalance(new PublicKey(data.address));
       return { lamports: lamports.toString() };
