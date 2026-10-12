@@ -153,11 +153,22 @@ export const searchCoins = createServerFn({ method: "GET" })
       .filter((h) => PATH.test(h.path));
   });
 
-/** Public launch-record read. Nulls in the body mean "Not available". A failed read is null. */
+const riskCache = new Map<string, { at: number; value: string | null }>();
+
+/** Public launch-record read. Nulls in the body mean "Not available". A failed read is null. Cached 60 seconds per coin. */
 export const getCoinRisk = createServerFn({ method: "GET" })
   .validator(coinArgs)
   .handler(async ({ data }): Promise<string | null> => {
     await (await import("./guard.server")).guardRelay("read");
+    const key = `${data.chain}:${data.token.toLowerCase()}`;
+    const now = Date.now();
+    for (const [entry, row] of riskCache) {
+      if (now - row.at >= 60_000) riskCache.delete(entry);
+    }
+    const hit = riskCache.get(key);
+    if (hit) return hit.value;
     const row = await get(`/coin-risk/${data.chain}/${encodeURIComponent(data.token)}`, 15_000);
-    return row ? JSON.stringify(row) : null;
+    const value = row ? JSON.stringify(row) : null;
+    riskCache.set(key, { at: now, value });
+    return value;
   });
