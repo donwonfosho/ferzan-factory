@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
-import { PrivyProvider, useExportWallet, useImportWallet, useLinkAccount, usePrivy, useSignMessage, useWallets } from "@privy-io/react-auth";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { PrivyProvider, useExportWallet, useImportWallet, useLinkAccount, useLogin, useLoginWithTelegram, usePrivy, useSignMessage, useWallets } from "@privy-io/react-auth";
 import {
   useCreateWallet as useCreateExtendedWallet,
   useExportWallet as useExportExtendedWallet,
@@ -47,6 +47,155 @@ function linkedWallet(user: unknown, chainType: "tron" | "ton"): LinkedWallet | 
 }
 
 const clean = (hex: string) => hex.replace(/^0x/, "").toLowerCase();
+
+const NOTE =
+  'Telegram will ask for your phone number, then send a login request inside the Telegram app (not a text message). Open Telegram, go to the chat named "Telegram" with the blue checkmark, and tap Confirm.';
+
+const TAKEN =
+  "This Telegram is already used by another Ferzan account. Sign out and sign in with Telegram to use that account. Each account keeps its own wallet, so move any funds first.";
+
+function hidePrivyDialog() {
+  const dialog = document.getElementById("privy-dialog");
+  if (dialog) dialog.style.display = "none";
+}
+
+function showPrivyDialog() {
+  const dialog = document.getElementById("privy-dialog");
+  if (dialog) dialog.style.display = "";
+}
+
+function telegramChoice(target: EventTarget | null): boolean {
+  if (!(target instanceof Element)) return false;
+  if (target.closest("[data-telegram-note]")) return false;
+  const button = target.closest("button, [role='button']");
+  if (!button) return false;
+  const text = (button.textContent ?? "").replace(/\s+/g, " ").trim();
+  return text === "Telegram" || text === "Telegram Recent";
+}
+
+/** Shown the moment Telegram is picked, and again with Try again if that window closes unsigned. */
+function TelegramSignInNote() {
+  const { authenticated, logout } = usePrivy();
+  const [phase, setPhase] = useState<"off" | "open" | "retry">("off");
+  const [taken, setTaken] = useState(false);
+  const { login } = useLoginWithTelegram();
+  const phaseRef = useRef(phase);
+  const authRef = useRef(authenticated);
+  const loginRef = useRef(login);
+  phaseRef.current = phase;
+  authRef.current = authenticated;
+  loginRef.current = login;
+
+  useLogin({
+    onComplete: () => setPhase("off"),
+    onError: () => {
+      if (phaseRef.current === "open") setPhase("retry");
+    },
+  });
+
+  useLinkAccount({
+    onError: (error, details) => {
+      if (details?.linkMethod !== "telegram") return;
+      if (error !== "linked_to_another_user" && error !== "account_transfer_required") return;
+      setTaken(true);
+      hidePrivyDialog();
+    },
+  });
+
+  useEffect(() => {
+    if (!taken) return;
+    hidePrivyDialog();
+    const id = window.setInterval(hidePrivyDialog, 200);
+    return () => {
+      window.clearInterval(id);
+      showPrivyDialog();
+    };
+  }, [taken]);
+
+  useEffect(() => {
+    if (authenticated) setPhase("off");
+  }, [authenticated]);
+
+  useEffect(() => {
+    function start() {
+      setPhase("open");
+      // Paint the note first, then open Telegram's window. If the browser blocks it, Try again is a direct click.
+      requestAnimationFrame(() => {
+        void loginRef.current().then(
+          () => setPhase("off"),
+          () => setPhase("retry"),
+        );
+      });
+    }
+
+    function onClick(event: MouseEvent) {
+      if (authRef.current || !telegramChoice(event.target)) return;
+      event.preventDefault();
+      event.stopPropagation();
+      start();
+    }
+
+    document.addEventListener("click", onClick, true);
+    return () => document.removeEventListener("click", onClick, true);
+  }, []);
+
+  if (phase === "off" && !taken) return null;
+
+  return (
+    <div data-telegram-note className="fixed inset-x-0 top-3 z-[2147483000] px-3">
+      <div className="mx-auto max-w-md rounded-xl bg-bg p-4 shadow-border">
+        {taken ? (
+          <>
+            <p className="text-sm">{tr(TAKEN)}</p>
+            <button
+              type="button"
+              className="btn-cyan mt-3 min-h-11 px-4"
+              onClick={() => {
+                setTaken(false);
+                showPrivyDialog();
+                void logout().then(() => {
+                  setPhase("open");
+                  return login();
+                }).then(
+                  () => setPhase("off"),
+                  () => setPhase("retry"),
+                );
+              }}
+            >
+              {tr("Sign out and use Telegram")}
+            </button>
+          </>
+        ) : (
+          <>
+            <p className="text-sm">{tr(NOTE)}</p>
+            {phase === "retry" ? (
+              <button
+                type="button"
+                className="btn-cyan mt-3 min-h-11 px-4"
+                onClick={() => {
+                  const buttons = document.querySelectorAll("button");
+                  for (const button of buttons) {
+                    if (telegramChoice(button)) {
+                      button.click();
+                      return;
+                    }
+                  }
+                  setPhase("open");
+                  void login().then(
+                    () => setPhase("off"),
+                    () => setPhase("retry"),
+                  );
+                }}
+              >
+                {tr("Try again")}
+              </button>
+            ) : null}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
 
 /** Mirrors the Privy account into the wallet bridge. */
 function Bridge() {
@@ -238,6 +387,7 @@ export default function PrivyApp() {
       }}
     >
       <Bridge />
+      <TelegramSignInNote />
     </PrivyProvider>
   );
 }

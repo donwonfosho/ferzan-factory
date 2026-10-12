@@ -892,6 +892,7 @@ const dict: Record<string, string> = {
   "Sign in with email, Google, X or a wallet. New accounts get their own wallet on Base, BNB, Ethereum, Robinhood and Arc, plus a Solana wallet. You can export the keys any time.": "Đăng nhập bằng email, Google, X hoặc ví. Các tài khoản mới nhận được ví riêng của họ trên Base, BNB, Ethereum, Robinhood và Arc, cùng với ví Solana. Bạn có thể xuất khóa bất kỳ lúc nào.",
   "Sign in with the account that launched these coins.": "Đăng nhập bằng tài khoản đã phát hành những đồng tiền này.",
   "Sign out": "Đăng xuất",
+  "Sign out and use Telegram": "Đăng xuất và dùng Telegram",
   "Sign with your wallet first.": "Trước tiên, hãy đăng nhập bằng ví của bạn.",
   "Signature looks wrong.": "Chữ ký có vẻ sai.",
   "Signature time looks wrong.": "Thời gian chữ ký có vẻ sai.",
@@ -958,6 +959,8 @@ const dict: Record<string, string> = {
   "Telegram chat": "Telegram trò chuyện",
   "Telegram hub": "Telegram hub",
   "Telegram text copied.": "Telegram đã sao chép văn bản.",
+  'Telegram will ask for your phone number, then send a login request inside the Telegram app (not a text message). Open Telegram, go to the chat named "Telegram" with the blue checkmark, and tap Confirm.':
+    'Telegram sẽ hỏi số điện thoại của bạn, rồi gửi yêu cầu đăng nhập bên trong ứng dụng Telegram (không phải tin nhắn SMS). Mở Telegram, vào cuộc trò chuyện tên "Telegram" có dấu tích xanh và nhấn Xác nhận.',
   "Terms": "Điều khoản",
   "That address looks wrong.": "Địa chỉ đó có vẻ sai.",
   "That amount gets nothing back.": "Số tiền đó sẽ không được hoàn lại.",
@@ -1072,6 +1075,8 @@ const dict: Record<string, string> = {
   "The wallet returned no account.": "Ví không trả lại tài khoản.",
   "These are the Ferzan bots and rooms. They live in Telegram. None of them are minted onto a coin, and none of them hold your key.": "Đây là Ferzan bot và phòng. Họ sống ở Telegram. Không có tài khoản nào được đúc vào đồng xu và không có tài khoản nào giữ chìa khóa của bạn.",
   "These are the only official Ferzan accounts. Anything else using the Ferzan name is not us.": "Đây là tài khoản Ferzan chính thức duy nhất. Bất kỳ thứ gì khác sử dụng tên Ferzan không phải là chúng tôi.",
+  "This Telegram is already used by another Ferzan account. Sign out and sign in with Telegram to use that account. Each account keeps its own wallet, so move any funds first.":
+    "Telegram này đã được dùng bởi một tài khoản Ferzan khác. Hãy đăng xuất rồi đăng nhập bằng Telegram để dùng tài khoản đó. Mỗi tài khoản giữ ví riêng, nên hãy chuyển tiền trước.",
   "This account has no EVM wallet yet.": "Tài khoản này chưa có ví EVM.",
   "This account has no Solana wallet yet.": "Tài khoản này chưa có ví Solana.",
   "This browser cannot sign with the Solana wallet. Update the browser and try again.": "Trình duyệt này không thể đăng nhập bằng ví Solana. Hãy cập nhật trình duyệt và thử lại.",
@@ -1137,6 +1142,7 @@ const dict: Record<string, string> = {
   "Tron wallet looks wrong.": "Tron ví có vẻ sai.",
   "TronLink did not connect. Unlock it and approve this site, then try again.": "TronLink không bắt đầu kết nối. Mở khóa và phê duyệt trang web này, sau đó thử lại.",
   "TronLink extension": "TronLink tiện ích mở rộng",
+  "Try again": "Thử lại",
   "Type": "Nhập",
   "Type a ticker or a name.": "Nhập mã hoặc tên.",
   "Type an amount to see where the dot moves.": "Nhập số tiền để xem dấu chấm di chuyển đến đâu.",

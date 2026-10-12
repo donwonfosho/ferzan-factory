@@ -892,6 +892,7 @@ const dict: Record<string, string> = {
   "Sign in with email, Google, X or a wallet. New accounts get their own wallet on Base, BNB, Ethereum, Robinhood and Arc, plus a Solana wallet. You can export the keys any time.": "E-posta, Google, X veya bir cüzdanla oturum açın. Yeni hesaplar Base, BNB, Ethereum, Robinhood ve Arc'de kendi cüzdanlarına ek olarak bir Solana cüzdanına sahip olur. Anahtarları istediğiniz zaman dışa aktarabilirsiniz.",
   "Sign in with the account that launched these coins.": "Bu paraları başlatan hesapla oturum açın.",
   "Sign out": "Oturumu kapatın",
+  "Sign out and use Telegram": "Çıkış yap ve Telegram ile gir",
   "Sign with your wallet first.": "Önce cüzdanınızla oturum açın.",
   "Signature looks wrong.": "İmza yanlış görünüyor.",
   "Signature time looks wrong.": "İmza zamanı yanlış görünüyor.",
@@ -958,6 +959,8 @@ const dict: Record<string, string> = {
   "Telegram chat": "Telegram sohbete gider",
   "Telegram hub": "Telegram hub",
   "Telegram text copied.": "Telegram metin kopyalandı.",
+  'Telegram will ask for your phone number, then send a login request inside the Telegram app (not a text message). Open Telegram, go to the chat named "Telegram" with the blue checkmark, and tap Confirm.':
+    'Telegram telefon numaranızı isteyecek, sonra giriş isteğini Telegram uygulamasının içine gönderecek (kısa mesaj değil). Telegram\'ı açın, mavi onay işaretli "Telegram" adlı sohbete girin ve Onayla\'ya dokunun.',
   "Terms": "Şartlar",
   "That address looks wrong.": "Bu adres yanlış görünüyor.",
   "That amount gets nothing back.": "Bu miktar hiçbir şeyi geri getirmez.",
@@ -1072,6 +1075,8 @@ const dict: Record<string, string> = {
   "The wallet returned no account.": "Cüzdan hiçbir hesabı geri vermedi.",
   "These are the Ferzan bots and rooms. They live in Telegram. None of them are minted onto a coin, and none of them hold your key.": "Bunlar Ferzan botlar ve odalardır. Telegram'de yaşıyorlar. Hiçbiri bir madeni paraya basılmıyor ve hiçbiri sizin anahtarınızı içermiyor.",
   "These are the only official Ferzan accounts. Anything else using the Ferzan name is not us.": "Bunlar tek resmi Ferzan hesaplardır. Ferzan adını kullanan diğer kişiler bize ait değildir.",
+  "This Telegram is already used by another Ferzan account. Sign out and sign in with Telegram to use that account. Each account keeps its own wallet, so move any funds first.":
+    "Bu Telegram başka bir Ferzan hesabında kullanılıyor. Çıkış yapın ve o hesabı kullanmak için Telegram ile giriş yapın. Her hesabın kendi cüzdanı vardır, bu yüzden önce bakiyeyi taşıyın.",
   "This account has no EVM wallet yet.": "Bu hesabın henüz EVM cüzdanı yok.",
   "This account has no Solana wallet yet.": "Bu hesabın henüz Solana cüzdanı yok.",
   "This browser cannot sign with the Solana wallet. Update the browser and try again.": "Bu tarayıcı Solana cüzdanıyla oturum açamıyor. Tarayıcıyı güncelleyin ve tekrar deneyin.",
@@ -1137,6 +1142,7 @@ const dict: Record<string, string> = {
   "Tron wallet looks wrong.": "Tron cüzdan yanlış görünüyor.",
   "TronLink did not connect. Unlock it and approve this site, then try again.": "TronLink bağlanmadı. Kilidini açın ve bu siteyi onaylayın, ardından tekrar deneyin.",
   "TronLink extension": "TronLink uzantı",
+  "Try again": "Tekrar dene",
   "Type": "Yazın",
   "Type a ticker or a name.": "Bir kayan yazı veya ad yazın.",
   "Type an amount to see where the dot moves.": "Noktanın nereye hareket edeceğini görmek için bir miktar yazın.",

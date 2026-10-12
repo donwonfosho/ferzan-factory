@@ -892,6 +892,7 @@ const dict: Record<string, string> = {
   "Sign in with email, Google, X or a wallet. New accounts get their own wallet on Base, BNB, Ethereum, Robinhood and Arc, plus a Solana wallet. You can export the keys any time.": "Inicia sesión con correo, Google, X o una billetera. Las cuentas nuevas reciben su propia billetera en Base, BNB, Ethereum, Robinhood y Arc, más una billetera de Solana. Puedes exportar las claves cuando quieras.",
   "Sign in with the account that launched these coins.": "Inicia sesión con la cuenta que lanzó estas monedas.",
   "Sign out": "Cerrar sesión",
+  "Sign out and use Telegram": "Cerrar sesión y usar Telegram",
   "Sign with your wallet first.": "Primero firma con tu billetera.",
   "Signature looks wrong.": "La firma no es válida.",
   "Signature time looks wrong.": "La hora de la firma no es válida.",
@@ -958,6 +959,8 @@ const dict: Record<string, string> = {
   "Telegram chat": "Chat de Telegram",
   "Telegram hub": "Hub de Telegram",
   "Telegram text copied.": "Texto para Telegram copiado.",
+  'Telegram will ask for your phone number, then send a login request inside the Telegram app (not a text message). Open Telegram, go to the chat named "Telegram" with the blue checkmark, and tap Confirm.':
+    'Telegram te pedirá tu número de teléfono y luego enviará una solicitud de inicio de sesión dentro de la app de Telegram (no un mensaje de texto). Abre Telegram, entra al chat llamado "Telegram" con la marca azul y pulsa Confirmar.',
   "Terms": "Términos",
   "That address looks wrong.": "Esa dirección no es válida.",
   "That amount gets nothing back.": "Esa cantidad no devuelve nada.",
@@ -1072,6 +1075,8 @@ const dict: Record<string, string> = {
   "The wallet returned no account.": "La billetera no devolvió ninguna cuenta.",
   "These are the Ferzan bots and rooms. They live in Telegram. None of them are minted onto a coin, and none of them hold your key.": "Estos son los bots y salas de Ferzan. Viven en Telegram. Ninguno está acuñado en una moneda y ninguno guarda tu clave.",
   "These are the only official Ferzan accounts. Anything else using the Ferzan name is not us.": "Estas son las únicas cuentas oficiales de Ferzan. Cualquier otra que use el nombre de Ferzan no somos nosotros.",
+  "This Telegram is already used by another Ferzan account. Sign out and sign in with Telegram to use that account. Each account keeps its own wallet, so move any funds first.":
+    "Este Telegram ya lo usa otra cuenta de Ferzan. Cierra sesión e inicia sesión con Telegram para usar esa cuenta. Cada cuenta conserva su propia billetera, así que mueve los fondos primero.",
   "This account has no EVM wallet yet.": "Esta cuenta aún no tiene billetera EVM.",
   "This account has no Solana wallet yet.": "Esta cuenta aún no tiene billetera de Solana.",
   "This browser cannot sign with the Solana wallet. Update the browser and try again.": "Este navegador no puede firmar con la billetera de Solana. Actualiza el navegador e inténtalo de nuevo.",
@@ -1137,6 +1142,7 @@ const dict: Record<string, string> = {
   "Tron wallet looks wrong.": "La billetera de Tron no es válida.",
   "TronLink did not connect. Unlock it and approve this site, then try again.": "TronLink no se conectó. Desbloquéalo y aprueba este sitio, luego inténtalo de nuevo.",
   "TronLink extension": "Extensión TronLink",
+  "Try again": "Inténtalo de nuevo",
   "Type": "Tipo",
   "Type a ticker or a name.": "Escribe un ticker o un nombre.",
   "Type an amount to see where the dot moves.": "Escribe una cantidad para ver adónde se mueve el punto.",

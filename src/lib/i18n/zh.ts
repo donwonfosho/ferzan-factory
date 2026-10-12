@@ -897,6 +897,7 @@ const dict: Record<string, string> = {
   "Sign in with email, Google, X or a wallet. New accounts get their own wallet on Base, BNB, Ethereum, Robinhood and Arc, plus a Solana wallet. You can export the keys any time.": "用邮箱、Google、X 或钱包登录。新账户会获得自己的 Base、BNB、Ethereum、Robinhood 和 Arc 钱包，外加一个 Solana 钱包。你可以随时导出私钥。",
   "Sign in with the account that launched these coins.": "请用发射这些币的账户登录。",
   "Sign out": "退出登录",
+  "Sign out and use Telegram": "退出并用 Telegram 登录",
   "Sign with your wallet first.": "请先用你的钱包签名。",
   "Signature looks wrong.": "签名不对。",
   "Signature time looks wrong.": "签名时间不对。",
@@ -965,6 +966,8 @@ const dict: Record<string, string> = {
   "Telegram chat": "Telegram 聊天群",
   "Telegram hub": "Telegram 中心",
   "Telegram text copied.": "已复制 Telegram 文案。",
+  'Telegram will ask for your phone number, then send a login request inside the Telegram app (not a text message). Open Telegram, go to the chat named "Telegram" with the blue checkmark, and tap Confirm.':
+    "Telegram 会先要你的手机号，然后在 Telegram 应用里发送一条登录请求（不是短信）。打开 Telegram，进入带蓝色对勾、名为“Telegram”的聊天，点确认。",
   "Terms": "条款",
   "That address looks wrong.": "地址格式不对。",
   "That amount gets nothing back.": "这个数额换不回任何东西。",
@@ -1079,6 +1082,8 @@ const dict: Record<string, string> = {
   "The wallet returned no account.": "钱包没有返回账户。",
   "These are the Ferzan bots and rooms. They live in Telegram. None of them are minted onto a coin, and none of them hold your key.": "这些是 Ferzan 的机器人和群组，它们都在 Telegram 上。它们都没有被铸造到某个币上，也都不持有你的私钥。",
   "These are the only official Ferzan accounts. Anything else using the Ferzan name is not us.": "这些是唯一的官方 Ferzan 账户。其他使用 Ferzan 名称的都不是我们。",
+  "This Telegram is already used by another Ferzan account. Sign out and sign in with Telegram to use that account. Each account keeps its own wallet, so move any funds first.":
+    "这个 Telegram 已经用于另一个 Ferzan 账户。请退出，再用 Telegram 登录以使用那个账户。每个账户有自己的钱包，请先转走资金。",
   "This account has no EVM wallet yet.": "这个账户还没有 EVM 钱包。",
   "This account has no Solana wallet yet.": "这个账户还没有 Solana 钱包。",
   "This browser cannot sign with the Solana wallet. Update the browser and try again.": "这个浏览器无法用 Solana 钱包签名。请更新浏览器后重试。",
@@ -1148,6 +1153,7 @@ const dict: Record<string, string> = {
   "Tron wallet looks wrong.": "Tron 钱包不对。",
   "TronLink did not connect. Unlock it and approve this site, then try again.": "TronLink 没有连接。请解锁并授权本站后重试。",
   "TronLink extension": "TronLink 插件",
+  "Try again": "再试一次",
   "Type": "类型",
   "Type a ticker or a name.": "输入代码或名称。",
   "Type an amount to see where the dot moves.": "输入数额，看看圆点移动到哪里。",
