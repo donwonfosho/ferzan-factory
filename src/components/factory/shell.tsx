@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useAccountWallets } from "@/lib/factory/wallet-bridge";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { CHAINS, COMMUNITY_URL, X_URL } from "@/lib/factory/catalog";
 import { creatorLabel, owns } from "@/lib/factory/engine";
 import { useFactory } from "@/lib/factory/store";
@@ -54,6 +54,8 @@ export function Shell({ children }: { children: ReactNode }) {
   const wallet = useFactory((s) => s.wallet);
   const profile = useFactory((s) => s.profile);
   const [open, setOpen] = useState(false);
+  const headRef = useRef<HTMLDivElement>(null);
+  const deskRef = useRef<HTMLDivElement>(null);
   const [sol, setSol] = useState<string | null>(null);
   const account = useAccountWallets();
 
@@ -87,6 +89,58 @@ export function Shell({ children }: { children: ReactNode }) {
     labelUnnamedControls();
   }, [path]);
 
+  useEffect(() => {
+    setOpen(false);
+  }, [href]);
+
+  useEffect(() => {
+    const el = headRef.current;
+    if (!el) return;
+    const measure = () => {
+      document.documentElement.style.setProperty("--site-header", `${Math.round(el.getBoundingClientRect().height)}px`);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    window.addEventListener("resize", measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    const onDown = (e: PointerEvent) => {
+      const t = e.target;
+      if (!(t instanceof Node)) return;
+      if (deskRef.current?.contains(t)) return;
+      if (t instanceof Element && t.closest("[data-desk-button]")) return;
+      setOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    document.addEventListener("pointerdown", onDown);
+    const y = window.scrollY;
+    const { style } = document.body;
+    const prev = { position: style.position, top: style.top, width: style.width, overflow: style.overflow };
+    style.position = "fixed";
+    style.top = `-${y}px`;
+    style.width = "100%";
+    style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.removeEventListener("pointerdown", onDown);
+      style.position = prev.position;
+      style.top = prev.top;
+      style.width = prev.width;
+      style.overflow = prev.overflow;
+      window.scrollTo(0, y);
+    };
+  }, [open]);
+
   const creatorCut = launches
     .filter((item) => item.kind === "primary" && owns(item.creator, wallet))
     .reduce<Record<string, bigint>>((acc, item) => {
@@ -104,7 +158,7 @@ export function Shell({ children }: { children: ReactNode }) {
     <div className="min-h-screen">
       <WatchSync />
       <FollowSync />
-      <div className="sticky top-0 z-40">
+      <div ref={headRef} className="sticky top-0 z-50">
         <StatusBanner />
         <div className="h-px bg-cyan" />
         <header className="border-b border-line bg-bg/90 backdrop-blur-md">
@@ -148,15 +202,46 @@ export function Shell({ children }: { children: ReactNode }) {
           )}
           <button
             type="button"
+            data-desk-button
             className="btn-line"
             aria-expanded={open}
+            aria-controls="desk-menu"
             onClick={() => setOpen((v) => !v)}
           >
             {tr("Desk")}
           </button>
         </div>
-        {open ? (
-          <div className="border-t border-line bg-surface">
+        <TradeTape />
+        </header>
+      </div>
+      {open ? (
+        <>
+          <div
+            data-desk-backdrop
+            className="fixed inset-x-0 bottom-0 z-[45] bg-black/40 sm:bg-black/20"
+            style={{ top: "var(--site-header, 4.5rem)" }}
+            onClick={() => setOpen(false)}
+          />
+          <div
+            ref={deskRef}
+            id="desk-menu"
+            role="dialog"
+            aria-label={tr("Desk")}
+            data-desk-menu
+            className="fixed inset-x-0 z-[46] overflow-y-auto overscroll-contain border-t border-line bg-surface shadow-lg bottom-[calc(3.75rem+env(safe-area-inset-bottom,0px))] sm:bottom-auto sm:max-h-[calc(100dvh-var(--site-header,4.5rem)-1rem)]"
+            style={{ top: "var(--site-header, 4.5rem)" }}
+          >
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-line bg-surface px-4 py-2 sm:hidden">
+              <p className="text-sm font-semibold">{tr("Desk")}</p>
+              <button
+                type="button"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-lg"
+                aria-label={tr("Close")}
+                onClick={() => setOpen(false)}
+              >
+                ×
+              </button>
+            </div>
             <div className="mx-auto grid max-w-7xl gap-4 px-4 py-4">
               <div>
                 <p className="text-sm font-medium text-muted">{tr("Menu")}</p>
@@ -193,11 +278,11 @@ export function Shell({ children }: { children: ReactNode }) {
                     <span className="block font-semibold">{tr("Add funds")}</span>
                     <span className="text-sm text-muted">{tr("Card, Apple Pay, or cash out")}</span>
                   </Link>
-                  <a href={COMMUNITY_URL} className="rounded-xl bg-bg px-3 py-3 shadow-border">
+                  <a href={COMMUNITY_URL} className="rounded-xl bg-bg px-3 py-3 shadow-border" onClick={() => setOpen(false)}>
                     <span className="block font-semibold">{tr("Telegram")}</span>
                     <span className="text-sm text-muted">{tr("Ferzan chat")}</span>
                   </a>
-                  <a href={X_URL} className="rounded-xl bg-bg px-3 py-3 shadow-border">
+                  <a href={X_URL} className="rounded-xl bg-bg px-3 py-3 shadow-border" onClick={() => setOpen(false)}>
                     <span className="block font-semibold">X</span>
                     <span className="text-sm text-muted">{tr("@ferzanfactory")}</span>
                   </a>
@@ -213,10 +298,8 @@ export function Shell({ children }: { children: ReactNode }) {
               {wallet.startsWith("0x") ? <WalletBalances evm={wallet} sol={account?.authenticated ? account.solAddress : sol} /> : null}
             </div>
           </div>
-        ) : null}
-        <TradeTape />
-        </header>
-      </div>
+        </>
+      ) : null}
       <LaunchBar />
       <main className={cn("mx-auto px-4 pt-10 pb-28 sm:px-6 sm:py-14", NARROW_PATHS.some((p) => path.startsWith(p)) ? "max-w-5xl" : "max-w-7xl")}>{children}</main>
       <LaunchWatch />

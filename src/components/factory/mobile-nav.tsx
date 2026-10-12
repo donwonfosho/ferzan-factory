@@ -36,7 +36,7 @@ export function MobileNav() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 flex border-t border-line bg-bg/95 pb-[env(safe-area-inset-bottom,0px)] backdrop-blur-md sm:hidden"
+      className="fixed inset-x-0 bottom-0 z-50 flex border-t border-line bg-bg/95 pb-[env(safe-area-inset-bottom,0px)] backdrop-blur-md sm:hidden"
       aria-label={tr("Main")}
     >
       <Link to="/" className={cls(path === "/")}>

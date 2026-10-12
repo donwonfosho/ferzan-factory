@@ -77,7 +77,7 @@ function pctLabel(bps: number): string {
 }
 
 function FeeLadder({ me }: { me: Rec }) {
-  if (me.fee_exempt === true) return <p className="mt-3 text-sm text-[#9fe9f2]">{tr("Fee exempt")}</p>;
+  if (me.fee_exempt === true) return null;
   const bps = num(me.fee_bps);
   if (bps === null) return null;
   const next = rec(me.next_tier);
@@ -450,7 +450,24 @@ export function TerminalPage() {
   }
 
   return (
-    <div className="term-page mx-auto max-w-3xl pb-24 sm:pb-0">
+    <div className="term-page mx-auto max-w-3xl">
+      <div
+        className="sticky z-30 -mx-4 mb-3 overflow-x-auto border-b border-[rgba(160,190,255,.12)] bg-[#070b18] px-2 py-2 sm:hidden"
+        style={{ top: "var(--site-header, 4.5rem)" }}
+      >
+        <div className="flex w-max gap-2">
+          {tabs.map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              className={`shrink-0 rounded-lg px-3 py-2 text-sm font-medium ${tab === id ? "bg-[#143f4a] text-[#2fe3d8]" : "text-[#93a4a7]"}`}
+              onClick={() => pickTab(id)}
+            >
+              {tr(label)}
+            </button>
+          ))}
+        </div>
+      </div>
       <h1 className="text-4xl">{tr("Terminal")}</h1>
       <p className="mt-2 text-sm text-muted">{tr("The bot places the trade from your Trading Wallet. This page never sees your keys.")}</p>
       {err ? <p className="term-card mt-3 text-sm">{err}</p> : null}
@@ -818,25 +835,6 @@ export function TerminalPage() {
         </div>
       ) : null}
       {toast ? <p className="mt-3 text-sm text-cyan">{toast}</p> : null}
-      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-[rgba(160,190,255,.12)] bg-[#070b18] px-1 pt-1 sm:hidden" style={{ paddingBottom: "max(0.4rem, env(safe-area-inset-bottom))" }}>
-        <div className="grid grid-cols-5">
-          {tabs.map(([id, label]) => (
-            <button key={id} type="button" className={`flex min-h-0 flex-col items-center gap-0.5 px-1 py-1 text-[11px] ${tab === id ? "text-[#2fe3d8]" : "text-muted"}`} onClick={() => pickTab(id)}>
-              <TabIcon id={id} />
-              {tr(label)}
-            </button>
-          ))}
-        </div>
-      </nav>
     </div>
   );
-}
-
-function TabIcon({ id }: { id: Tab }) {
-  const common = { width: 18, height: 18, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, "aria-hidden": true as const };
-  if (id === "trade") return <svg {...common}><path d="M4 16l5-5 3 3 8-8" /><path d="M14 6h6v6" /></svg>;
-  if (id === "book") return <svg {...common}><rect x="4" y="4" width="16" height="16" rx="2" /><path d="M8 9h8M8 13h5" /></svg>;
-  if (id === "wallets") return <svg {...common}><rect x="3" y="6" width="18" height="12" rx="2" /><path d="M3 10h18" /></svg>;
-  if (id === "watch") return <svg {...common}><path d="M12 20s-7-4.4-7-9a4 4 0 0 1 7-2 4 4 0 0 1 7 2c0 4.6-7 9-7 9z" /></svg>;
-  return <svg {...common}><path d="M5 19V10M12 19V5M19 19v-7" /></svg>;
 }
