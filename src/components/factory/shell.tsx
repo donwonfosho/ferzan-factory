@@ -234,6 +234,7 @@ export function Shell({ children }: { children: ReactNode }) {
             <ul className="mt-2 space-y-1">
               <li><Link to="/" className="text-cyan">{tr("Floor")}</Link></li>
               <li><Link to="/pulse" className="text-cyan">{tr("Pulse")}</Link></li>
+              <li><Link to="/creator" className="text-cyan">{tr("Creator")}</Link></li>
               <li><Link to="/launch" search={{ kind: "curve" }} className="text-cyan">{tr("Launch")}</Link></li>
               <li><Link to="/bots" className="text-cyan">{tr("Bots")}</Link></li>
             </ul>

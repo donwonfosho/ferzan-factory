@@ -34,6 +34,7 @@ import { Route as AdminFeedbackRouteImport } from './routes/admin/feedback'
 import { Route as ApiCspReportRouteImport } from './routes/api/csp-report'
 import { Route as ApiLaunchesRouteImport } from './routes/api/launches'
 import { Route as ApiRelayStatusRouteImport } from './routes/api/relay-status'
+import { Route as CreatorIndexRouteImport } from './routes/creator/index'
 import { Route as CreatorWalletRouteImport } from './routes/creator/$wallet'
 import { Route as PAddressRouteImport } from './routes/p/$address'
 import { Route as TIdRouteImport } from './routes/t/$id'
@@ -170,6 +171,11 @@ const ApiRelayStatusRoute = ApiRelayStatusRouteImport.update({
   path: '/api/relay-status',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CreatorIndexRoute = CreatorIndexRouteImport.update({
+  id: '/creator/',
+  path: '/creator/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CreatorWalletRoute = CreatorWalletRouteImport.update({
   id: '/creator/$wallet',
   path: '/creator/$wallet',
@@ -250,6 +256,7 @@ export interface FileRoutesByFullPath {
   '/creator/$wallet': typeof CreatorWalletRoute
   '/p/$address': typeof PAddressRoute
   '/t/$id': typeof TIdRoute
+  '/creator/': typeof CreatorIndexRoute
   '/api/v1/coins': typeof ApiV1CoinsRoute
   '/c/$chain/$address': typeof CChainAddressRoute
   '/coin/$chain/$curve': typeof CoinChainCurveRoute
@@ -287,6 +294,7 @@ export interface FileRoutesByTo {
   '/creator/$wallet': typeof CreatorWalletRoute
   '/p/$address': typeof PAddressRoute
   '/t/$id': typeof TIdRoute
+  '/creator': typeof CreatorIndexRoute
   '/api/v1/coins': typeof ApiV1CoinsRoute
   '/c/$chain/$address': typeof CChainAddressRoute
   '/coin/$chain/$curve': typeof CoinChainCurveRoute
@@ -325,6 +333,7 @@ export interface FileRoutesById {
   '/creator/$wallet': typeof CreatorWalletRoute
   '/p/$address': typeof PAddressRoute
   '/t/$id': typeof TIdRoute
+  '/creator/': typeof CreatorIndexRoute
   '/api/v1/coins': typeof ApiV1CoinsRoute
   '/c/$chain/$address': typeof CChainAddressRoute
   '/coin/$chain/$curve': typeof CoinChainCurveRoute
@@ -364,6 +373,7 @@ export interface FileRouteTypes {
     | '/creator/$wallet'
     | '/p/$address'
     | '/t/$id'
+    | '/creator/'
     | '/api/v1/coins'
     | '/c/$chain/$address'
     | '/coin/$chain/$curve'
@@ -401,6 +411,7 @@ export interface FileRouteTypes {
     | '/creator/$wallet'
     | '/p/$address'
     | '/t/$id'
+    | '/creator'
     | '/api/v1/coins'
     | '/c/$chain/$address'
     | '/coin/$chain/$curve'
@@ -438,6 +449,7 @@ export interface FileRouteTypes {
     | '/creator/$wallet'
     | '/p/$address'
     | '/t/$id'
+    | '/creator/'
     | '/api/v1/coins'
     | '/c/$chain/$address'
     | '/coin/$chain/$curve'
@@ -476,6 +488,7 @@ export interface RootRouteChildren {
   CreatorWalletRoute: typeof CreatorWalletRoute
   PAddressRoute: typeof PAddressRoute
   TIdRoute: typeof TIdRoute
+  CreatorIndexRoute: typeof CreatorIndexRoute
   ApiV1CoinsRoute: typeof ApiV1CoinsRoute
   CChainAddressRoute: typeof CChainAddressRoute
   CoinChainCurveRoute: typeof CoinChainCurveRoute
@@ -661,6 +674,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiRelayStatusRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/creator/': {
+      id: '/creator/'
+      path: '/creator'
+      fullPath: '/creator/'
+      preLoaderRoute: typeof CreatorIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/creator/$wallet': {
       id: '/creator/$wallet'
       path: '/creator/$wallet'
@@ -774,6 +794,7 @@ const rootRouteChildren: RootRouteChildren = {
   CreatorWalletRoute: CreatorWalletRoute,
   PAddressRoute: PAddressRoute,
   TIdRoute: TIdRoute,
+  CreatorIndexRoute: CreatorIndexRoute,
   ApiV1CoinsRoute: ApiV1CoinsRoute,
   CChainAddressRoute: CChainAddressRoute,
   CoinChainCurveRoute: CoinChainCurveRoute,
