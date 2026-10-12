@@ -161,3 +161,84 @@ export function publicHeaders(status = 200): Headers {
     "cache-control": status === 200 ? "public, max-age=10" : "no-store",
   });
 }
+
+export type EmbedCard = {
+  chain: string;
+  id: string;
+  name: string;
+  symbol: string;
+  image: string;
+  path: string;
+  price: string | null;
+  mcapUsd: number | null;
+  progress: number | null;
+};
+
+const embedCache = new Map<string, { at: number; value: EmbedCard }>();
+
+function numOrNull(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : null;
+}
+
+function priceLabel(n: number | null, native: string): string | null {
+  if (n === null || n <= 0) return null;
+  const text = n >= 1 ? n.toFixed(4).replace(/0+$/, "").replace(/\.$/, "") : n.toPrecision(3);
+  return native ? `${text} ${native}` : text;
+}
+
+async function launchJson(path: string): Promise<Record<string, unknown> | null> {
+  try {
+    const res = await fetch(`https://launch.ferzaneco.com/api${path}`, {
+      headers: { accept: "application/json" },
+      signal: AbortSignal.timeout(6000),
+    });
+    if (!res.ok) return null;
+    const body = (await res.json()) as unknown;
+    return body && typeof body === "object" ? (body as Record<string, unknown>) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Card for /embed. Cached 20 seconds. Missing market fields stay null. */
+export async function embedCard(chain: string, id: string): Promise<EmbedCard> {
+  const key = `${chain}:${id.toLowerCase()}`;
+  const now = Date.now();
+  for (const [entry, row] of embedCache) {
+    if (now - row.at >= 20_000) embedCache.delete(entry);
+  }
+  const hit = embedCache.get(key);
+  if (hit) return hit.value;
+  const listed = JSON.parse(await coinBody(chain, id)) as { coin: PublicCoin | null };
+  const coin = listed.coin;
+  const chart = await launchJson(`/curve-chart/${encodeURIComponent(id)}?tf=60`);
+  let price = priceLabel(numOrNull(chart?.price), typeof chart?.native === "string" ? chart.native.slice(0, 8) : "");
+  let mcapUsd = numOrNull(chart?.mcap_usd);
+  let progress =
+    chart && typeof chart.progress === "number" && Number.isFinite(chart.progress)
+      ? Math.max(0, Math.min(100, chart.progress))
+      : null;
+  if (!price && !(mcapUsd && mcapUsd > 0) && progress === null) {
+    const one = await launchJson(`/coin/${encodeURIComponent(chain)}/${encodeURIComponent(id)}`);
+    price = priceLabel(numOrNull(one?.price), typeof one?.native === "string" ? one.native.slice(0, 8) : "");
+    mcapUsd = numOrNull(one?.mcap_usd);
+    progress =
+      one && typeof one.progress === "number" && Number.isFinite(one.progress)
+        ? Math.max(0, Math.min(100, one.progress))
+        : null;
+  }
+  const value: EmbedCard = {
+    chain,
+    id,
+    name: coin?.name || "",
+    symbol: coin?.symbol || "",
+    image: coin?.image || "",
+    path: coin?.path || `/coin/${chain}/${id}`,
+    price,
+    mcapUsd: mcapUsd && mcapUsd > 0 ? mcapUsd : null,
+    progress,
+  };
+  embedCache.set(key, { at: Date.now(), value });
+  return value;
+}
+

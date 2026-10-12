@@ -69,7 +69,7 @@ export function DocsPage() {
           {tr("Other sites may read the coin list. It is read-only and best-effort. See the API section.")}
         </Item>
         <Item n="8" title={tr("Embed a buy button")}>
-          {tr("Put /embed/chain/id on your site in an iframe. The button opens the coin page here. The embed does not connect a wallet.")}
+          {tr("Put /embed/chain/id on your site in an iframe. It shows the coin, the price, and a Trade on Ferzan button. The embed does not connect a wallet. The coin's creator can copy the iframe from the coin page.")}
         </Item>
       </ol>
       <section className="mt-8 space-y-3">

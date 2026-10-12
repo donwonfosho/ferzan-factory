@@ -7,6 +7,7 @@ import { WalletNeeded, solanaWallet, useAccountWallets } from "@/lib/factory/wal
 import { cn } from "@/lib/cn";
 import { TvChart } from "./tv-chart";
 import { CoinStream } from "./coin-stream";
+import { EmbedCode } from "./embed-code";
 import { Button, TextInput } from "./ui";
 import { CreatorScoreBox } from "./creator-score";
 import { SafetyBadges } from "./safety-badges";
@@ -253,6 +254,7 @@ export function SolCoinPage({ mint }: { mint: string }) {
       </p>
       <RiskPanel chain="solana" token={coin.mint} progress={coin.progress} curveOpen={!coin.graduated} />
       <CoinStream chain="solana" token={coin.mint} creator={coin.creator} signer={knownWallet} />
+      <EmbedCode chain="solana" id={coin.mint} creator={coin.creator} />
 
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-start">

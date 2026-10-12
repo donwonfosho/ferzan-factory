@@ -19,6 +19,7 @@ import { Button, TextInput } from "./ui";
 import { CurveGraphic } from "./chart-pro";
 import { TvChart } from "./tv-chart";
 import { CoinStream } from "./coin-stream";
+import { EmbedCode } from "./embed-code";
 import { CreatorScoreBox } from "./creator-score";
 import { SafetyBadges } from "./safety-badges";
 import { ReportCoin } from "./feedback";
@@ -346,6 +347,7 @@ export function BotCoinPage({ chain, curve }: { chain: BotCurveChain; curve: str
       </p>
       <RiskPanel chain={state.chain} token={state.token} progress={state.progress} curveOpen={!state.graduated && !opensAt} />
       <CoinStream chain={state.chain} token={state.token} curve={curve} creator={state.creator} signer={pnlWallet} />
+      <EmbedCode chain={state.chain} id={curve} creator={state.creator} />
 
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-start">

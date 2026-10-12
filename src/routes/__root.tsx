@@ -55,7 +55,7 @@ function Root() {
         />
         {embed ? (
           <LangRoot>
-            <main className="grid min-h-screen place-items-center bg-bg p-4 text-fg">
+            <main className="bg-bg p-2 text-fg">
               <Outlet />
             </main>
           </LangRoot>
