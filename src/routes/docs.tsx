@@ -65,6 +65,12 @@ export function DocsPage() {
             {tr("Weekly competition")}
           </Link>
         </Item>
+        <Item n="7" title={tr("Read the public list")}>
+          {tr("GET /api/v1/coins returns the newest 50 coins as JSON. Add ?chain=base to pick a chain. GET /api/v1/coin/base/0x… returns one. Other sites may read these. They do not include private fields.")}
+        </Item>
+        <Item n="8" title={tr("Embed a buy button")}>
+          {tr("Put /embed/chain/id on your site in an iframe. The button opens the coin page here. The embed does not connect a wallet.")}
+        </Item>
       </ol>
       <section className="mt-8 space-y-4">
         <h2 className="text-2xl">{tr("FAQ")}</h2>

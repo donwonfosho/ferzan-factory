@@ -36,9 +36,12 @@ import { Route as ApiRelayStatusRouteImport } from './routes/api/relay-status'
 import { Route as CreatorWalletRouteImport } from './routes/creator/$wallet'
 import { Route as PAddressRouteImport } from './routes/p/$address'
 import { Route as TIdRouteImport } from './routes/t/$id'
+import { Route as ApiV1CoinsRouteImport } from './routes/api/v1/coins'
 import { Route as CChainAddressRouteImport } from './routes/c/$chain/$address'
 import { Route as CoinChainCurveRouteImport } from './routes/coin/$chain/$curve'
+import { Route as EmbedChainIdRouteImport } from './routes/embed/$chain/$id'
 import { Route as TokenChainAddressRouteImport } from './routes/token/$chain/$address'
+import { Route as ApiV1CoinChainIdRouteImport } from './routes/api/v1/coin/$chain/$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -175,6 +178,11 @@ const TIdRoute = TIdRouteImport.update({
   path: '/t/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiV1CoinsRoute = ApiV1CoinsRouteImport.update({
+  id: '/api/v1/coins',
+  path: '/api/v1/coins',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CChainAddressRoute = CChainAddressRouteImport.update({
   id: '/c/$chain/$address',
   path: '/c/$chain/$address',
@@ -185,9 +193,19 @@ const CoinChainCurveRoute = CoinChainCurveRouteImport.update({
   path: '/coin/$chain/$curve',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EmbedChainIdRoute = EmbedChainIdRouteImport.update({
+  id: '/embed/$chain/$id',
+  path: '/embed/$chain/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TokenChainAddressRoute = TokenChainAddressRouteImport.update({
   id: '/token/$chain/$address',
   path: '/token/$chain/$address',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1CoinChainIdRoute = ApiV1CoinChainIdRouteImport.update({
+  id: '/api/v1/coin/$chain/$id',
+  path: '/api/v1/coin/$chain/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -219,9 +237,12 @@ export interface FileRoutesByFullPath {
   '/creator/$wallet': typeof CreatorWalletRoute
   '/p/$address': typeof PAddressRoute
   '/t/$id': typeof TIdRoute
+  '/api/v1/coins': typeof ApiV1CoinsRoute
   '/c/$chain/$address': typeof CChainAddressRoute
   '/coin/$chain/$curve': typeof CoinChainCurveRoute
+  '/embed/$chain/$id': typeof EmbedChainIdRoute
   '/token/$chain/$address': typeof TokenChainAddressRoute
+  '/api/v1/coin/$chain/$id': typeof ApiV1CoinChainIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -251,9 +272,12 @@ export interface FileRoutesByTo {
   '/creator/$wallet': typeof CreatorWalletRoute
   '/p/$address': typeof PAddressRoute
   '/t/$id': typeof TIdRoute
+  '/api/v1/coins': typeof ApiV1CoinsRoute
   '/c/$chain/$address': typeof CChainAddressRoute
   '/coin/$chain/$curve': typeof CoinChainCurveRoute
+  '/embed/$chain/$id': typeof EmbedChainIdRoute
   '/token/$chain/$address': typeof TokenChainAddressRoute
+  '/api/v1/coin/$chain/$id': typeof ApiV1CoinChainIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -284,9 +308,12 @@ export interface FileRoutesById {
   '/creator/$wallet': typeof CreatorWalletRoute
   '/p/$address': typeof PAddressRoute
   '/t/$id': typeof TIdRoute
+  '/api/v1/coins': typeof ApiV1CoinsRoute
   '/c/$chain/$address': typeof CChainAddressRoute
   '/coin/$chain/$curve': typeof CoinChainCurveRoute
+  '/embed/$chain/$id': typeof EmbedChainIdRoute
   '/token/$chain/$address': typeof TokenChainAddressRoute
+  '/api/v1/coin/$chain/$id': typeof ApiV1CoinChainIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -318,9 +345,12 @@ export interface FileRouteTypes {
     | '/creator/$wallet'
     | '/p/$address'
     | '/t/$id'
+    | '/api/v1/coins'
     | '/c/$chain/$address'
     | '/coin/$chain/$curve'
+    | '/embed/$chain/$id'
     | '/token/$chain/$address'
+    | '/api/v1/coin/$chain/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -350,9 +380,12 @@ export interface FileRouteTypes {
     | '/creator/$wallet'
     | '/p/$address'
     | '/t/$id'
+    | '/api/v1/coins'
     | '/c/$chain/$address'
     | '/coin/$chain/$curve'
+    | '/embed/$chain/$id'
     | '/token/$chain/$address'
+    | '/api/v1/coin/$chain/$id'
   id:
     | '__root__'
     | '/'
@@ -382,9 +415,12 @@ export interface FileRouteTypes {
     | '/creator/$wallet'
     | '/p/$address'
     | '/t/$id'
+    | '/api/v1/coins'
     | '/c/$chain/$address'
     | '/coin/$chain/$curve'
+    | '/embed/$chain/$id'
     | '/token/$chain/$address'
+    | '/api/v1/coin/$chain/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -415,9 +451,12 @@ export interface RootRouteChildren {
   CreatorWalletRoute: typeof CreatorWalletRoute
   PAddressRoute: typeof PAddressRoute
   TIdRoute: typeof TIdRoute
+  ApiV1CoinsRoute: typeof ApiV1CoinsRoute
   CChainAddressRoute: typeof CChainAddressRoute
   CoinChainCurveRoute: typeof CoinChainCurveRoute
+  EmbedChainIdRoute: typeof EmbedChainIdRoute
   TokenChainAddressRoute: typeof TokenChainAddressRoute
+  ApiV1CoinChainIdRoute: typeof ApiV1CoinChainIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -611,6 +650,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/v1/coins': {
+      id: '/api/v1/coins'
+      path: '/api/v1/coins'
+      fullPath: '/api/v1/coins'
+      preLoaderRoute: typeof ApiV1CoinsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/c/$chain/$address': {
       id: '/c/$chain/$address'
       path: '/c/$chain/$address'
@@ -625,11 +671,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CoinChainCurveRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/embed/$chain/$id': {
+      id: '/embed/$chain/$id'
+      path: '/embed/$chain/$id'
+      fullPath: '/embed/$chain/$id'
+      preLoaderRoute: typeof EmbedChainIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/token/$chain/$address': {
       id: '/token/$chain/$address'
       path: '/token/$chain/$address'
       fullPath: '/token/$chain/$address'
       preLoaderRoute: typeof TokenChainAddressRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/coin/$chain/$id': {
+      id: '/api/v1/coin/$chain/$id'
+      path: '/api/v1/coin/$chain/$id'
+      fullPath: '/api/v1/coin/$chain/$id'
+      preLoaderRoute: typeof ApiV1CoinChainIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -663,9 +723,12 @@ const rootRouteChildren: RootRouteChildren = {
   CreatorWalletRoute: CreatorWalletRoute,
   PAddressRoute: PAddressRoute,
   TIdRoute: TIdRoute,
+  ApiV1CoinsRoute: ApiV1CoinsRoute,
   CChainAddressRoute: CChainAddressRoute,
   CoinChainCurveRoute: CoinChainCurveRoute,
+  EmbedChainIdRoute: EmbedChainIdRoute,
   TokenChainAddressRoute: TokenChainAddressRoute,
+  ApiV1CoinChainIdRoute: ApiV1CoinChainIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

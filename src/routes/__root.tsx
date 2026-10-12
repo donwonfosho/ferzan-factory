@@ -1,6 +1,6 @@
 import "@/lib/factory/buffer-polyfill";
 import "@/lib/zod-config";
-import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
+import { createRootRoute, HeadContent, Outlet, Scripts, useRouterState } from "@tanstack/react-router";
 import { PrivyRoot } from "@/components/factory/privy-root";
 import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
@@ -37,7 +37,12 @@ export const Route = createRootRoute({
       { rel: "apple-touch-icon", href: "/__grok/icon-180.png" },
     ],
   }),
-  component: () => (
+  component: Root,
+});
+
+function Root() {
+  const embed = useRouterState({ select: (s) => s.location.pathname.startsWith("/embed/") });
+  return (
     <html lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
@@ -48,18 +53,28 @@ export const Route = createRootRoute({
             __html: "document.querySelectorAll('link[rel=stylesheet][media=print]').forEach(function(l){l.media='all'})",
           }}
         />
-        <PreviewHostBridge />
-        <AuthProvider>
-          <PrivyRoot>
-            <LangRoot>
-              <Shell>
-                <Outlet />
-              </Shell>
-            </LangRoot>
-          </PrivyRoot>
-        </AuthProvider>
+        {embed ? (
+          <LangRoot>
+            <main className="grid min-h-screen place-items-center bg-bg p-4 text-fg">
+              <Outlet />
+            </main>
+          </LangRoot>
+        ) : (
+          <>
+            <PreviewHostBridge />
+            <AuthProvider>
+              <PrivyRoot>
+                <LangRoot>
+                  <Shell>
+                    <Outlet />
+                  </Shell>
+                </LangRoot>
+              </PrivyRoot>
+            </AuthProvider>
+          </>
+        )}
         <Scripts />
       </body>
     </html>
-  ),
-});
+  );
+}

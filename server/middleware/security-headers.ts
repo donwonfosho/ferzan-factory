@@ -32,11 +32,17 @@ export default async function securityHeadersMiddleware(
   const result = await next();
   if (!(result instanceof Response)) return result;
   const headers = new Headers(result.headers);
+  const path = event.url?.pathname ?? "";
+  const embed = path.startsWith("/embed/");
   for (const [key, value] of Object.entries(HEADERS)) {
-    if (!headers.has(key)) headers.set(key, value);
+    if (headers.has(key)) continue;
+    if (embed && (key === "content-security-policy" || key === "content-security-policy-report-only")) {
+      headers.set(key, value.replace("frame-ancestors 'self' https://grok.com https://*.grok.com", "frame-ancestors *"));
+      continue;
+    }
+    headers.set(key, value);
   }
   // A missing script must not be cached. grok.me otherwise remembers the 404 for a year.
-  const path = event.url?.pathname ?? "";
   const type = headers.get("content-type") ?? "";
   if (/\.(?:js|mjs|css)$/.test(path) && type.includes("text/html")) {
     headers.set("cache-control", "no-store");
