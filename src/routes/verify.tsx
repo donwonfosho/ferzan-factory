@@ -5,6 +5,7 @@ import {
   PLAIN_FACTORIES,
   SOLANA_CURVE_PROGRAM,
   TRON_CURVE_FACTORY,
+  TRON_CURVE_FACTORY_OLD,
   TRON_PLAIN_FACTORY,
 } from "@/lib/factory/contracts";
 import { tr } from "@/lib/i18n";
@@ -62,10 +63,16 @@ function rows(): Row[] {
     });
   }
   out.push({
-    what: "Tron curve factory. It creates a bonding-curve coin on Tron.",
+    what: "Tron curve factory — new launches (0 TRX fee)",
     chain: "Tron",
     address: TRON_CURVE_FACTORY,
     href: `https://tronscan.org/#/address/${TRON_CURVE_FACTORY}`,
+  });
+  out.push({
+    what: "Tron curve factory — older coins (5 TRX fee)",
+    chain: "Tron",
+    address: TRON_CURVE_FACTORY_OLD,
+    href: `https://tronscan.org/#/address/${TRON_CURVE_FACTORY_OLD}`,
   });
   out.push({
     what: "Tron standard-coin factory. It creates a coin that is not a curve, on Tron.",

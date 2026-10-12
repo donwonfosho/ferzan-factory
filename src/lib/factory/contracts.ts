@@ -28,8 +28,11 @@ export const PLAIN_FACTORIES: Record<CurveLaunchChain, string> = {
 /** Ferzan's Tron plain-launch factory. */
 export const TRON_PLAIN_FACTORY = "TBcPG1XKutsns1dJtgJeWQDuGRxeESeMXn";
 
-/** Ferzan's Tron curve factory. A launch built for any other contract is refused. */
-export const TRON_CURVE_FACTORY = "TPS1aM5TwfmJHjzuA1XMy6wWme2LYqZ1BN";
+/** Ferzan's Tron curve factory. New launches go here. A launch built for any other contract is refused. */
+export const TRON_CURVE_FACTORY = "TSxKr97AGGL6nEZNFYRnGfN48VjB9fi5AN";
+
+/** Older Tron curve factory (5 TRX fee). Coins already on it keep trading. New launches do not use it. */
+export const TRON_CURVE_FACTORY_OLD = "TPS1aM5TwfmJHjzuA1XMy6wWme2LYqZ1BN";
 
 /** Ferzan's Solana curve program. */
 export const SOLANA_CURVE_PROGRAM = "G7n5XBB7pjvKS7JfC6esgQGGAyPku5cposdiHfVAUxnJ";

@@ -14,7 +14,7 @@ const API = "https://launch.ferzaneco.com/api";
 const CHAIN_IDS: Record<CurveLaunchChain, number> = { bsc: 56, base: 8453, ethereum: 1, robinhood: 4663, arc: 5042 };
 /** Ferzan's Tron launch factory (TBcPG1XKutsns1dJtgJeWQDuGRxeESeMXn), as TronGrid writes it. */
 const TRON_FACTORY_HEX = "4112001441b5746c26ce9f287e48404e4fbc7d57d8";
-const TRON_MAX_FEE_SUN = 50_000_000n; // the launch fee is fixed in the factory (5 TRX); refuse anything above 50
+const TRON_MAX_FEE_SUN = 50_000_000n; // the launch fee is fixed in the factory (0 TRX since Oct 12, 2026); refuse anything above 50
 /** A Tron curve launch may carry a first buy on top of the fee: the form checks the exact amount, this is the hard ceiling. */
 const TRON_MAX_CURVE_SUN = 5_000_000_000_000n;
 const TON_MAX_NANO = 1_500_000_000n; // a TON launch sends about 0.6 TON in total

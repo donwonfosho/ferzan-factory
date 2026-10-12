@@ -61,7 +61,7 @@ export function useLaunchFees(): LaunchFeeTable | null {
   return fees;
 }
 
-/** English label: "Free", "5 TRX", "Loading…", or the wallet fallback. Pass it through tr(). */
+/** English label: "Free", "Loading…", or the wallet fallback. Pass it through tr(). */
 export function launchFeeText(table: LaunchFeeTable | null, chain: BotLaunchChain, plain: boolean): string {
   if (!table) return "Loading…";
   const q = plain ? table[chain].plain : table[chain].curve;
