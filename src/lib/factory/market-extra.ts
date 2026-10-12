@@ -152,3 +152,12 @@ export const searchCoins = createServerFn({ method: "GET" })
       })
       .filter((h) => PATH.test(h.path));
   });
+
+/** Public launch-record read. Nulls in the body mean "Not available". A failed read is null. */
+export const getCoinRisk = createServerFn({ method: "GET" })
+  .validator(coinArgs)
+  .handler(async ({ data }): Promise<string | null> => {
+    await (await import("./guard.server")).guardRelay("read");
+    const row = await get(`/coin-risk/${data.chain}/${encodeURIComponent(data.token)}`, 15_000);
+    return row ? JSON.stringify(row) : null;
+  });
