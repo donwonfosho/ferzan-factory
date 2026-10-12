@@ -26,6 +26,11 @@ async function nativeUsd(chain: ChainId): Promise<number | null> {
   return n;
 }
 
+/** The same Coinbase spot price the page uses, for a server check at purchase. */
+export function nativeUsdNow(chain: ChainId): Promise<number | null> {
+  return nativeUsd(chain);
+}
+
 export function useNativeUsd(chain: ChainId): number | null {
   const [usd, setUsd] = useState<number | null>(cache.get(PAIR[chain]) ?? (PAIR[chain] === "USDC" ? 1 : null));
   useEffect(() => {

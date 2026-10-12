@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { setPollInterval } from "@/lib/factory/poll";
 import { listPulseCoins, type TelegramChain, type TelegramCoin } from "@/lib/factory/telegram-feed";
+import { listPromoted, type BoostView } from "@/lib/factory/boosts";
 import { useLiveConnected } from "@/lib/factory/live";
 import { cn } from "@/lib/cn";
 import { ChainMark, type MarkChain } from "./chain-mark";
@@ -115,6 +116,7 @@ export function PulseBoard() {
   const [tab, setTab] = useState<Tab>("trending");
   const [windowId, setWindowId] = useState<Window>("24h");
   const [coins, setCoins] = useState<TelegramCoin[] | null>(null);
+  const [promoted, setPromoted] = useState<BoostView[]>([]);
   const [note, setNote] = useState("");
   const [now, setNow] = useState(() => Date.now());
   const live = useLiveConnected();
@@ -133,6 +135,9 @@ export function PulseBoard() {
       seen.current = true;
       setNote("");
       setCoins(rows);
+      void listPromoted()
+        .then(setPromoted)
+        .catch(() => undefined);
     } catch {
       if (!seen.current) setNote("Busy right now. Try again in a minute.");
     }
@@ -188,6 +193,27 @@ export function PulseBoard() {
         </div>
       </div>
       <WatchlistStrip />
+      {promoted.length > 0 ? (
+        <section className="rounded-xl bg-surface p-3 shadow-border">
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 className="text-sm font-extrabold">{tr("Promoted")}</h2>
+            <a href="/promoted" className="text-xs font-semibold text-cyan">{tr("Every promoted coin")}</a>
+          </div>
+          <p className="mt-1 text-xs text-muted">{tr("Paid placements. Newest first.")}</p>
+          <div className="mt-2 space-y-1">
+            {promoted.map((row) => (
+              <a key={row.txHash} href={row.path} className="flex items-center justify-between gap-3 rounded-lg px-2 py-2 hover:bg-bg">
+                <span className="truncate font-semibold">${row.symbol || row.name}</span>
+                <span className="shrink-0 text-xs text-muted">{tr("Promoted")}</span>
+              </a>
+            ))}
+          </div>
+        </section>
+      ) : (
+        <p className="text-sm">
+          <a href="/promoted" className="font-semibold text-cyan">{tr("Promote a coin")}</a>
+        </p>
+      )}
       <QuickBuyBar />
       <div className="flex gap-1 overflow-x-auto" role="tablist">
         {TABS.map((id) => (
