@@ -13,6 +13,7 @@ import { ReportCoin } from "./feedback";
 import { ShareCoin } from "./perks";
 import { useLive } from "@/lib/factory/live";
 import { HoldersPanel, PnlShare } from "./coin-extras";
+import { RiskPanel } from "./risk-panel";
 import { AlertsButton, WatchButton } from "./watch";
 import { CoinComments } from "./coin-comments";
 
@@ -254,6 +255,7 @@ export function SolCoinPage({ mint }: { mint: string }) {
           ? tr("This curve is full. Its liquidity moved to a locked Meteora pool.")
           : tr("{0} of {1} SOL raised · {2} trades · {3} SOL volume", coin.raisedSol.toFixed(2), coin.gradSol.toFixed(0), coin.trades, coin.volumeSol.toFixed(2))}
       </p>
+      <RiskPanel chain="solana" token={coin.mint} progress={coin.progress} curveOpen={!coin.graduated} />
 
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-start">

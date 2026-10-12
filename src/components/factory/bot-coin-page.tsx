@@ -23,6 +23,7 @@ import { ReportCoin } from "./feedback";
 import { ShareCoin } from "./perks";
 import { useLive, sameCoin } from "@/lib/factory/live";
 import { HoldersPanel, PnlShare } from "./coin-extras";
+import { RiskPanel } from "./risk-panel";
 import { AlertsButton, WatchButton } from "./watch";
 import { CoinComments } from "./coin-comments";
 import { BridgeBuy } from "./bridge-buy-panel";
@@ -346,6 +347,7 @@ export function BotCoinPage({ chain, curve }: { chain: BotCurveChain; curve: str
           ? tr("This curve is full. Its liquidity moved to a DEX pool.")
           : tr("{0} of {1} {2} raised.", formatSmart(BigInt(state.realEth), 18), formatSmart(BigInt(state.gradTarget), 18), state.native)}
       </p>
+      <RiskPanel chain={state.chain} token={state.token} progress={state.progress} curveOpen={!state.graduated && !opensAt} />
 
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-start">
