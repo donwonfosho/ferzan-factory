@@ -11,6 +11,7 @@ import { CurveGraphic } from "./chart-pro";
 import { TvChart } from "./tv-chart";
 import { CoinStream } from "./coin-stream";
 import { EmbedCode } from "./embed-code";
+import { VerifiedCreator } from "./verified-creator";
 import { CreatorScoreBox } from "./creator-score";
 import { SafetyBadges } from "./safety-badges";
 import { ReportCoin } from "./feedback";
@@ -307,6 +308,7 @@ export function TronCurvePage({ curve }: { curve: string }) {
       </p>
       <RiskPanel chain="tron" token={state.token} progress={state.progress} curveOpen={!state.graduated && !state.complete} />
       <CoinStream chain="tron" token={state.token} curve={curve} creator={state.creator} signer={account || (signedIn?.authenticated ? (signedIn.tronAddress ?? "") : "")} />
+      <VerifiedCreator chain="tron" coin={curve} creator={state.creator} />
       <EmbedCode chain="tron" id={curve} creator={state.creator} />
 
 

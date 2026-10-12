@@ -20,6 +20,7 @@ import { CurveGraphic } from "./chart-pro";
 import { TvChart } from "./tv-chart";
 import { CoinStream } from "./coin-stream";
 import { EmbedCode } from "./embed-code";
+import { VerifiedCreator } from "./verified-creator";
 import { CreatorScoreBox } from "./creator-score";
 import { SafetyBadges } from "./safety-badges";
 import { ReportCoin } from "./feedback";
@@ -347,6 +348,7 @@ export function BotCoinPage({ chain, curve }: { chain: BotCurveChain; curve: str
       </p>
       <RiskPanel chain={state.chain} token={state.token} progress={state.progress} curveOpen={!state.graduated && !opensAt} />
       <CoinStream chain={state.chain} token={state.token} curve={curve} creator={state.creator} signer={pnlWallet} />
+      <VerifiedCreator chain={state.chain} coin={curve} creator={state.creator} />
       <EmbedCode chain={state.chain} id={curve} creator={state.creator} />
 
 

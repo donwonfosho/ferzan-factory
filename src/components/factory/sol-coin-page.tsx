@@ -8,6 +8,7 @@ import { cn } from "@/lib/cn";
 import { TvChart } from "./tv-chart";
 import { CoinStream } from "./coin-stream";
 import { EmbedCode } from "./embed-code";
+import { VerifiedCreator } from "./verified-creator";
 import { Button, TextInput } from "./ui";
 import { CreatorScoreBox } from "./creator-score";
 import { SafetyBadges } from "./safety-badges";
@@ -254,6 +255,7 @@ export function SolCoinPage({ mint }: { mint: string }) {
       </p>
       <RiskPanel chain="solana" token={coin.mint} progress={coin.progress} curveOpen={!coin.graduated} />
       <CoinStream chain="solana" token={coin.mint} creator={coin.creator} signer={knownWallet} />
+      <VerifiedCreator chain="solana" coin={coin.mint} creator={coin.creator} />
       <EmbedCode chain="solana" id={coin.mint} creator={coin.creator} />
 
 

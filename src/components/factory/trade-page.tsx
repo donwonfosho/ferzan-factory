@@ -12,6 +12,7 @@ import { OpenInTelegram } from "./open-telegram";
 import { ReportCoin } from "./feedback";
 import { CoinPush } from "./coin-push";
 import { EmbedCode } from "./embed-code";
+import { VerifiedCreator } from "./verified-creator";
 import { CoinTape, CoinThread } from "./coin-board";
 import { Holders } from "./holders";
 import { CreatorHealth } from "./creator-health";
@@ -120,6 +121,7 @@ export function TradePage({ chain, address }: { chain: string; address: string }
         ) : null}
         {listed ? <Holders chain={listed} address={coin?.contract || address} decimals={meta.tokenDecimals} /> : null}
         {coin?.creator ? <CreatorHealth creator={coin.creator} highlight={coin.contract} /> : null}
+        {coin?.creator ? <VerifiedCreator chain={coin.chain} coin={coin.contract} creator={coin.creator} /> : null}
         {coin?.creator ? <div className="mt-4"><EmbedCode chain={coin.chain} id={coin.contract} creator={coin.creator} /></div> : null}
       </div>
       <aside>

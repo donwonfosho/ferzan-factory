@@ -10,6 +10,7 @@ import { formatUsd, useNativeUsd } from "@/lib/factory/usd";
 import { useAccountWallets } from "@/lib/factory/wallet-bridge";
 import { CoinStream } from "./coin-stream";
 import { EmbedCode } from "./embed-code";
+import { VerifiedCreator } from "./verified-creator";
 import { ShareCard } from "./share-card";
 import { tr } from "@/lib/i18n";
 
@@ -140,6 +141,7 @@ export function CreatorDash() {
               </ul>
             </div>
             <CoinStream chain={coin.chain} token={coin.contract} curve={coin.contract} creator={coin.creator} signer={signer} />
+            <VerifiedCreator chain={coin.chain} coin={coin.contract} creator={coin.creator} />
             <EmbedCode chain={coin.chain} id={coin.contract} creator={coin.creator} />
             <ShareCard chain={coin.chain} contract={coin.contract} symbol={coin.symbol} name={coin.name} image={coin.image} />
           </section>
