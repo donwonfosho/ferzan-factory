@@ -534,3 +534,158 @@ select {
   .fz-grad-text, .fz-shimmer::after, .fz-border::before, .fz-rise, .fz-orb, .fz-banner { animation: none !important; }
   .fz-card:hover, .fz-chip:hover { transform: none; }
 }
+
+.term-page {
+  overflow-x: clip;
+}
+
+.term-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: 14px;
+  background:
+    radial-gradient(120% 60% at 50% -10%, #0e1f4d, transparent 70%),
+    #0b1330;
+  border: 1px solid rgba(160, 190, 255, 0.12);
+  padding: 1.25rem;
+}
+
+.term-grad {
+  background: linear-gradient(#ffffff, #9fe9f2);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  font-size: 34px;
+  line-height: 1.1;
+}
+
+@media (min-width: 640px) {
+  .term-grad {
+    font-size: 40px;
+  }
+}
+
+.term-card {
+  min-width: 0;
+  border-radius: 14px;
+  background: #0b1330;
+  border: 1px solid rgba(160, 190, 255, 0.12);
+  color: #f4f7f7;
+  padding: 1rem;
+}
+
+.term-sunk {
+  border-radius: 12px;
+  background: #111c40;
+}
+
+.term-label {
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #93a4a7;
+}
+
+.term-skel {
+  border-radius: 14px;
+  background: linear-gradient(90deg, #111c40 25%, #1c2d58 50%, #111c40 75%);
+  background-size: 200% 100%;
+  animation: term-shimmer 1.2s linear infinite;
+}
+
+@keyframes term-shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
+}
+
+.term-go,
+.term-go-sell {
+  display: flex;
+  width: 100%;
+  height: 48px;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  font-weight: 700;
+  color: #042022;
+  transition: transform 80ms ease;
+}
+
+.term-go {
+  background: linear-gradient(180deg, #2fe3d8, #12b3ae);
+  box-shadow: 0 6px 18px -8px rgba(25, 201, 192, 0.38);
+}
+
+.term-go-sell {
+  background: linear-gradient(180deg, #fb7185, #e11d48);
+  color: #fff;
+  box-shadow: 0 6px 18px -8px rgba(225, 29, 72, 0.38);
+}
+
+.term-go:active,
+.term-go-sell:active {
+  transform: scale(0.96);
+}
+
+.term-go:disabled,
+.term-go-sell:disabled {
+  opacity: 0.45;
+  transform: none;
+}
+
+.term-chip {
+  min-height: 2.75rem;
+  border-radius: 999px;
+  padding: 0 1rem;
+  background: #111c40;
+  color: #f4f7f7;
+  border: 1px solid rgba(160, 190, 255, 0.12);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.term-chip-on {
+  background: #143f4a;
+  border-color: #2fe3d8;
+  color: #9fe9f2;
+}
+
+.term-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  border-radius: 999px;
+  background: #111c40;
+  padding: 4px;
+}
+
+.term-switch button {
+  min-height: 2.5rem;
+  border-radius: 999px;
+  font-weight: 700;
+  color: #93a4a7;
+}
+
+.term-switch-buy {
+  background: #34d399;
+  color: #042022 !important;
+}
+
+.term-switch-sell {
+  background: #fb7185;
+  color: #1a0c09 !important;
+}
+
+@media (prefers-color-scheme: light) {
+  .term-card,
+  .term-hero,
+  .term-sunk,
+  .term-chip {
+    color: #f4f7f7;
+  }
+}

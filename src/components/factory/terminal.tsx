@@ -5,10 +5,11 @@ import { setPollInterval } from "@/lib/factory/poll";
 import { CHAINS } from "@/lib/factory/catalog";
 import { tr } from "@/lib/i18n";
 import { Button, TextInput } from "./ui";
+import { TradingSetup, WalletChip, WalletsPanel } from "./wallets-panel";
 
 type Rec = Record<string, unknown>;
 type Gate = "wait" | "out" | "check" | "locked" | "open";
-type Tab = "trade" | "book" | "watch" | "feed";
+type Tab = "trade" | "book" | "wallets" | "watch" | "feed";
 
 const LOCKED = "Link Telegram to unlock the terminal";
 
@@ -28,8 +29,39 @@ function text(value: unknown): string {
 }
 
 function money(value: unknown): string {
-  if (typeof value !== "number" || !Number.isFinite(value)) return tr("Not available");
-  return value.toLocaleString(undefined, { maximumFractionDigits: value >= 100 ? 2 : 4 });
+  const n = typeof value === "number" ? value : typeof value === "string" && value.trim() ? Number(value) : NaN;
+  if (!Number.isFinite(n)) return "";
+  const sign = n < 0 ? "-" : "";
+  const abs = Math.abs(n);
+  if (abs === 0) return "$0.00";
+  if (abs >= 1) return `${sign}$${abs.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `${sign}$${abs.toFixed(abs >= 0.0001 ? 4 : 6).replace(/0+$/, "").replace(/\.$/, "")}`;
+}
+
+function cap(value: unknown): string {
+  const n = typeof value === "number" ? value : typeof value === "string" && value.trim() ? Number(value) : NaN;
+  if (!Number.isFinite(n)) return "";
+  const sign = n < 0 ? "-" : "";
+  const abs = Math.abs(n);
+  if (abs >= 1e9) return `${sign}$${(abs / 1e9).toFixed(1)}B`;
+  if (abs >= 1e6) return `${sign}$${(abs / 1e6).toFixed(1)}M`;
+  if (abs >= 1e3) return `${sign}$${(abs / 1e3).toFixed(1)}K`;
+  return money(abs);
+}
+
+function feeText(me: Rec): string {
+  if (me.fee_exempt === true) return tr("Exempt");
+  const bps = typeof me.fee_bps === "number" ? me.fee_bps : Number(me.fee_bps);
+  if (!Number.isFinite(bps)) return "";
+  const pct = bps / 100;
+  const shown = Number.isInteger(pct) ? String(pct) : pct.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
+  return `${shown}%`;
+}
+
+function pnlPct(row: Rec): number | null {
+  if (typeof row.pnl_pct === "number" && Number.isFinite(row.pnl_pct)) return row.pnl_pct;
+  if (typeof row.pnl === "number" && typeof row.value === "number" && row.value !== 0) return (row.pnl / row.value) * 100;
+  return null;
 }
 
 function plain(value: unknown): string {
@@ -126,6 +158,8 @@ export function TerminalPage() {
   const [lastOrder, setLastOrder] = useState<Rec | null>(null);
   const [alertTarget, setAlertTarget] = useState("2m");
   const [copyAddress, setCopyAddress] = useState("");
+  const [openPos, setOpenPos] = useState("");
+  const [toast, setToast] = useState("");
 
   useEffect(() => {
     setOffHost(window.location.hostname !== "ferzan-factory.com");
@@ -241,23 +275,35 @@ export function TerminalPage() {
     }
   }
 
-  async function lookup() {
+  async function lookup(mintAddr = mint) {
+    const id = mintAddr.trim();
     setBusy(true);
     setCoin(null);
     setRules(null);
     setSafety("");
     try {
-      const row = rec(await call("token", { mint: mint.trim() }));
+      const row = rec(await call("token", { mint: id }));
       setCoin(row);
-      const rule = rec(await call("rules", { mint: mint.trim() }));
+      const rule = rec(await call("rules", { mint: id }));
       setRules(rule);
-      const check = await deskSafety({ data: { mint: mint.trim(), chain } });
+      const check = await deskSafety({ data: { mint: id, chain } });
       setSafety(check ? plain(JSON.parse(check) as unknown) : "");
     } catch (e) {
       setErr(e instanceof Error ? e.message : tr("That coin looks wrong."));
     } finally {
       setBusy(false);
     }
+  }
+
+  async function reloadDesk() {
+    const token = await accountRef.current?.identityToken();
+    if (!token) return;
+    const [who, port] = await Promise.all([
+      deskCall({ data: { token, op: "me", body: {} } }),
+      deskCall({ data: { token, op: "portfolio", body: { refresh: true } } }),
+    ]);
+    setMe(rec(JSON.parse(who) as unknown));
+    setBook(rec(JSON.parse(port) as unknown));
   }
 
   async function loadWatch() {
@@ -289,9 +335,9 @@ export function TerminalPage() {
 
   if (gate === "wait" || gate === "check") {
     return (
-      <div className="mx-auto max-w-lg">
-        <h1 className="text-4xl">{tr("Terminal")}</h1>
-        <p className="mt-4 text-muted">{tr("Loading…")}</p>
+      <div className="term-page mx-auto max-w-lg">
+        <div className="term-skel h-8 w-40" />
+        <div className="term-skel mt-4 h-28" />
       </div>
     );
   }
@@ -311,7 +357,7 @@ export function TerminalPage() {
           <>
             <p className="mt-4 text-lg">{tr(LOCKED)}</p>
             <p className="mt-2 text-sm text-muted">{tr("Buys and sells go through your Telegram bot. Keys and withdrawals stay in that chat.")}</p>
-            {err ? <p className="mt-3 text-sm text-muted">{err}</p> : null}
+            {err ? <p className="term-card mt-3 text-sm">{err}</p> : null}
             <Button className="mt-6" onClick={() => account?.linkTelegram()}>
               {gate === "out" ? tr("Sign in") : tr("Link Telegram")}
             </Button>
@@ -322,67 +368,70 @@ export function TerminalPage() {
   }
 
   const noWallet = book?.noWallet === true;
+  const tradingOff = me?.wallet_ready === false || noWallet;
   const bot = https(book?.bot_link) || https(me?.bot_link);
   const presets = rec(book?.presets);
   const buyPresets = Array.isArray(presets.sol) ? presets.sol : [];
   const sellPresets = Array.isArray(presets.sell) ? presets.sell : [];
   const positions = list(book?.positions);
+  const profit = book && typeof book.pnl_usd === "number" ? book.pnl_usd : book && typeof book.pnl === "number" ? book.pnl : null;
+  const spendUnit = chain === "bsc" ? "BNB" : chain === "ton" ? "TON" : chain && chain !== "solana" ? "ETH" : "SOL";
+  const deskAddresses = rec(me?.addresses);
+  const tabs = [
+    ["trade", "Trade"],
+    ["book", "Portfolio"],
+    ["wallets", "Wallets"],
+    ["watch", "Watch"],
+    ["feed", "Feed"],
+  ] as const;
+
+  function pickTab(id: Tab) {
+    setTab(id);
+    if (id === "watch") void loadWatch();
+    if (id === "feed") {
+      void loadFeed();
+      void loadMore();
+    }
+  }
+
+  function copied(message: string) {
+    if (!message) return;
+    setToast(message);
+    window.setTimeout(() => setToast(""), 1600);
+  }
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="term-page mx-auto max-w-3xl pb-24 sm:pb-0">
       <h1 className="text-4xl">{tr("Terminal")}</h1>
-      <p className="mt-2 text-sm text-muted">{tr("The bot places the trade. This page never sees your keys.")}</p>
-      {err ? <p className="mt-3 text-sm text-muted">{err}</p> : null}
+      <p className="mt-2 text-sm text-muted">{tr("The bot places the trade from your Trading Wallet. This page never sees your keys.")}</p>
+      {err ? <p className="term-card mt-3 text-sm">{err}</p> : null}
       {me ? (
-        <ul className="ticket mt-4 space-y-2 text-sm">
-          <Row label="Fee" value={me.fee_exempt === true ? tr("Exempt") : text(me.fee_bps) ? tr("{0} bps", text(me.fee_bps)) : ""} />
-          <Row label="30 day volume" value={text(me.volume30) ? money(me.volume30) : ""} />
-          <Row label="Next fee" value={me.next_tier ? tr("{0} bps at {1}", text(rec(me.next_tier).bps), money(rec(me.next_tier).at)) : ""} />
-          <Row label="Wallets" value={[text(rec(me.addresses).sol), text(rec(me.addresses).evm), text(rec(me.addresses).ton)].filter(Boolean).join(" · ")} />
+        <section className="term-hero mt-4">
+          <p className="term-label">{tr("Total balance")}</p>
+          <p className="term-grad mt-1">{book ? money(book.total_usd) : ""}</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {feeText(me) ? <span className="term-chip min-h-0 py-1">{tr("Fee")} {feeText(me)}</span> : null}
+            {money(me.volume30) ? <span className="term-chip min-h-0 py-1">{tr("30 day volume")} {money(me.volume30)}</span> : null}
+            {profit !== null ? <span className="term-chip min-h-0 py-1">{tr("Profit")} {money(profit)}</span> : null}
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {text(deskAddresses.sol) ? <WalletChip chain="SOL" address={text(deskAddresses.sol)} onCopied={copied} /> : null}
+            {text(deskAddresses.evm) ? <WalletChip chain="EVM" address={text(deskAddresses.evm)} onCopied={copied} /> : null}
+            {text(deskAddresses.ton) ? <WalletChip chain="TON" address={text(deskAddresses.ton)} onCopied={copied} /> : null}
+          </div>
           {https(rec(me.ref).link) ? (
-            <li>
-              <a className="text-cyan" href={https(rec(me.ref).link)}>
-                {tr("Referral link")}
-              </a>
-            </li>
-          ) : null}
-        </ul>
-      ) : null}
-
-      {noWallet ? (
-        <div className="ticket mt-4">
-          <p className="font-semibold">{tr("No wallet yet")}</p>
-          <p className="mt-2">{tr("Open the bot and tap Start once")}</p>
-          {bot ? (
-            <a className="btn-cyan mt-4" href={bot}>
-              {tr("Open the bot")}
+            <a className="mt-3 inline-block text-sm text-cyan" href={https(rec(me.ref).link)}>
+              {tr("Referral link")}
             </a>
           ) : null}
-        </div>
-      ) : null}
+        </section>
+      ) : err ? null : (
+        <div className="term-skel mt-4 h-36" />
+      )}
 
-      <div className="mt-4 flex gap-2 overflow-x-auto">
-        {(
-          [
-            ["trade", "Trade"],
-            ["book", "Portfolio"],
-            ["watch", "Watch"],
-            ["feed", "Feed"],
-          ] as const
-        ).map(([id, label]) => (
-          <button
-            key={id}
-            type="button"
-            className={tab === id ? "btn-cyan shrink-0" : "btn-line shrink-0"}
-            onClick={() => {
-              setTab(id);
-              if (id === "watch") void loadWatch();
-              if (id === "feed") {
-                void loadFeed();
-                void loadMore();
-              }
-            }}
-          >
+      <div className="mt-4 hidden gap-2 overflow-x-auto sm:flex">
+        {tabs.map(([id, label]) => (
+          <button key={id} type="button" className={tab === id ? "btn-cyan shrink-0" : "btn-line shrink-0"} onClick={() => pickTab(id)}>
             {tr(label)}
           </button>
         ))}
@@ -390,8 +439,11 @@ export function TerminalPage() {
 
       {tab === "trade" ? (
         <div className="mt-4 grid gap-4">
+          {tradingOff ? (
+            <TradingSetup bot={bot} />
+          ) : (
           <form
-            className="ticket grid gap-3"
+            className="term-card grid gap-3"
             onSubmit={(e) => {
               e.preventDefault();
               const n = Number(amount);
@@ -405,18 +457,19 @@ export function TerminalPage() {
               });
             }}
           >
-            <div className="flex gap-2">
-              <button type="button" className={side === "buy" ? "btn-cyan" : "btn-line"} onClick={() => { setSide("buy"); setUnit("usd"); }}>
+            <p className="term-label">{tr("Trade")}</p>
+            <div className="term-switch">
+              <button type="button" className={side === "buy" ? "term-switch-buy" : ""} onClick={() => { setSide("buy"); setUnit("usd"); }}>
                 {tr("Buy")}
               </button>
-              <button type="button" className={side === "sell" ? "btn-sell" : "btn-line"} onClick={() => { setSide("sell"); setUnit("pct"); }}>
+              <button type="button" className={side === "sell" ? "term-switch-sell" : ""} onClick={() => { setSide("sell"); setUnit("pct"); }}>
                 {tr("Sell")}
               </button>
             </div>
             <TextInput value={mint} placeholder={tr("Coin address")} onChange={(e) => setMint(e.target.value)} />
             <div className="flex flex-wrap gap-2">
               {(side === "buy" ? buyPresets : sellPresets).map((n) => (
-                <button key={String(n)} type="button" className="btn-line" onClick={() => setAmount(String(n))}>
+                <button key={String(n)} type="button" className={String(n) === amount ? "term-chip term-chip-on" : "term-chip"} onClick={() => setAmount(String(n))}>
                   {String(n)}
                 </button>
               ))}
@@ -424,15 +477,15 @@ export function TerminalPage() {
             <TextInput value={amount} inputMode="decimal" placeholder={side === "sell" ? tr("Percent, 1 to 100") : tr("Amount")} onChange={(e) => setAmount(e.target.value)} />
             {side === "buy" ? (
               <div className="flex gap-2">
-                <button type="button" className={unit === "usd" ? "btn-cyan" : "btn-line"} onClick={() => setUnit("usd")}>{tr("USD")}</button>
-                <button type="button" className={unit === "native" ? "btn-cyan" : "btn-line"} onClick={() => setUnit("native")}>{tr("Native coin")}</button>
+                <button type="button" className={unit === "usd" ? "term-chip term-chip-on" : "term-chip"} onClick={() => setUnit("usd")}>{tr("USD")}</button>
+                <button type="button" className={unit === "native" ? "term-chip term-chip-on" : "term-chip"} onClick={() => setUnit("native")}>{tr("Native coin")}</button>
               </div>
             ) : (
               <p className="text-sm text-muted">{tr("Sells use a percent of the bag, from 1 to 100.")}</p>
             )}
             <label className="text-sm text-muted">
-              {tr("Chain")}
-              <select className="mt-1 min-h-12 w-full rounded-lg bg-bg px-3" value={chain} onChange={(e) => setChain(e.target.value)} aria-label={tr("Chain")}>
+              <span className="term-label">{tr("Chain")}</span>
+              <select className="term-sunk mt-1 min-h-12 w-full px-3" value={chain} onChange={(e) => setChain(e.target.value)} aria-label={tr("Chain")}>
                 <option value="">{tr("Any")}</option>
                 {Object.values(CHAINS).map((c) => (
                   <option key={c.id} value={c.id}>{c.label}</option>
@@ -442,12 +495,15 @@ export function TerminalPage() {
             {book?.multi === true ? (
               <label className="flex items-center gap-2 text-sm">
                 <input type="checkbox" checked={multi} onChange={(e) => setMulti(e.target.checked)} />
-                {tr("Use every wallet")}
+                {tr("Use every Trading Wallet")}
               </label>
             ) : null}
-            <Button type="submit" variant={side === "sell" ? "sell" : "cyan"} disabled={busy || Boolean(orderId) || noWallet}>
+            {side === "buy" && amount ? (
+              <p className="text-sm text-muted">{tr("You'll spend ~{0} from your Trading Wallet ({1})", unit === "usd" ? money(Number(amount)) || amount : amount, spendUnit)}</p>
+            ) : null}
+            <button type="submit" className={side === "sell" ? "term-go-sell" : "term-go"} disabled={busy || Boolean(orderId) || tradingOff}>
               {orderId ? tr("Order working…") : side === "buy" ? tr("Buy") : tr("Sell")}
-            </Button>
+            </button>
             {orderText ? <p className="text-sm">{orderText}</p> : null}
             {again && lastOrder ? (
               <Button type="button" variant="ghost" onClick={() => void sendOrder(lastOrder)}>
@@ -458,21 +514,22 @@ export function TerminalPage() {
               {tr("Look up this coin")}
             </button>
           </form>
+          )}
           {coin ? (
-            <ul className="ticket space-y-2 text-sm">
+            <ul className="term-card space-y-2 text-sm">
               <Row label="Coin" value={[text(coin.symbol), text(coin.name)].filter(Boolean).join(" · ")} />
               <Row label="Price" value={money(coin.price)} />
-              <Row label="Market cap" value={money(coin.mc)} />
+              <Row label="Market cap" value={cap(coin.mc)} />
               <Row label="Liquidity" value={money(coin.liq)} />
               <Row label="24h" value={text(coin.chg24)} />
               <li><Spark data={coin.chart} /></li>
               <Row label="Safety" value={text(coin.safety) || safety} />
-              <Row label="Fee" value={text(coin.fee_bps)} />
+              <Row label="Fee" value={feeText(coin) || text(coin.fee_bps)} />
             </ul>
           ) : null}
           {rules ? (
-            <div className="ticket text-sm">
-              <p className="font-semibold">{tr("Rules")}</p>
+            <div className="term-card text-sm">
+              <p className="term-label">{tr("Rules")}</p>
               <ul className="mt-2 space-y-2">
                 <Row label="Exit" value={rules.exit ? text(rec(rules.exit).tp) || text(rec(rules.exit).sl) || text(rec(rules.exit).trail) : ""} />
                 <Row label="DCA" value={rules.dca ? [text(rec(rules.dca).usd), text(rec(rules.dca).every)].filter(Boolean).join(" ") : ""} />
@@ -512,41 +569,73 @@ export function TerminalPage() {
 
       {tab === "book" ? (
         <div className="mt-4 grid gap-3">
-          <ul className="ticket space-y-2 text-sm">
-            <Row label="Total" value={book ? money(book.total_usd) : ""} />
-            <Row label="Profit" value={book ? money(book.pnl_usd) : ""} />
-          </ul>
-          <Button variant="ghost" onClick={() => void call("portfolio", { refresh: true }).then((row) => setBook(rec(row))).catch((e) => setErr(e instanceof Error ? e.message : ""))}>
+          <p className="term-label">{tr("Portfolio")}</p>
+          <button type="button" className="btn-line w-fit" onClick={() => void call("portfolio", { refresh: true }).then((row) => setBook(rec(row))).catch((e) => setErr(e instanceof Error ? e.message : ""))}>
             {tr("Refresh")}
-          </Button>
-          {positions.map((p) => (
-            <button
-              key={text(p.mint)}
-              type="button"
-              className="ticket w-full text-left text-sm"
-              onClick={() => {
-                setMint(text(p.mint));
-                setTab("trade");
-              }}
-            >
-              <span className="flex items-center justify-between gap-2">
-                <span className="font-semibold">{text(p.symbol) || tr("Not available")}</span>
-                <Spark data={p.chart} />
-              </span>
-              <span className="mt-1 block text-muted">
-                {tr("{0} · value {1} · profit {2}", text(p.chain), money(p.value), money(p.pnl))}
-              </span>
-            </button>
-          ))}
+          </button>
+          {positions.length === 0 ? (
+            <div className="term-card">
+              <p>{tr("No holdings yet — buy something from the Trade tab")}</p>
+              <button type="button" className="term-go mt-3" onClick={() => pickTab("trade")}>{tr("Trade")}</button>
+            </div>
+          ) : null}
+          {positions.map((p) => {
+            const pct = pnlPct(p);
+            const id = text(p.mint);
+            const open = openPos === id;
+            return (
+              <div key={id || text(p.symbol)} className="term-card">
+                <button type="button" className="flex w-full min-w-0 items-start justify-between gap-3 text-left" onClick={() => setOpenPos(open ? "" : id)}>
+                  <span className="min-w-0">
+                    <span className="block truncate font-bold">{text(p.symbol) || tr("Not available")}</span>
+                    <span className="term-label mt-1 inline-block">{text(p.chain)}</span>
+                  </span>
+                  <span className="shrink-0 text-right">
+                    <span className="block font-bold tabular-nums">{money(p.value)}</span>
+                    {pct !== null ? (
+                      <span className="block text-sm tabular-nums" style={{ color: pct >= 0 ? "#34d399" : "#fb7185" }}>
+                        {pct >= 0 ? "+" : ""}{pct.toFixed(1)}%
+                      </span>
+                    ) : null}
+                  </span>
+                </button>
+                {open ? (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {[25, 50, 100].map((n) => (
+                      <button
+                        key={n}
+                        type="button"
+                        className="term-chip"
+                        onClick={() => void sendOrder({ side: "sell", mint: id, amount: n, unit: "pct", ...(text(p.chain) ? { chain: text(p.chain) } : {}) })}
+                      >
+                        {tr("Sell {0}%", n)}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      className="term-chip"
+                      onClick={() => {
+                        setMint(id);
+                        pickTab("trade");
+                        void lookup(id);
+                      }}
+                    >
+                      {tr("View chart")}
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+            );
+          })}
           {list(book?.wallets).length > 1 ? (
-            <div className="ticket text-sm">
-              <p className="font-semibold">{tr("Wallet slot")}</p>
+            <div className="term-card text-sm">
+              <p className="term-label">{tr("Trading Wallet")}</p>
               <div className="mt-2 flex flex-wrap gap-2">
                 {list(book?.wallets).map((w) => (
                   <button
                     key={text(w.id)}
                     type="button"
-                    className={w.active === true ? "btn-cyan" : "btn-line"}
+                    className={w.active === true ? "term-chip term-chip-on" : "term-chip"}
                     onClick={() => {
                       void call("wallet", { id: text(w.id) }).then(() => call("portfolio", { refresh: true })).then((row) => setBook(rec(row))).catch((e) => setErr(e instanceof Error ? e.message : ""));
                     }}
@@ -559,23 +648,29 @@ export function TerminalPage() {
           ) : null}
           <Button variant="ghost" onClick={() => void loadMore()}>{tr("History")}</Button>
           {history.map((item, i) => (
-            <p key={`${text(item.mint)}-${i}`} className="text-sm text-muted">
+            <p key={`${text(item.mint)}-${i}`} className="truncate text-sm text-muted">
               {tr("{0} {1} {2} · {3}", text(item.side), text(item.symbol), money(item.usd), text(item.source))}
             </p>
           ))}
         </div>
       ) : null}
 
+      {tab === "wallets" ? (
+        <div className="mt-4">
+          <WalletsPanel me={me} onRefresh={() => void reloadDesk().catch((e) => setErr(e instanceof Error ? e.message : ""))} />
+        </div>
+      ) : null}
+
       {tab === "watch" ? (
         <div className="mt-4 grid gap-4">
           <form
-            className="ticket grid gap-2"
+            className="term-card grid gap-2"
             onSubmit={(e) => {
               e.preventDefault();
               void call("alerts/add", { mint: mint.trim(), target: alertTarget }).then(() => loadWatch()).catch((e2) => setErr(e2 instanceof Error ? e2.message : ""));
             }}
           >
-            <p className="font-semibold">{tr("Alerts")}</p>
+            <p className="term-label">{tr("Alerts")}</p>
             <TextInput value={mint} placeholder={tr("Coin address")} onChange={(e) => setMint(e.target.value)} />
             <TextInput value={alertTarget} placeholder={tr("2m, +50%, -30%, or price 0.001")} onChange={(e) => setAlertTarget(e.target.value)} />
             <Button type="submit" disabled={!mint.trim()}>{tr("Add alert")}</Button>
@@ -589,7 +684,7 @@ export function TerminalPage() {
             ))}
           </form>
           <form
-            className="ticket grid gap-2"
+            className="term-card grid gap-2"
             onSubmit={(e) => {
               e.preventDefault();
               void call("wallets/add", { address: copyAddress.trim(), ...(chain ? { chain } : {}) }).then(() => {
@@ -598,7 +693,7 @@ export function TerminalPage() {
               }).catch((e2) => setErr(e2 instanceof Error ? e2.message : ""));
             }}
           >
-            <p className="font-semibold">{tr("Copy a wallet")}</p>
+            <p className="term-label">{tr("Copy a wallet")}</p>
             <TextInput value={copyAddress} placeholder={tr("Wallet address")} onChange={(e) => setCopyAddress(e.target.value)} />
             <Button type="submit">{tr("Watch wallet")}</Button>
             <label className="flex items-center gap-2 text-sm">
@@ -641,7 +736,7 @@ export function TerminalPage() {
             <button
               key={text(item.mint) || text(item.symbol)}
               type="button"
-              className="ticket w-full text-left text-sm"
+              className="term-card w-full text-left text-sm"
               onClick={() => {
                 if (text(item.mint)) {
                   setMint(text(item.mint));
@@ -649,13 +744,13 @@ export function TerminalPage() {
                 }
               }}
             >
-              <span className="font-semibold">{text(item.symbol) || text(item.name) || tr("Not available")}</span>
+              <span className="block truncate font-semibold">{text(item.symbol) || text(item.name) || tr("Not available")}</span>
               <span className="mt-1 block text-muted">{[text(item.chain), money(item.mc || item.mcap || item.volume)].filter(Boolean).join(" · ")}</span>
             </button>
           ))}
           {stats ? (
-            <div className="ticket text-sm">
-              <p className="font-semibold">{tr("Badges")}</p>
+            <div className="term-card text-sm">
+              <p className="term-label">{tr("Badges")}</p>
               <ul className="mt-2 space-y-1">
                 {list(stats.badges).map((b) => (
                   <li key={text(b.id)}>{tr("{0} {1} — {2}", text(b.emoji), text(b.name), b.earned === true ? tr("Earned") : tr("Not yet"))}</li>
@@ -664,7 +759,7 @@ export function TerminalPage() {
             </div>
           ) : null}
           {trust ? (
-            <ul className="ticket space-y-2 text-sm">
+            <ul className="term-card space-y-2 text-sm">
               <Row label="Rank" value={text(trust.rank)} />
               <Row label="Week" value={text(trust.week)} />
               <Row label="Tier" value={text(trust.tier)} />
@@ -672,6 +767,26 @@ export function TerminalPage() {
           ) : null}
         </div>
       ) : null}
+      {toast ? <p className="mt-3 text-sm text-cyan">{toast}</p> : null}
+      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-[rgba(160,190,255,.12)] bg-[#070b18] px-1 pt-1 sm:hidden" style={{ paddingBottom: "max(0.4rem, env(safe-area-inset-bottom))" }}>
+        <div className="grid grid-cols-5">
+          {tabs.map(([id, label]) => (
+            <button key={id} type="button" className={`flex min-h-0 flex-col items-center gap-0.5 px-1 py-1 text-[11px] ${tab === id ? "text-[#2fe3d8]" : "text-muted"}`} onClick={() => pickTab(id)}>
+              <TabIcon id={id} />
+              {tr(label)}
+            </button>
+          ))}
+        </div>
+      </nav>
     </div>
   );
+}
+
+function TabIcon({ id }: { id: Tab }) {
+  const common = { width: 18, height: 18, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, "aria-hidden": true as const };
+  if (id === "trade") return <svg {...common}><path d="M4 16l5-5 3 3 8-8" /><path d="M14 6h6v6" /></svg>;
+  if (id === "book") return <svg {...common}><rect x="4" y="4" width="16" height="16" rx="2" /><path d="M8 9h8M8 13h5" /></svg>;
+  if (id === "wallets") return <svg {...common}><rect x="3" y="6" width="18" height="12" rx="2" /><path d="M3 10h18" /></svg>;
+  if (id === "watch") return <svg {...common}><path d="M12 20s-7-4.4-7-9a4 4 0 0 1 7-2 4 4 0 0 1 7 2c0 4.6-7 9-7 9z" /></svg>;
+  return <svg {...common}><path d="M5 19V10M12 19V5M19 19v-7" /></svg>;
 }

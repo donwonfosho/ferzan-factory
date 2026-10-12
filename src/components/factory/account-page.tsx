@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { PRIVY_APP_ID, accountWallets, evmWallet, useAccountWallets } from "@/lib/factory/wallet-bridge";
 import { MoveFunds } from "./move-funds";
 import { AccountPortfolio, AccountRewards } from "./portfolio";
+import { WalletsPanel } from "./wallets-panel";
 import { AccountCard } from "./account-card";
 import { ImportWallet } from "./import-wallet";
 import { Link, useNavigate } from "@tanstack/react-router";
@@ -155,7 +156,7 @@ export function AccountPage() {
       setWallet(address);
       setCopied(tr("Extension is the signer. The key on this profile is still saved."));
     } catch {
-      setCopied(tr("The extension was closed. The profile wallet is unchanged."));
+      setCopied(tr("The extension was closed. My Wallet is unchanged."));
     }
   }
 
@@ -274,7 +275,9 @@ export function AccountPage() {
       ) : null}
 
       {panel === "wallets" ? (
-      <div className="ticket">
+      <div className="grid gap-4">
+        <WalletsPanel />
+        <div className="ticket">
         <h1 className="text-3xl">{PRIVY_APP_ID ? tr("Old browser wallet") : tr("View wallets")}</h1>
         {PRIVY_APP_ID ? (
           <p className="mt-2 text-sm text-muted">
@@ -347,7 +350,7 @@ export function AccountPage() {
         <div className="mt-3 flex flex-wrap gap-2">
           {!usingSite && siteAddress ? (
             <Button type="button" variant="ghost" onClick={useBrowserWallet}>
-              {tr("Use profile wallet")}
+              {tr("Use the old browser wallet")}
             </Button>
           ) : null}
           <Button type="button" variant="ghost" onClick={() => void connectExtension()}>
@@ -355,6 +358,7 @@ export function AccountPage() {
           </Button>
         </div>
         {copied ? <p className="mt-2 text-sm text-muted">{copied}</p> : null}
+        </div>
       </div>
       ) : null}
 
@@ -529,7 +533,7 @@ function SendForm({ from, viaAccount }: { from: string; viaAccount: boolean }) {
     <form onSubmit={(e) => void submit(e)} className="ticket space-y-3">
       <h1 className="text-3xl">{tr("Send")}</h1>
       <p className="text-sm text-muted">
-        {tr("Sends the chain coin from")}{" "}{viaAccount ? tr("your account wallet") : tr("the old browser wallet")} ({from.slice(0, 6)}…{from.slice(-4)}{tr("). Solana sends are not on this form.")}
+        {tr("Sends the chain coin from")}{" "}{viaAccount ? tr("My Wallet") : tr("the old browser wallet")} ({from.slice(0, 6)}…{from.slice(-4)}{tr("). Solana sends are not on this form.")}
       </p>
       <div className="flex flex-wrap gap-2">
         {SEND_CHAINS.map((id) => (

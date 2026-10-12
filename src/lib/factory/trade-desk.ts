@@ -234,6 +234,28 @@ export const deskCall = createServerFn({ method: "POST" })
     return JSON.stringify(await runDesk(data.op, data.token, data.body)) ?? "null";
   });
 
+const CASHOUT = new Set(["sol", "base", "ethereum", "bsc"]);
+
+/** Cash out the Trading Wallet to My Wallet. The destination is not sent; the desk reads it from the identity token. */
+export const deskCashout = createServerFn({ method: "POST" })
+  .validator((data: unknown): { token: string; chain: string; amount: string } => {
+    const row = rec(data);
+    const token = row.token;
+    if (typeof token !== "string" || token.length < 20 || token.length > 16_000) throw new Error("Sign in again.");
+    const chain = typeof row.chain === "string" ? row.chain : "";
+    if (!CASHOUT.has(chain)) throw new Error("That looks wrong.");
+    const amount = typeof row.amount === "number" && Number.isFinite(row.amount) ? String(row.amount) : typeof row.amount === "string" ? row.amount.trim() : "";
+    if (amount !== "max" && !/^\d+(\.\d+)?$/.test(amount)) throw new Error("That looks wrong.");
+    if (amount.length > 40) throw new Error("That looks wrong.");
+    return { token, chain, amount };
+  })
+  .handler(async ({ data }): Promise<string> => {
+    await (await import("./guard.server")).guardRelay("send");
+    await telegramOrLock(data.token);
+    const { cashoutSelf } = await import("./trade-desk.server");
+    return JSON.stringify(await cashoutSelf(data.token, data.chain, data.amount)) ?? "null";
+  });
+
 /** Public contract check. No account and no bridge token. Null when it cannot be read. */
 export const deskSafety = createServerFn({ method: "GET" })
   .validator((data: unknown): { mint: string; chain: string } => {

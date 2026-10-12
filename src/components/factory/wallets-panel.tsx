@@ -1,0 +1,443 @@
+import { useEffect, useState } from "react";
+import { explorerTx } from "@/lib/factory/deploy";
+import { readBalance } from "@/lib/factory/relay";
+import { solanaExplorerTx, solBalance } from "@/lib/factory/solana";
+import { formatUnits, parseDecimal } from "@/lib/factory/units";
+import { deskCall, deskCashout } from "@/lib/factory/trade-desk";
+import { evmWallet, solanaWallet, useAccountWallets } from "@/lib/factory/wallet-bridge";
+import { tr } from "@/lib/i18n";
+
+type Rec = Record<string, unknown>;
+
+const NOTE_KEY = "ferzan-two-wallets";
+const EVM_TOP: { id: "base" | "ethereum" | "bsc"; label: string; unit: string }[] = [
+  { id: "base", label: "Base", unit: "ETH" },
+  { id: "ethereum", label: "Ethereum", unit: "ETH" },
+  { id: "bsc", label: "BNB Chain", unit: "BNB" },
+];
+
+function rec(value: unknown): Rec {
+  return value && typeof value === "object" && !Array.isArray(value) ? (value as Rec) : {};
+}
+
+function text(value: unknown): string {
+  return typeof value === "string" ? value : "";
+}
+
+export function WalletChip({ chain, address, onCopied }: { chain: string; address: string; onCopied: (msg: string) => void }) {
+  const dot = chain === "SOL" ? "#14f195" : chain === "TON" ? "#0098ea" : "#8b9cff";
+  const short = address.length > 10 ? `${address.slice(0, 4)}…${address.slice(-4)}` : address;
+  return (
+    <button
+      type="button"
+      title={address}
+      className="inline-flex min-h-0 items-center gap-2 whitespace-nowrap rounded-full border border-[rgba(160,190,255,.18)] bg-[#111c40] px-3 py-1.5 text-sm tabular-nums"
+      onClick={() => {
+        try {
+          void navigator.clipboard.writeText(address).then(
+            () => onCopied(tr("Copied")),
+            () => onCopied(""),
+          );
+        } catch {
+          onCopied("");
+        }
+      }}
+    >
+      <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: dot }} aria-hidden />
+      {chain} {short}
+    </button>
+  );
+}
+
+function https(value: unknown): string {
+  if (typeof value !== "string") return "";
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" ? url.toString() : "";
+  } catch {
+    return "";
+  }
+}
+
+export function WalletsPanel({ me: given, onRefresh }: { me?: Rec | null; onRefresh?: () => void }) {
+  const account = useAccountWallets();
+  const [loaded, setLoaded] = useState<Rec | null>(given === undefined ? null : given);
+  const [waiting, setWaiting] = useState(given === undefined);
+  const me = given === undefined ? loaded : given;
+  const [noteOn, setNoteOn] = useState(false);
+  const [toast, setToast] = useState("");
+  const [balances, setBalances] = useState<Record<string, string>>({});
+  const [topOpen, setTopOpen] = useState(false);
+  const [topChain, setTopChain] = useState<"sol" | "base" | "ethereum" | "bsc">("sol");
+  const [topAmount, setTopAmount] = useState("");
+  const [cashOpen, setCashOpen] = useState(false);
+  const [cashChain, setCashChain] = useState<"sol" | "base" | "ethereum" | "bsc">("sol");
+  const [cashAmount, setCashAmount] = useState("");
+  const [confirm, setConfirm] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState("");
+  const [link, setLink] = useState("");
+  const [tick, setTick] = useState(0);
+
+  const addresses = rec(me?.addresses);
+  const solDesk = text(addresses.sol);
+  const evmDesk = text(addresses.evm);
+  const tonDesk = text(addresses.ton);
+  const ready = me?.wallet_ready === true || (me?.wallet_ready !== false && Boolean(solDesk || evmDesk || tonDesk));
+  const bot = https(me?.bot_link) || "https://t.me/Ferzan_Trade_Bot";
+  const showCash = me?.self_cashout === true;
+
+  useEffect(() => {
+    try {
+      setNoteOn(window.localStorage.getItem(NOTE_KEY) !== "1");
+    } catch {
+      setNoteOn(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!solDesk && topChain === "sol" && evmDesk) setTopChain("base");
+    if (!solDesk && cashChain === "sol" && evmDesk) setCashChain("base");
+  }, [solDesk, evmDesk, topChain, cashChain]);
+
+  useEffect(() => {
+    if (given !== undefined) return;
+    if (!account?.ready) return;
+    if (!account.authenticated) {
+      setLoaded({});
+      setWaiting(false);
+      return;
+    }
+    let stop = false;
+    void account.identityToken().then(async (token) => {
+      if (!token || stop) return;
+      try {
+        const row = rec(JSON.parse(await deskCall({ data: { token, op: "me", body: {} } })) as unknown);
+        if (!stop) {
+          setLoaded(row);
+          setWaiting(false);
+        }
+      } catch {
+        if (!stop) {
+          setLoaded({});
+          setWaiting(false);
+        }
+      }
+    });
+    return () => {
+      stop = true;
+    };
+  }, [given, account, tick]);
+
+  useEffect(() => {
+    let stop = false;
+    const jobs: [string, Promise<bigint>][] = [];
+    if (account?.solAddress) jobs.push([`my:sol`, solBalance(account.solAddress)]);
+    if (solDesk) jobs.push([`desk:sol`, solBalance(solDesk)]);
+    const evmMine = account?.evmAddress;
+    const evmReads: [string, "base" | "ethereum" | "bsc", string][] = [];
+    if (evmMine) {
+      for (const row of EVM_TOP) evmReads.push([`my:${row.id}`, row.id, evmMine]);
+    }
+    if (evmDesk) {
+      for (const row of EVM_TOP) evmReads.push([`desk:${row.id}`, row.id, evmDesk]);
+    }
+    void (async () => {
+      const next: Record<string, string> = {};
+      await Promise.all([
+        ...jobs.map(async ([key, job]) => {
+          try {
+            next[key] = formatUnits(await job, 9, 4) + " SOL";
+          } catch {
+            /* leave unread */
+          }
+        }),
+        ...evmReads.map(async ([key, chain, address]) => {
+          try {
+            const { wei } = await readBalance({ data: { chain, address } });
+            const unit = EVM_TOP.find((row) => row.id === chain)?.unit ?? "";
+            next[key] = `${formatUnits(BigInt(wei), 18, 4)} ${unit}`;
+          } catch {
+            /* leave unread */
+          }
+        }),
+      ]);
+      if (!stop) setBalances(next);
+    })();
+    return () => {
+      stop = true;
+    };
+  }, [account?.solAddress, account?.evmAddress, solDesk, evmDesk, tick]);
+
+  function copied(message: string) {
+    if (!message) return;
+    setToast(message);
+    window.setTimeout(() => setToast(""), 1600);
+  }
+
+  function dismiss() {
+    setNoteOn(false);
+    try {
+      window.localStorage.setItem(NOTE_KEY, "1");
+    } catch {
+      /* this browser only */
+    }
+  }
+
+  function refresh() {
+    setTick((n) => n + 1);
+    onRefresh?.();
+  }
+
+  async function maxTop() {
+    setMsg("");
+    try {
+      if (topChain === "sol") {
+        if (!account?.solAddress) return;
+        const bal = await solBalance(account.solAddress);
+        const keep = 5000n;
+        if (bal <= keep) {
+          setMsg(tr("Not enough for the network fee."));
+          return;
+        }
+        setTopAmount(formatUnits(bal - keep, 9, 6));
+        return;
+      }
+      if (!account?.evmAddress) return;
+      const { wei } = await readBalance({ data: { chain: topChain, address: account.evmAddress } });
+      const { provider } = await evmWallet(topChain);
+      const gas = await provider.request({ method: "eth_gasPrice" });
+      const price = typeof gas === "string" ? BigInt(gas) : 1_000_000_000n;
+      const keep = price * 21000n;
+      const bal = BigInt(wei);
+      if (bal <= keep) {
+        setMsg(tr("Not enough for the network fee."));
+        return;
+      }
+      setTopAmount(formatUnits(bal - keep, 18, 6));
+    } catch (err) {
+      setMsg(err instanceof Error ? err.message : tr("The terminal did not answer. Try again."));
+    }
+  }
+
+  async function sendTop() {
+    setBusy(true);
+    setMsg("");
+    setLink("");
+    try {
+      if (topChain === "sol") {
+        if (!solDesk) throw new Error(tr("This chain has no Trading Wallet yet."));
+        const lamports = parseDecimal(topAmount, 9);
+        if (!lamports || lamports <= 0n) throw new Error(tr("Type how much to send."));
+        if (lamports > BigInt(Number.MAX_SAFE_INTEGER)) throw new Error(tr("Type how much to send."));
+        const wallet = await solanaWallet();
+        const { PublicKey, SystemProgram, Transaction } = await import("@solana/web3.js");
+        const { solanaRelay } = await import("@/lib/factory/solana");
+        const block = await solanaRelay({ data: { method: "block" } });
+        if (!("blockhash" in block) || typeof block.blockhash !== "string" || typeof block.lastValidBlockHeight !== "number") throw new Error(tr("The terminal did not answer. Try again."));
+        const from = new PublicKey(wallet.address);
+        const tx = new Transaction({ feePayer: from, blockhash: block.blockhash, lastValidBlockHeight: block.lastValidBlockHeight }).add(
+          SystemProgram.transfer({ fromPubkey: from, toPubkey: new PublicKey(solDesk), lamports: Number(lamports) }),
+        );
+        const raw = tx.serialize({ requireAllSignatures: false, verifySignatures: false });
+        const signature = await wallet.signAndSend(raw);
+        setLink(solanaExplorerTx(signature));
+        setMsg(tr("Sent. {0}", signature));
+      } else {
+        if (!evmDesk) throw new Error(tr("This chain has no Trading Wallet yet."));
+        const value = parseDecimal(topAmount, 18);
+        if (!value || value <= 0n) throw new Error(tr("Type how much to send."));
+        const { address, provider } = await evmWallet(topChain);
+        const hash = await provider.request({
+          method: "eth_sendTransaction",
+          params: [{ from: address, to: evmDesk, value: `0x${value.toString(16)}` }],
+        });
+        if (typeof hash !== "string") throw new Error(tr("The wallet did not send it."));
+        setLink(explorerTx(topChain, hash));
+        setMsg(tr("Sent. {0}", hash));
+      }
+      setTopAmount("");
+      refresh();
+    } catch (err) {
+      setMsg(err instanceof Error ? err.message : tr("The terminal did not answer. Try again."));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function sendCash() {
+    setBusy(true);
+    setMsg("");
+    setLink("");
+    try {
+      const token = await account?.identityToken();
+      if (!token) throw new Error(tr("Sign in again."));
+      const amount = cashAmount.trim().toLowerCase() === "max" ? "max" : cashAmount.trim();
+      if (!amount) throw new Error(tr("Type how much to send."));
+      const raw = await deskCashout({ data: { token, chain: cashChain, amount } });
+      const row = rec(JSON.parse(raw) as unknown);
+      const href = https(row.tx) || https(row.url) || https(row.link) || https(row.explorer);
+      const line = text(row.detail) || text(row.status) || text(row.message) || text(row.result);
+      setLink(href);
+      setMsg(line || tr("Queued"));
+      setConfirm(false);
+      refresh();
+    } catch (err) {
+      setMsg(err instanceof Error ? err.message : tr("The terminal did not answer. Try again."));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const mySol = account?.solAddress ?? "";
+  const myEvm = account?.evmAddress ?? "";
+  const cashUnit = cashChain === "sol" ? "SOL" : cashChain === "bsc" ? "BNB" : "ETH";
+  const cashDest = cashChain === "sol" ? mySol : myEvm;
+  const cashShort = cashDest.length > 10 ? `${cashDest.slice(0, 4)}…${cashDest.slice(-4)}` : cashDest;
+
+  if (waiting && given === undefined) return <div className="term-skel h-40" />;
+
+  return (
+    <div className="grid gap-3">
+      {noteOn ? (
+        <div className="term-card text-sm">
+          <p>
+            {tr("My Wallet is the one you sign with, for launches and trades on this site. Trading Wallet is the Trade Bot wallet. It runs orders, take-profit, stop-loss and copy trades even when you are offline.")}
+          </p>
+          <button type="button" className="btn-line mt-3" onClick={dismiss}>
+            {tr("Got it")}
+          </button>
+        </div>
+      ) : null}
+      <div className="grid gap-3 sm:grid-cols-2">
+        <section className="term-card">
+          <p className="term-label">{tr("My Wallet")}</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {mySol ? <WalletChip chain="SOL" address={mySol} onCopied={copied} /> : null}
+            {myEvm ? <WalletChip chain="EVM" address={myEvm} onCopied={copied} /> : null}
+            {!mySol && !myEvm ? <p className="text-sm text-muted">{tr("Sign in on the Manage account page first.")}</p> : null}
+          </div>
+          <ul className="mt-3 space-y-1 text-sm tabular-nums">
+            {mySol && balances["my:sol"] ? <li>SOL · {balances["my:sol"]}</li> : null}
+            {myEvm
+              ? EVM_TOP.map((row) => (balances[`my:${row.id}`] ? <li key={row.id}>{row.label} · {balances[`my:${row.id}`]}</li> : null))
+              : null}
+          </ul>
+          <p className="mt-3 text-sm text-muted">{tr("You hold this. Used for launching coins and trading on the site.")}</p>
+          {ready ? (
+            <button type="button" className="btn-line mt-3" onClick={() => { setTopOpen((v) => !v); setCashOpen(false); setConfirm(false); }}>
+              {tr("Top up Trading Wallet")}
+            </button>
+          ) : null}
+        </section>
+        <section className="term-card">
+          <p className="term-label">{tr("Trading Wallet")}</p>
+          {ready ? (
+            <>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {solDesk ? <WalletChip chain="SOL" address={solDesk} onCopied={copied} /> : null}
+                {evmDesk ? <WalletChip chain="EVM" address={evmDesk} onCopied={copied} /> : null}
+                {tonDesk ? <WalletChip chain="TON" address={tonDesk} onCopied={copied} /> : null}
+              </div>
+              <ul className="mt-3 space-y-1 text-sm tabular-nums">
+                {solDesk && balances["desk:sol"] ? <li>SOL · {balances["desk:sol"]}</li> : null}
+                {evmDesk
+                  ? EVM_TOP.map((row) => (balances[`desk:${row.id}`] ? <li key={row.id}>{row.label} · {balances[`desk:${row.id}`]}</li> : null))
+                  : null}
+              </ul>
+              <p className="mt-3 text-sm text-muted">{tr("Your Trade Bot wallet. Runs your orders and take-profit/stop-loss even when you're offline.")}</p>
+              {tonDesk ? (
+                <p className="mt-2 text-sm text-muted">{tr("Send TON here from any wallet")}</p>
+              ) : null}
+              {showCash ? (
+                <button type="button" className="btn-line mt-3" onClick={() => { setCashOpen((v) => !v); setTopOpen(false); setConfirm(false); }}>
+                  {tr("Cash out to My Wallet")}
+                </button>
+              ) : null}
+            </>
+          ) : (
+            <>
+              <p className="mt-3 text-sm">{tr("Your Trading Wallet is created in the Trade Bot — open @Ferzan_Trade_Bot, tap Start, then come back.")}</p>
+              <a className="btn-cyan mt-3 inline-flex" href={bot} target="_blank" rel="noopener noreferrer">
+                {tr("Open @Ferzan_Trade_Bot")}
+              </a>
+            </>
+          )}
+        </section>
+      </div>
+      {topOpen && ready ? (
+        <form
+          className="term-card grid gap-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void sendTop();
+          }}
+        >
+          <p className="term-label">{tr("Top up Trading Wallet")}</p>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" className={topChain === "sol" ? "term-chip term-chip-on" : "term-chip"} disabled={!solDesk} onClick={() => setTopChain("sol")}>SOL</button>
+            {EVM_TOP.map((row) => (
+              <button key={row.id} type="button" className={topChain === row.id ? "term-chip term-chip-on" : "term-chip"} disabled={!evmDesk} onClick={() => setTopChain(row.id)}>
+                {row.unit} · {row.label}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <input className="min-w-0 flex-1 bg-[#111c40] px-3 tabular-nums" inputMode="decimal" value={topAmount} placeholder={tr("Amount")} onChange={(e) => setTopAmount(e.target.value)} aria-label={tr("Amount")} />
+            <button type="button" className="term-chip" onClick={() => void maxTop()}>{tr("Max")}</button>
+          </div>
+          <button type="submit" className="term-go" disabled={busy}>{tr("Send")}</button>
+        </form>
+      ) : null}
+      {cashOpen && showCash ? (
+        <div className="term-card grid gap-3">
+          <p className="term-label">{tr("Cash out to My Wallet")}</p>
+          {confirm ? (
+            <>
+              <p>{tr("Send {0} {1} from your Trading Wallet to My Wallet {2}?", cashAmount.trim() || tr("Max"), cashUnit, cashShort)}</p>
+              <div className="flex gap-2">
+                <button type="button" className="term-go" disabled={busy} onClick={() => void sendCash()}>{tr("Confirm")}</button>
+                <button type="button" className="btn-line" onClick={() => setConfirm(false)}>{tr("Cancel")}</button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex flex-wrap gap-2">
+                <button type="button" className={cashChain === "sol" ? "term-chip term-chip-on" : "term-chip"} disabled={!solDesk || !mySol} onClick={() => setCashChain("sol")}>SOL</button>
+                {EVM_TOP.map((row) => (
+                  <button key={row.id} type="button" className={cashChain === row.id ? "term-chip term-chip-on" : "term-chip"} disabled={!evmDesk || !myEvm} onClick={() => setCashChain(row.id)}>
+                    {row.unit} · {row.label}
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <input className="min-w-0 flex-1 bg-[#111c40] px-3 tabular-nums" inputMode="decimal" value={cashAmount} placeholder={tr("Amount")} onChange={(e) => setCashAmount(e.target.value)} aria-label={tr("Amount")} />
+                <button type="button" className="term-chip" onClick={() => setCashAmount("max")}>{tr("Max")}</button>
+              </div>
+              <button type="button" className="term-go" disabled={busy || !cashAmount.trim()} onClick={() => setConfirm(true)}>{tr("Cash out to My Wallet")}</button>
+            </>
+          )}
+        </div>
+      ) : null}
+      {msg ? <p className="text-sm">{msg}</p> : null}
+      {link ? (
+        <a className="text-sm text-cyan" href={link} target="_blank" rel="noopener noreferrer">
+          {tr("View on explorer")}
+        </a>
+      ) : null}
+      {toast ? <p className="text-sm text-cyan">{toast}</p> : null}
+    </div>
+  );
+}
+
+export function TradingSetup({ bot }: { bot: string }) {
+  return (
+    <div className="term-card">
+      <p className="term-label">{tr("Trading Wallet")}</p>
+      <p className="mt-3 text-sm">{tr("Your Trading Wallet is created in the Trade Bot — open @Ferzan_Trade_Bot, tap Start, then come back.")}</p>
+      <a className="btn-cyan mt-3 inline-flex" href={bot || "https://t.me/Ferzan_Trade_Bot"} target="_blank" rel="noopener noreferrer">
+        {tr("Open @Ferzan_Trade_Bot")}
+      </a>
+    </div>
+  );
+}

@@ -132,6 +132,11 @@ export async function publicSafety(mint: string, chain: string): Promise<unknown
   }
 }
 
+/** Cash out from the Trading Wallet to the account's own wallet. The desk reads the destination from the identity token. Never pass an address. */
+export async function cashoutSelf(idToken: string, chain: string, amount: string): Promise<unknown> {
+  return post("cashout_self", idToken, { chain, amount });
+}
+
 /** Tell the desk about a site watchlist change. Silent when Telegram is not linked or the desk does not answer. */
 export async function syncCoinWatch(
   accessToken: string,
