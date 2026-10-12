@@ -1,6 +1,6 @@
 /**
  * Server-only bridge to the Ferzan trade desk.
- * The visitor's Privy access token is sent to the desk and never logged or returned.
+ * The visitor's Privy identity token is sent to the desk and never logged or returned.
  */
 const DESK = "https://157-230-80-150.sslip.io";
 const TIMEOUT_MS = 15_000;
@@ -69,8 +69,8 @@ function toUserError(err: DeskStatus): Error {
   return new Error(err.detail || "The terminal did not answer. Try again.");
 }
 
-async function post(endpoint: string, accessToken: string, fields: Record<string, unknown>): Promise<unknown> {
-  const body: Record<string, unknown> = { privy: accessToken };
+async function post(endpoint: string, idToken: string, fields: Record<string, unknown>): Promise<unknown> {
+  const body: Record<string, unknown> = { privy: idToken };
   for (const [key, value] of Object.entries(fields)) {
     if (key === "privy" || key === "bridge" || value === undefined) continue;
     body[key] = value;
@@ -101,7 +101,7 @@ async function noWallet(accessToken: string): Promise<{ noWallet: true; bot_link
   };
 }
 
-/** POST /api/<endpoint> with the Privy access token. Portfolio 404 becomes a no-wallet result and does not throw. */
+/** POST /api/<endpoint> with the Privy identity token. Portfolio 404 becomes a no-wallet result and does not throw. */
 export async function runDesk(endpoint: string, accessToken: string, fields: Record<string, unknown>): Promise<unknown> {
   try {
     if (endpoint === "portfolio") {
@@ -152,23 +152,8 @@ export async function syncCoinWatch(
     }
   }
 }
-export async function telegramUserId(accessToken: string): Promise<string | null> {
-  if (accessToken.length < 20 || accessToken.length > 4000) throw new Error("Sign in again.");
-  const appId = process.env.VITE_PRIVY_APP_ID || "cmuitovv501qx0cl6wnj2qvvt";
-  const res = await fetch("https://auth.privy.io/api/v1/users/me", {
-    headers: { Authorization: `Bearer ${accessToken}`, "privy-app-id": appId },
-    signal: AbortSignal.timeout(6000),
-  });
-  if (!res.ok) throw new Error("Sign in again.");
-  const body = (await res.json()) as { linked_accounts?: unknown; linkedAccounts?: unknown };
-  const list = Array.isArray(body.linked_accounts) ? body.linked_accounts : Array.isArray(body.linkedAccounts) ? body.linkedAccounts : [];
-  for (const item of list) {
-    if (!item || typeof item !== "object") continue;
-    const row = item as { type?: unknown; telegram_user_id?: unknown; telegramUserId?: unknown };
-    if (row.type !== "telegram") continue;
-    const raw = row.telegram_user_id ?? row.telegramUserId;
-    const id = typeof raw === "number" ? String(Math.trunc(raw)) : typeof raw === "string" ? raw.trim() : "";
-    if (/^[0-9]{1,20}$/.test(id)) return id;
-  }
-  return null;
+export async function telegramUserId(token: string): Promise<string | null> {
+  const { telegramIdOf, verifyIdentity } = await import("./privy-identity.server");
+  const identity = await verifyIdentity(token);
+  return telegramIdOf(identity.linked);
 }

@@ -207,7 +207,7 @@ async function telegramOrLock(token: string): Promise<string> {
 export const deskLinked = createServerFn({ method: "POST" })
   .validator((data: unknown): { token: string } => {
     const token = rec(data).token;
-    if (typeof token !== "string" || token.length < 20 || token.length > 4000) throw new Error("Sign in again.");
+    if (typeof token !== "string" || token.length < 20 || token.length > 16_000) throw new Error("Sign in again.");
     return { token };
   })
   .handler(async ({ data }): Promise<{ linked: boolean }> => {
@@ -217,12 +217,12 @@ export const deskLinked = createServerFn({ method: "POST" })
     return { linked: Boolean(id) };
   });
 
-/** One desk call. The access token stays on the server. */
+/** One desk call. The identity token stays on the server. */
 export const deskCall = createServerFn({ method: "POST" })
   .validator((data: unknown): { token: string; op: DeskOp; body: Record<string, unknown> } => {
     const row = rec(data);
     const token = row.token;
-    if (typeof token !== "string" || token.length < 20 || token.length > 4000) throw new Error("Sign in again.");
+    if (typeof token !== "string" || token.length < 20 || token.length > 16_000) throw new Error("Sign in again.");
     const op = row.op;
     if (typeof op !== "string" || !(OPS as readonly string[]).includes(op)) throw new Error("That looks wrong.");
     return { token, op: op as DeskOp, body: cleanDesk(op as DeskOp, row.body) };

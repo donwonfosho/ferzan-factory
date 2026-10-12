@@ -25,33 +25,30 @@ function platformOf(value: unknown): "x" | "telegram" {
 }
 
 function tokenOf(value: unknown): string {
-  if (typeof value !== "string" || value.length < 20 || value.length > 4000) throw new Error("Sign in again.");
+  if (typeof value !== "string" || value.length < 20 || value.length > 16_000) throw new Error("Sign in again.");
   return value;
 }
 
 type Account = { wallets: string[]; x: string | null; telegram: string | null };
 
 async function privyAccount(token: string): Promise<Account> {
-  const appId = process.env.VITE_PRIVY_APP_ID || "cmuitovv501qx0cl6wnj2qvvt";
-  const res = await fetch("https://auth.privy.io/api/v1/users/me", {
-    headers: { Authorization: `Bearer ${token}`, "privy-app-id": appId },
-    signal: AbortSignal.timeout(6000),
-  });
-  if (!res.ok) throw new Error("Sign in again.");
-  const body = (await res.json()) as { linked_accounts?: unknown; linkedAccounts?: unknown };
-  const list = Array.isArray(body.linked_accounts) ? body.linked_accounts : Array.isArray(body.linkedAccounts) ? body.linkedAccounts : [];
+  const { verifyIdentity } = await import("./privy-identity.server");
+  const identity = await verifyIdentity(token);
   const wallets: string[] = [];
   let x: string | null = null;
   let telegram: string | null = null;
-  for (const item of list) {
-    if (!item || typeof item !== "object") continue;
-    const row = item as { type?: unknown; address?: unknown; username?: unknown };
+  for (const row of identity.linked) {
     const type = typeof row.type === "string" ? row.type : "";
     if ((type === "wallet" || type === "smart_wallet") && typeof row.address === "string") wallets.push(row.address);
     const handle = typeof row.username === "string" ? row.username.replace(/^@/, "").trim() : "";
-    if (!HANDLE.test(handle)) continue;
-    if ((type === "twitter" || type === "twitter_oauth") && !x) x = handle;
-    if (type === "telegram" && !telegram) telegram = handle;
+    if ((type === "twitter_oauth" || type === "twitter") && !x && HANDLE.test(handle)) x = handle;
+    if (type === "telegram" && !telegram) {
+      if (HANDLE.test(handle)) telegram = handle;
+      else if (typeof row.telegram_user_id === "number" || typeof row.telegram_user_id === "string") {
+        const id = String(row.telegram_user_id).trim();
+        if (HANDLE.test(id)) telegram = id;
+      }
+    }
   }
   return { wallets, x, telegram };
 }

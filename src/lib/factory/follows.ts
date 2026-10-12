@@ -9,23 +9,15 @@ function creatorOf(value: unknown): string {
 }
 
 async function accountId(token: string): Promise<string> {
-  if (token.length < 20 || token.length > 4000) throw new Error("Sign in again.");
-  const appId = process.env.VITE_PRIVY_APP_ID || "cmuitovv501qx0cl6wnj2qvvt";
-  const res = await fetch("https://auth.privy.io/api/v1/users/me", {
-    headers: { Authorization: `Bearer ${token}`, "privy-app-id": appId },
-    signal: AbortSignal.timeout(6000),
-  });
-  if (!res.ok) throw new Error("Sign in again.");
-  const body = (await res.json()) as { id?: unknown };
-  if (typeof body.id !== "string" || body.id.length < 4 || body.id.length > 120) throw new Error("Sign in again.");
-  return body.id;
+  const { accountIdOf } = await import("./privy-identity.server");
+  return accountIdOf(token);
 }
 
 export const listFollows = createServerFn({ method: "POST" })
   .validator((data: unknown): { token: string } => {
     if (!data || typeof data !== "object") throw new Error("Sign in again.");
     const token = (data as { token?: unknown }).token;
-    if (typeof token !== "string") throw new Error("Sign in again.");
+    if (typeof token !== "string" || token.length < 20 || token.length > 16_000) throw new Error("Sign in again.");
     return { token };
   })
   .handler(async ({ data }): Promise<string[]> => {
@@ -43,7 +35,7 @@ export const putFollow = createServerFn({ method: "POST" })
   .validator((data: unknown): { token: string; creator: string } => {
     if (!data || typeof data !== "object") throw new Error("Sign in again.");
     const row = data as { token?: unknown; creator?: unknown };
-    if (typeof row.token !== "string") throw new Error("Sign in again.");
+    if (typeof row.token !== "string" || row.token.length < 20 || row.token.length > 16_000) throw new Error("Sign in again.");
     return { token: row.token, creator: creatorOf(row.creator) };
   })
   .handler(async ({ data }): Promise<{ ok: true }> => {
@@ -70,7 +62,7 @@ export const dropFollow = createServerFn({ method: "POST" })
   .validator((data: unknown): { token: string; creator: string } => {
     if (!data || typeof data !== "object") throw new Error("Sign in again.");
     const row = data as { token?: unknown; creator?: unknown };
-    if (typeof row.token !== "string") throw new Error("Sign in again.");
+    if (typeof row.token !== "string" || row.token.length < 20 || row.token.length > 16_000) throw new Error("Sign in again.");
     return { token: row.token, creator: creatorOf(row.creator) };
   })
   .handler(async ({ data }): Promise<{ ok: true }> => {
