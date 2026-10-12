@@ -234,6 +234,13 @@ export const deskCall = createServerFn({ method: "POST" })
     return JSON.stringify(await runDesk(data.op, data.token, data.body)) ?? "null";
   });
 
+/** ".01" and "0,01" are the same amount. "max" is left alone. */
+export function normalizeTypedAmount(value: string): string {
+  let amount = value.trim().replace(/,/g, ".");
+  if (amount.startsWith(".")) amount = `0${amount}`;
+  return amount;
+}
+
 const CASHOUT = new Set(["sol", "base", "ethereum", "bsc"]);
 
 /** Cash out the Trading Wallet to My Wallet. The destination is not sent; the desk reads it from the identity token. */
@@ -244,9 +251,10 @@ export const deskCashout = createServerFn({ method: "POST" })
     if (typeof token !== "string" || token.length < 20 || token.length > 16_000) throw new Error("Sign in again.");
     const chain = typeof row.chain === "string" ? row.chain : "";
     if (!CASHOUT.has(chain)) throw new Error("That looks wrong.");
-    const amount = typeof row.amount === "number" && Number.isFinite(row.amount) ? String(row.amount) : typeof row.amount === "string" ? row.amount.trim() : "";
-    if (amount !== "max" && !/^\d+(\.\d+)?$/.test(amount)) throw new Error("That looks wrong.");
-    if (amount.length > 40) throw new Error("That looks wrong.");
+    const raw = typeof row.amount === "number" && Number.isFinite(row.amount) ? String(row.amount) : typeof row.amount === "string" ? row.amount : "";
+    const amount = normalizeTypedAmount(raw);
+    if (amount !== "max" && !/^\d+(\.\d+)?$/.test(amount)) throw new Error("Type an amount like 0.01, or tap Max.");
+    if (amount.length > 40) throw new Error("Type an amount like 0.01, or tap Max.");
     return { token, chain, amount };
   })
   .handler(async ({ data }): Promise<string> => {

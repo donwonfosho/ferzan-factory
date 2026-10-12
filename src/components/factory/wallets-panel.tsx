@@ -3,7 +3,7 @@ import { explorerTx } from "@/lib/factory/deploy";
 import { readBalance } from "@/lib/factory/relay";
 import { solanaExplorerTx, solBalance } from "@/lib/factory/solana";
 import { formatUnits, parseDecimal } from "@/lib/factory/units";
-import { deskCall, deskCashout } from "@/lib/factory/trade-desk";
+import { deskCall, deskCashout, normalizeTypedAmount } from "@/lib/factory/trade-desk";
 import { evmWallet, solanaWallet, useAccountWallets } from "@/lib/factory/wallet-bridge";
 import { tr } from "@/lib/i18n";
 
@@ -249,7 +249,7 @@ export function WalletsPanel({ me: given, onRefresh }: { me?: Rec | null; onRefr
           setMsg(tr("The Trading Wallet address looks wrong. Nothing was sent."));
           return;
         }
-        const lamports = parseDecimal(topAmount, 9);
+        const lamports = parseDecimal(normalizeTypedAmount(topAmount), 9);
         if (!lamports || lamports <= 0n) throw new Error(tr("Type how much to send."));
         if (lamports > BigInt(Number.MAX_SAFE_INTEGER)) throw new Error(tr("Type how much to send."));
         const wallet = await solanaWallet();
@@ -271,7 +271,7 @@ export function WalletsPanel({ me: given, onRefresh }: { me?: Rec | null; onRefr
           setMsg(tr("The Trading Wallet address looks wrong. Nothing was sent."));
           return;
         }
-        const value = parseDecimal(topAmount, 18);
+        const value = parseDecimal(normalizeTypedAmount(topAmount), 18);
         if (!value || value <= 0n) throw new Error(tr("Type how much to send."));
         const { address, provider } = await evmWallet(topChain);
         const hash = await provider.request({
@@ -299,8 +299,10 @@ export function WalletsPanel({ me: given, onRefresh }: { me?: Rec | null; onRefr
     try {
       const token = await account?.identityToken();
       if (!token) throw new Error(tr("Sign in again."));
-      const amount = cashAmount.trim().toLowerCase() === "max" ? "max" : cashAmount.trim();
+      const typed = normalizeTypedAmount(cashAmount);
+      const amount = typed.toLowerCase() === "max" ? "max" : typed;
       if (!amount) throw new Error(tr("Type how much to send."));
+      if (amount !== "max" && !/^\d+(\.\d+)?$/.test(amount)) throw new Error(tr("Type an amount like 0.01, or tap Max."));
       const raw = await deskCashout({ data: { token, chain: cashChain, amount } });
       const row = rec(JSON.parse(raw) as unknown);
       const href = https(row.tx) || https(row.url) || https(row.link) || https(row.explorer);
@@ -323,6 +325,8 @@ export function WalletsPanel({ me: given, onRefresh }: { me?: Rec | null; onRefr
   const cashUnit = cashChain === "sol" ? "SOL" : cashChain === "bsc" ? "BNB" : "ETH";
   const cashDest = cashChain === "sol" ? mySol : myEvm;
   const cashShort = cashDest.length > 10 ? `${cashDest.slice(0, 4)}…${cashDest.slice(-4)}` : cashDest;
+  const cashTyped = normalizeTypedAmount(cashAmount);
+  const cashShown = !cashTyped || cashTyped.toLowerCase() === "max" ? tr("Max") : cashTyped;
 
   if (waiting && given === undefined) return <div className="term-skel h-40" />;
 
@@ -423,7 +427,7 @@ export function WalletsPanel({ me: given, onRefresh }: { me?: Rec | null; onRefr
           <p className="term-label">{tr("Cash out to My Wallet")}</p>
           {confirm ? (
             <>
-              <p>{tr("Send {0} {1} from your Trading Wallet to My Wallet {2}?", cashAmount.trim() || tr("Max"), cashUnit, cashShort)}</p>
+              <p>{tr("Send {0} {1} from your Trading Wallet to My Wallet {2}?", cashShown, cashUnit, cashShort)}</p>
               <div className="flex gap-2">
                 <button type="button" className="term-go" disabled={busy} onClick={() => void sendCash()}>{tr("Confirm")}</button>
                 <button type="button" className="btn-line" onClick={() => setConfirm(false)}>{tr("Cancel")}</button>

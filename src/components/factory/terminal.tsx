@@ -452,7 +452,7 @@ export function TerminalPage() {
   return (
     <div className="term-page mx-auto max-w-3xl">
       <div
-        className="sticky z-30 -mx-4 mb-3 overflow-x-auto border-b border-[rgba(160,190,255,.12)] bg-[#070b18] px-2 py-2 sm:hidden"
+        className="sticky z-30 mb-3 overflow-x-auto rounded-xl border-b border-[rgba(160,190,255,.12)] bg-[#070b18] px-2 py-2 sm:hidden"
         style={{ top: "var(--site-header, 4.5rem)" }}
       >
         <div className="flex w-max gap-2">
