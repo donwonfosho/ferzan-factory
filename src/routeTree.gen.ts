@@ -42,6 +42,7 @@ import { Route as CoinChainCurveRouteImport } from './routes/coin/$chain/$curve'
 import { Route as EmbedChainIdRouteImport } from './routes/embed/$chain/$id'
 import { Route as TokenChainAddressRouteImport } from './routes/token/$chain/$address'
 import { Route as ApiV1CoinChainIdRouteImport } from './routes/api/v1/coin/$chain/$id'
+import { Route as ApiV1CoinChainIdTradesRouteImport } from './routes/api/v1/coin/$chain/$id.trades'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -208,6 +209,11 @@ const ApiV1CoinChainIdRoute = ApiV1CoinChainIdRouteImport.update({
   path: '/api/v1/coin/$chain/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiV1CoinChainIdTradesRoute = ApiV1CoinChainIdTradesRouteImport.update({
+  id: '/trades',
+  path: '/trades',
+  getParentRoute: () => ApiV1CoinChainIdRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -242,7 +248,8 @@ export interface FileRoutesByFullPath {
   '/coin/$chain/$curve': typeof CoinChainCurveRoute
   '/embed/$chain/$id': typeof EmbedChainIdRoute
   '/token/$chain/$address': typeof TokenChainAddressRoute
-  '/api/v1/coin/$chain/$id': typeof ApiV1CoinChainIdRoute
+  '/api/v1/coin/$chain/$id': typeof ApiV1CoinChainIdRouteWithChildren
+  '/api/v1/coin/$chain/$id/trades': typeof ApiV1CoinChainIdTradesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -277,7 +284,8 @@ export interface FileRoutesByTo {
   '/coin/$chain/$curve': typeof CoinChainCurveRoute
   '/embed/$chain/$id': typeof EmbedChainIdRoute
   '/token/$chain/$address': typeof TokenChainAddressRoute
-  '/api/v1/coin/$chain/$id': typeof ApiV1CoinChainIdRoute
+  '/api/v1/coin/$chain/$id': typeof ApiV1CoinChainIdRouteWithChildren
+  '/api/v1/coin/$chain/$id/trades': typeof ApiV1CoinChainIdTradesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -313,7 +321,8 @@ export interface FileRoutesById {
   '/coin/$chain/$curve': typeof CoinChainCurveRoute
   '/embed/$chain/$id': typeof EmbedChainIdRoute
   '/token/$chain/$address': typeof TokenChainAddressRoute
-  '/api/v1/coin/$chain/$id': typeof ApiV1CoinChainIdRoute
+  '/api/v1/coin/$chain/$id': typeof ApiV1CoinChainIdRouteWithChildren
+  '/api/v1/coin/$chain/$id/trades': typeof ApiV1CoinChainIdTradesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -351,6 +360,7 @@ export interface FileRouteTypes {
     | '/embed/$chain/$id'
     | '/token/$chain/$address'
     | '/api/v1/coin/$chain/$id'
+    | '/api/v1/coin/$chain/$id/trades'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -386,6 +396,7 @@ export interface FileRouteTypes {
     | '/embed/$chain/$id'
     | '/token/$chain/$address'
     | '/api/v1/coin/$chain/$id'
+    | '/api/v1/coin/$chain/$id/trades'
   id:
     | '__root__'
     | '/'
@@ -421,6 +432,7 @@ export interface FileRouteTypes {
     | '/embed/$chain/$id'
     | '/token/$chain/$address'
     | '/api/v1/coin/$chain/$id'
+    | '/api/v1/coin/$chain/$id/trades'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -456,7 +468,7 @@ export interface RootRouteChildren {
   CoinChainCurveRoute: typeof CoinChainCurveRoute
   EmbedChainIdRoute: typeof EmbedChainIdRoute
   TokenChainAddressRoute: typeof TokenChainAddressRoute
-  ApiV1CoinChainIdRoute: typeof ApiV1CoinChainIdRoute
+  ApiV1CoinChainIdRoute: typeof ApiV1CoinChainIdRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -692,8 +704,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiV1CoinChainIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/v1/coin/$chain/$id/trades': {
+      id: '/api/v1/coin/$chain/$id/trades'
+      path: '/trades'
+      fullPath: '/api/v1/coin/$chain/$id/trades'
+      preLoaderRoute: typeof ApiV1CoinChainIdTradesRouteImport
+      parentRoute: typeof ApiV1CoinChainIdRoute
+    }
   }
 }
+
+interface ApiV1CoinChainIdRouteChildren {
+  ApiV1CoinChainIdTradesRoute: typeof ApiV1CoinChainIdTradesRoute
+}
+
+const ApiV1CoinChainIdRouteChildren: ApiV1CoinChainIdRouteChildren = {
+  ApiV1CoinChainIdTradesRoute: ApiV1CoinChainIdTradesRoute,
+}
+
+const ApiV1CoinChainIdRouteWithChildren =
+  ApiV1CoinChainIdRoute._addFileChildren(ApiV1CoinChainIdRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -728,7 +758,7 @@ const rootRouteChildren: RootRouteChildren = {
   CoinChainCurveRoute: CoinChainCurveRoute,
   EmbedChainIdRoute: EmbedChainIdRoute,
   TokenChainAddressRoute: TokenChainAddressRoute,
-  ApiV1CoinChainIdRoute: ApiV1CoinChainIdRoute,
+  ApiV1CoinChainIdRoute: ApiV1CoinChainIdRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

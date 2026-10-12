@@ -3,6 +3,9 @@
  */
 const CHAINS = new Set(["ethereum", "bsc", "base", "robinhood", "solana", "arc", "tron", "ton"]);
 const ID = /^(0x[0-9a-fA-F]{40}|[1-9A-HJ-NP-Za-km-z]{32,44}|T[1-9A-HJ-NP-Za-km-z]{33}|EQ[A-Za-z0-9_-]{46})$/;
+const SORTS = new Set(["new", "buys", "volume"]);
+
+export type PublicSort = "new" | "buys" | "volume";
 
 export type PublicCoin = {
   chain: string;
@@ -12,7 +15,16 @@ export type PublicCoin = {
   image: string;
   createdAt: string;
   buys: number;
+  volumeWei: string;
   path: string;
+};
+
+export type PublicTrade = {
+  side: string;
+  nativeWei: string;
+  price: string;
+  createdAt: string;
+  tx: string;
 };
 
 type Row = {
@@ -23,6 +35,7 @@ type Row = {
   contract: string;
   image: string;
   buys: number;
+  volume_wei: string;
   created_at: string;
 };
 
@@ -43,6 +56,7 @@ function mapRow(row: Row): PublicCoin {
     image: row.image,
     createdAt: row.created_at,
     buys: row.buys,
+    volumeWei: row.volume_wei,
     path: pathFor(row),
   };
 }
@@ -72,21 +86,26 @@ export function openId(value: string): string {
   return id;
 }
 
-export async function coinsBody(chain: string | null): Promise<string> {
-  return remember(`list:${chain ?? ""}`, async () => {
+export function openSort(value: string | null): PublicSort {
+  const sort = (value ?? "new").trim().toLowerCase();
+  if (!SORTS.has(sort)) throw new Error("Sort by new, buys, or volume.");
+  return sort as PublicSort;
+}
+
+export async function coinsBody(chain: string | null, sort: PublicSort): Promise<string> {
+  return remember(`list:${chain ?? ""}:${sort}`, async () => {
     const { getSql } = await import("@/lib/db");
     const sql = await getSql();
-    const rows = chain
-      ? await sql<Row>`
-          select chain, mode, name, symbol, contract, image, buys, created_at::text as created_at
-          from coins where chain = ${chain}
-          order by created_at desc limit 50
-        `
-      : await sql<Row>`
-          select chain, mode, name, symbol, contract, image, buys, created_at::text as created_at
-          from coins
-          order by created_at desc limit 50
-        `;
+    const rows = await sql<Row>`
+      select chain, mode, name, symbol, contract, image, buys, volume_wei, created_at::text as created_at
+      from coins
+      where ${chain}::text is null or chain = ${chain}
+      order by
+        case when ${sort} = 'volume' then volume_wei::numeric else 0 end desc,
+        case when ${sort} = 'buys' then buys else 0 end desc,
+        created_at desc
+      limit 50
+    `;
     return JSON.stringify({ coins: rows.map(mapRow) });
   });
 }
@@ -96,12 +115,40 @@ export async function coinBody(chain: string, id: string): Promise<string> {
     const { getSql } = await import("@/lib/db");
     const sql = await getSql();
     const rows = await sql<Row>`
-      select chain, mode, name, symbol, contract, image, buys, created_at::text as created_at
+      select chain, mode, name, symbol, contract, image, buys, volume_wei, created_at::text as created_at
       from coins
       where chain = ${chain} and lower(contract) = ${id.toLowerCase()}
       limit 1
     `;
     return JSON.stringify({ coin: rows[0] ? mapRow(rows[0]) : null });
+  });
+}
+
+export async function tradesBody(chain: string, id: string): Promise<string> {
+  return remember(`trades:${chain}:${id.toLowerCase()}`, async () => {
+    const { getSql } = await import("@/lib/db");
+    const sql = await getSql();
+    const coin = await sql<{ contract: string }>`
+      select contract from coins
+      where chain = ${chain} and lower(contract) = ${id.toLowerCase()}
+      limit 1
+    `;
+    if (!coin[0]) return JSON.stringify({ trades: [] });
+    const rows = await sql<{ side: string; native_wei: string; price: string; created_at: string; tx_hash: string }>`
+      select side, native_wei, price, created_at::text as created_at, tx_hash
+      from prints
+      where contract = ${coin[0].contract}
+      order by created_at desc
+      limit 100
+    `;
+    const trades: PublicTrade[] = rows.map((row) => ({
+      side: row.side,
+      nativeWei: row.native_wei,
+      price: row.price,
+      createdAt: row.created_at,
+      tx: row.tx_hash,
+    }));
+    return JSON.stringify({ trades });
   });
 }
 

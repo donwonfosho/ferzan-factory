@@ -66,12 +66,33 @@ export function DocsPage() {
           </Link>
         </Item>
         <Item n="7" title={tr("Read the public list")}>
-          {tr("GET /api/v1/coins returns the newest 50 coins as JSON. Add ?chain=base to pick a chain. GET /api/v1/coin/base/0x… returns one. Other sites may read these. They do not include private fields.")}
+          {tr("Other sites may read the coin list. It is read-only and best-effort. See the API section.")}
         </Item>
         <Item n="8" title={tr("Embed a buy button")}>
           {tr("Put /embed/chain/id on your site in an iframe. The button opens the coin page here. The embed does not connect a wallet.")}
         </Item>
       </ol>
+      <section className="mt-8 space-y-3">
+        <h2 className="text-2xl">{tr("API")}</h2>
+        <p className="text-sm text-muted">
+          {tr("Read-only and best-effort. JSON only. No wallet tags and no visitor data. Any site may GET these. They are cached for 10 seconds.")}
+        </p>
+        <Example
+          title="GET /api/v1/coins"
+          text="GET /api/v1/coins?chain=base&sort=volume"
+          note={tr("Newest 50. Optional chain. sort is new, buys, or volume.")}
+        />
+        <Example
+          title="GET /api/v1/coin/:chain/:id"
+          text="GET /api/v1/coin/base/0x0000000000000000000000000000000000000000"
+          note={tr("One coin. coin is null when it is not listed.")}
+        />
+        <Example
+          title="GET /api/v1/coin/:chain/:id/trades"
+          text="GET /api/v1/coin/base/0x0000000000000000000000000000000000000000/trades"
+          note={tr("Newest 100 trades for that coin.")}
+        />
+      </section>
       <section className="mt-8 space-y-4">
         <h2 className="text-2xl">{tr("FAQ")}</h2>
         <Faq q={tr("How do I buy?")}>
@@ -137,5 +158,15 @@ function Item({ n, title, children }: { n: string; title: string; children: Reac
       <p className="mt-1 font-semibold">{title}</p>
       <div className="mt-1 text-sm text-muted">{children}</div>
     </li>
+  );
+}
+
+function Example({ title, text, note }: { title: string; text: string; note: string }) {
+  return (
+    <div className="bg-surface p-4 shadow-border">
+      <p className="font-semibold">{title}</p>
+      <p className="mt-1 break-all font-mono text-xs text-cyan">{text}</p>
+      <p className="mt-1 text-sm text-muted">{note}</p>
+    </div>
   );
 }
