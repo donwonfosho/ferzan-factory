@@ -143,6 +143,32 @@ export async function topupSol(idToken: string, signedB64: string): Promise<unkn
   return post("topup_sol", idToken, { signed_tx_b64: signedB64 });
 }
 
+const BLOCKHASH = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+
+/** Recent blockhash from the same Solana RPC the desk uses to broadcast a top-up. No sign-in. */
+export async function deskSolBlockhash(): Promise<{ blockhash: string; lastValidBlockHeight: number }> {
+  let res: Response;
+  try {
+    res = await fetch(`${DESK}/api/sol_blockhash`, {
+      method: "POST",
+      headers: { "content-type": "application/json", accept: "application/json" },
+      body: "{}",
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
+  } catch {
+    throw new Error("The terminal did not answer. Try again.");
+  }
+  const parsed = await readBody(res);
+  if (!res.ok) throw new DeskStatus(res.status, detailOf(parsed));
+  const row = parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : {};
+  const blockhash = typeof row.blockhash === "string" ? row.blockhash : "";
+  const height = row.lastValidBlockHeight;
+  if (!BLOCKHASH.test(blockhash) || typeof height !== "number" || !Number.isInteger(height) || height < 0) {
+    throw new Error("The terminal did not answer. Try again.");
+  }
+  return { blockhash, lastValidBlockHeight: height };
+}
+
 /** Tell the desk about a site watchlist change. Silent when Telegram is not linked or the desk does not answer. */
 export async function syncCoinWatch(
   accessToken: string,

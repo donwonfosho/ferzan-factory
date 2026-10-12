@@ -3,7 +3,7 @@ import { explorerTx } from "@/lib/factory/deploy";
 import { readBalance } from "@/lib/factory/relay";
 import { solanaExplorerTx, solBalance } from "@/lib/factory/solana";
 import { formatUnits, parseDecimal } from "@/lib/factory/units";
-import { deskCall, deskCashout, deskTopupSol, normalizeTypedAmount } from "@/lib/factory/trade-desk";
+import { deskCall, deskCashout, deskTopupBlockhash, deskTopupSol, normalizeTypedAmount } from "@/lib/factory/trade-desk";
 import { evmWallet, useAccountWallets } from "@/lib/factory/wallet-bridge";
 import { tr } from "@/lib/i18n";
 import { AddFundsCard } from "./add-funds-card";
@@ -300,13 +300,19 @@ export function WalletsPanel({ me: given, onRefresh }: { me?: Rec | null; onRefr
         const token = await account.identityToken();
         if (!token) throw new Error(tr("Sign in again."));
         const { PublicKey, SystemProgram, TransactionMessage, VersionedTransaction } = await import("@solana/web3.js");
-        const { solanaRelay } = await import("@/lib/factory/solana");
-        const block = await solanaRelay({ data: { method: "block" } });
-        if (!("blockhash" in block) || typeof block.blockhash !== "string") throw new Error(tr("The terminal did not answer. Try again."));
+        let blockhash = "";
+        try {
+          blockhash = (await deskTopupBlockhash()).blockhash;
+        } catch {
+          const { solanaRelay } = await import("@/lib/factory/solana");
+          const block = await solanaRelay({ data: { method: "block" } });
+          if (!("blockhash" in block) || typeof block.blockhash !== "string") throw new Error(tr("The terminal did not answer. Try again."));
+          blockhash = block.blockhash;
+        }
         const from = new PublicKey(account.solAddress);
         const message = new TransactionMessage({
           payerKey: from,
-          recentBlockhash: block.blockhash,
+          recentBlockhash: blockhash,
           instructions: [SystemProgram.transfer({ fromPubkey: from, toPubkey: new PublicKey(solDesk), lamports: Number(lamports) })],
         }).compileToV0Message();
         const signed = await account.solSign(new VersionedTransaction(message).serialize());
@@ -336,7 +342,12 @@ export function WalletsPanel({ me: given, onRefresh }: { me?: Rec | null; onRefr
       setTopAmount("");
       refresh();
     } catch (err) {
-      setMsg(err instanceof Error ? err.message : tr("The terminal did not answer. Try again."));
+      const message = err instanceof Error ? err.message : "";
+      if (topChain === "sol" && /blockhash not found|expired/i.test(message)) {
+        setMsg(tr("The network moved on before the transfer went out. Nothing was sent — tap Send again."));
+      } else {
+        setMsg(message || tr("The terminal did not answer. Try again."));
+      }
     } finally {
       setBusy(false);
     }

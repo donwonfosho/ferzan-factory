@@ -365,6 +365,14 @@ export const deskTopupSol = createServerFn({ method: "POST" })
     return { signature };
   });
 
+/** Blockhash from the Trade Desk's own Solana RPC, so a top-up is not signed against a different node. */
+export const deskTopupBlockhash = createServerFn({ method: "GET" })
+  .handler(async (): Promise<{ blockhash: string; lastValidBlockHeight: number }> => {
+    await (await import("./guard.server")).guardRelay("read");
+    const { deskSolBlockhash } = await import("./trade-desk.server");
+    return deskSolBlockhash();
+  });
+
 /** Public contract check. No account and no bridge token. Null when it cannot be read. */
 export const deskSafety = createServerFn({ method: "GET" })
   .validator((data: unknown): { mint: string; chain: string } => {
