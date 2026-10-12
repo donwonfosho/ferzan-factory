@@ -24,6 +24,7 @@ import { ShareCoin } from "./perks";
 import { useLive, sameCoin } from "@/lib/factory/live";
 import { HoldersPanel, PnlShare } from "./coin-extras";
 import { RiskPanel } from "./risk-panel";
+import { PhoneTrade, rememberLastTrade, tradePresets } from "./phone-trade";
 import { AlertsButton, WatchButton } from "./watch";
 import { CoinComments } from "./coin-comments";
 import { BridgeBuy } from "./bridge-buy-panel";
@@ -248,6 +249,7 @@ export function BotCoinPage({ chain, curve }: { chain: BotCurveChain; curve: str
         setBusy(BigInt(now.mine?.allowance ?? "0") < raw ? tr("Step 2 of 2: approve the sell.") : tr("Approve the sell in your wallet."));
         await follow((onHash) => send(from, curve, SEL.sell + word(raw) + word(minOut) + addrWord(ref), 0n, onHash), tr("Sell"));
       }
+      rememberLastTrade(`${chain}:${curve}`, amount);
       setAmount("");
       await load();
     } catch (err) {
@@ -423,6 +425,7 @@ export function BotCoinPage({ chain, curve }: { chain: BotCurveChain; curve: str
           )}
         </div>
       ) : (
+        <PhoneTrade symbol={state.symbol} presets={tradePresets(state.native)} amount={amount} setAmount={setAmount} rememberKey={`${chain}:${curve}`}>
         <form ref={formRef} onSubmit={(e) => void trade(e)} className="ticket fz-panel space-y-3">
           <div className="grid grid-cols-2 gap-2">
             <button type="button" className={cn("w-full", side === "buy" ? "btn-cyan" : "btn-line")} onClick={() => { setSide("buy"); setAmount(""); }}>
@@ -497,6 +500,7 @@ export function BotCoinPage({ chain, curve }: { chain: BotCurveChain; curve: str
           <p className="text-xs text-muted">{tr("1% fee on every trade: half to the creator, half to Ferzan. A referrer gets 10% of the fee.")}</p>
           <StoredReferrer />
         </form>
+        </PhoneTrade>
       )}
 
       <BridgeBuy dest={chain} />

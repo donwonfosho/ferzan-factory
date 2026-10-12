@@ -14,6 +14,7 @@ import { ShareCoin } from "./perks";
 import { useLive } from "@/lib/factory/live";
 import { HoldersPanel, PnlShare } from "./coin-extras";
 import { RiskPanel } from "./risk-panel";
+import { PhoneTrade, rememberLastTrade, tradePresets } from "./phone-trade";
 import { AlertsButton, WatchButton } from "./watch";
 import { CoinComments } from "./coin-comments";
 
@@ -162,6 +163,7 @@ export function SolCoinPage({ mint }: { mint: string }) {
       if (side === "buy") creditCall("solana", signature, w.address);
       setLastTx(signature);
       watchSolana(tx.id, signature, solanaExplorerTx(signature));
+      rememberLastTrade(`solana:${mint}`, amount);
       setAmount("");
       setBusy(tr("Sent. Updating in a few seconds."));
       window.setTimeout(() => void load(), 6000);
@@ -293,6 +295,7 @@ export function SolCoinPage({ mint }: { mint: string }) {
           </a>
         </div>
       ) : (
+        <PhoneTrade symbol={coin.symbol} presets={tradePresets("SOL")} amount={amount} setAmount={setAmount} rememberKey={`solana:${mint}`}>
         <form ref={formRef} onSubmit={(e) => void trade(e)} className="ticket fz-panel space-y-3">
           <div className="grid grid-cols-2 gap-2">
             <button type="button" className={cn("w-full", side === "buy" ? "btn-cyan" : "btn-line")} onClick={() => { setSide("buy"); setAmount(""); }}>
@@ -352,6 +355,7 @@ export function SolCoinPage({ mint }: { mint: string }) {
             {side === "buy" ? tr("Buy {0}", coin.symbol) : tr("Sell {0}", coin.symbol)}
           </Button>
         </form>
+        </PhoneTrade>
       )}
 
       {coin.graduated ? null : <BridgeBuy dest="solana" />}

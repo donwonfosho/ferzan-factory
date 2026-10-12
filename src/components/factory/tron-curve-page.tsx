@@ -13,6 +13,7 @@ import { ReportCoin } from "./feedback";
 import { ShareCoin } from "./perks";
 import { HoldersPanel } from "./coin-extras";
 import { RiskPanel } from "./risk-panel";
+import { PhoneTrade, rememberLastTrade, tradePresets } from "./phone-trade";
 import { AlertsButton, WatchButton } from "./watch";
 import { CoinComments } from "./coin-comments";
 import { BridgeBuy } from "./bridge-buy-panel";
@@ -200,6 +201,7 @@ export function TronCurvePage({ curve }: { curve: string }) {
           throw err;
         }
       }
+      rememberLastTrade(`tron:${curve}`, amount);
       setAmount("");
       setBusy(tr("Sent. Waiting for Tron to confirm."));
       await sleep(4000);
@@ -370,6 +372,7 @@ export function TronCurvePage({ curve }: { curve: string }) {
           </div>
         </div>
       ) : (
+        <PhoneTrade symbol={state.symbol} presets={tradePresets("TRX")} amount={amount} setAmount={setAmount} rememberKey={`tron:${curve}`}>
         <form ref={formRef} onSubmit={(e) => void trade(e)} className="ticket fz-panel space-y-3">
           <div className="grid grid-cols-2 gap-2">
             <button type="button" className={cn("w-full", side === "buy" ? "btn-cyan" : "btn-line")} onClick={() => { setSide("buy"); setAmount(""); }}>
@@ -442,6 +445,7 @@ export function TronCurvePage({ curve }: { curve: string }) {
           <p className="text-xs text-muted">{tr("1% fee on every trade: half to the creator, half to Ferzan. A referrer gets 10% of the fee.")}</p>
           <p className="text-xs text-muted">{tr("Tron also charges network energy, usually 20 to 40 TRX per trade, paid to the network and not to Ferzan.")}</p>
         </form>
+        </PhoneTrade>
       )}
 
       <BridgeBuy dest="tron" />

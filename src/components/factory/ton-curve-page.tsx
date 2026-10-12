@@ -14,6 +14,7 @@ import { ReportCoin } from "./feedback";
 import { ShareCoin } from "./perks";
 import { HoldersPanel } from "./coin-extras";
 import { RiskPanel } from "./risk-panel";
+import { PhoneTrade, rememberLastTrade, tradePresets } from "./phone-trade";
 import { AlertsButton, WatchButton } from "./watch";
 import { CoinComments } from "./coin-comments";
 import { ChainMark } from "./chain-mark";
@@ -165,6 +166,7 @@ export function TonCurvePage({ curve }: { curve: string }) {
         throw err;
       }
       // TON Connect does not give this site a chain receipt. Stay pending until the visitor dismisses it.
+      rememberLastTrade(`ton:${curve}`, amount);
       setAmount("");
       setBusy(tr("Sent. Waiting for TON to confirm."));
       await sleep(6000);
@@ -335,6 +337,7 @@ export function TonCurvePage({ curve }: { curve: string }) {
           </div>
         </div>
       ) : (
+        <PhoneTrade symbol={state.symbol} presets={tradePresets("TON")} amount={amount} setAmount={setAmount} rememberKey={`ton:${curve}`}>
         <form ref={formRef} onSubmit={(e) => void trade(e)} className="ticket fz-panel space-y-3">
           <div className="grid grid-cols-2 gap-2">
             <button type="button" className={cn("w-full", side === "buy" ? "btn-cyan" : "btn-line")} onClick={() => { setSide("buy"); setAmount(""); }}>
@@ -400,6 +403,7 @@ export function TonCurvePage({ curve }: { curve: string }) {
           <p className="text-xs text-muted">{tr("1% fee on every trade: half to the creator, half to Ferzan. A referrer gets 10% of the fee.")}</p>
           <p className="text-xs text-muted">{tr("A buy also sends about 0.12 TON for network gas. The curve returns what it does not use.")}</p>
         </form>
+        </PhoneTrade>
       )}
 
       <div className="ticket fz-panel">
