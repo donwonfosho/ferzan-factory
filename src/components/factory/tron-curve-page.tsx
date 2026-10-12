@@ -6,7 +6,8 @@ import { formatPrice, formatSmart, formatUsdPrice, parseDecimal } from "@/lib/fa
 import { useLive, sameCoin } from "@/lib/factory/live";
 import { cn } from "@/lib/cn";
 import { Button, TextInput } from "./ui";
-import { CandleChart, CurveGraphic } from "./chart-pro";
+import { CurveGraphic } from "./chart-pro";
+import { TvChart } from "./tv-chart";
 import { CreatorScoreBox } from "./creator-score";
 import { SafetyBadges } from "./safety-badges";
 import { ReportCoin } from "./feedback";
@@ -24,13 +25,6 @@ import { OpenInTelegram } from "./open-telegram";
 import { tr } from "@/lib/i18n";
 import { tryFive } from "@/lib/factory/retry";
 import { FEE_TG, FEE_TG_REF, TradePreview, approveLine, beginTx, minText } from "./trade-confidence";
-const TIMEFRAMES = [
-  { tf: 60, label: "1m" },
-  { tf: 300, label: "5m" },
-  { tf: 900, label: "15m" },
-  { tf: 3600, label: "1h" },
-  { tf: 14400, label: "4h" },
-];
 const SLIPPAGES = [100, 500, 1000];
 const DEC = 6; // TRX and Ferzan Tron coins both use 6 decimals
 
@@ -313,14 +307,7 @@ export function TronCurvePage({ curve }: { curve: string }) {
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-start">
         <div className="min-w-0 space-y-4">
       <div className="ticket fz-panel">
-        <div className="mb-2 flex gap-2 overflow-x-auto">
-          {TIMEFRAMES.map((t) => (
-            <button key={t.tf} type="button" onClick={() => setTf(t.tf)} className={cn("min-h-9 px-3 text-sm", tf === t.tf ? "btn-cyan" : "btn-line")}>
-              {tr(t.label)}
-            </button>
-          ))}
-        </div>
-        <CandleChart candles={state.candles} trades={state.trades} tf={tf} native="TRX" toCap={state.price > 0 ? state.mcapUsd / state.price : 0} />
+        <TvChart candles={state.candles} tf={tf} onTf={setTf} native="TRX" toCap={state.price > 0 ? state.mcapUsd / state.price : 0} />
       </div>
 
       <CurveGraphic
