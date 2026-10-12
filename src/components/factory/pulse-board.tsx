@@ -9,6 +9,8 @@ import { compactUsd } from "./market-line";
 import { QuickBuyBar, QuickBuyButton } from "./quick-buy";
 import { Mark } from "./ui";
 import { WatchlistStrip } from "./watch";
+import { coinKey } from "@/lib/factory/streams";
+import { LiveMark, useLiveStreams } from "./coin-stream";
 import { sameCreator, useFollows } from "./follow";
 
 import { tr } from "@/lib/i18n";
@@ -16,7 +18,7 @@ import { tryFive } from "@/lib/factory/retry";
 const CHAIN_KEY = "ferzan-pulse-chain";
 const API_CHAINS = new Set(["base", "bsc", "ethereum", "robinhood", "solana", "arc", "tron", "ton"]);
 const MARKS = new Set(["solana", "base", "bsc", "ethereum", "robinhood", "arc", "tron", "ton"]);
-const TABS = ["trending", "new", "soon", "graduated", "following"] as const;
+const TABS = ["trending", "new", "soon", "graduated", "live", "following"] as const;
 type Tab = (typeof TABS)[number];
 const WINDOWS = ["5m", "1h", "24h"] as const;
 type Window = (typeof WINDOWS)[number];
@@ -25,6 +27,7 @@ const TAB_LABEL: Record<Tab, string> = {
   new: "New",
   soon: "Graduating soon",
   graduated: "Graduated",
+  live: "Live now",
   following: "Following",
 };
 const WINDOW_LABEL: Record<Window, string> = { "5m": "5 minutes", "1h": "1 hour", "24h": "24 hours" };
@@ -53,8 +56,9 @@ function volumeOf(coin: TelegramCoin, window: Window): number | null {
   return coin.vol24Usd;
 }
 
-function pick(rows: TelegramCoin[], tab: Tab, window: Window, follows: string[]): { rows: TelegramCoin[]; missing: boolean } {
+function pick(rows: TelegramCoin[], tab: Tab, window: Window, follows: string[], live: Set<string>): { rows: TelegramCoin[]; missing: boolean } {
   if (tab === "new") return { rows: [...rows].sort((a, b) => b.launchedTs - a.launchedTs), missing: false };
+  if (tab === "live") return { rows: rows.filter((c) => live.has(coinKey(c.chain, c.token))), missing: false };
   if (tab === "following") {
     return {
       rows: rows.filter((c) => follows.some((creator) => sameCreator(creator, c.creator))).sort((a, b) => b.launchedTs - a.launchedTs),
@@ -87,6 +91,7 @@ function Row({ coin, now }: { coin: TelegramCoin; now: number }) {
       <span className="min-w-0 flex-1">
         <span className="flex items-center gap-1.5">
           <span className="truncate font-semibold">${coin.symbol}</span>
+          <LiveMark chain={coin.chain} token={coin.token} />
           {MARKS.has(coin.chain) ? <ChainMark id={coin.chain as MarkChain} className="h-3.5 w-3.5 shrink-0" /> : null}
           {coin.safe ? <span className="shrink-0 text-xs" title={tr("Safe launch")}>🛡️</span> : null}
           <span className="shrink-0 text-xs text-muted">{coin.launchedTs ? age(coin.launchedTs, now) : ""}</span>
@@ -114,6 +119,7 @@ export function PulseBoard() {
   const [now, setNow] = useState(() => Date.now());
   const live = useLiveConnected();
   const follows = useFollows();
+  const streams = useLiveStreams();
   const seen = useRef(false);
 
   useEffect(() => {
@@ -151,7 +157,7 @@ export function PulseBoard() {
     }
   }
 
-  const shown = coins ? pick(coins, tab, windowId, follows) : null;
+  const shown = coins ? pick(coins, tab, windowId, follows, new Set(streams.map((row) => row.coin))) : null;
 
   return (
     <div className="space-y-4">

@@ -9,6 +9,7 @@ import { cn } from "@/lib/cn";
 import { Button, TextInput } from "./ui";
 import { CurveGraphic } from "./chart-pro";
 import { TvChart } from "./tv-chart";
+import { CoinStream } from "./coin-stream";
 import { CreatorScoreBox } from "./creator-score";
 import { SafetyBadges } from "./safety-badges";
 import { ReportCoin } from "./feedback";
@@ -304,6 +305,7 @@ export function TronCurvePage({ curve }: { curve: string }) {
             : tr("{0} of {1} {2} raised.", formatSmart(BigInt(state.real), DEC), formatSmart(BigInt(state.gradTarget), DEC), "TRX")}
       </p>
       <RiskPanel chain="tron" token={state.token} progress={state.progress} curveOpen={!state.graduated && !state.complete} />
+      <CoinStream chain="tron" token={state.token} curve={curve} creator={state.creator} signer={account || (signedIn?.authenticated ? (signedIn.tronAddress ?? "") : "")} />
 
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-start">

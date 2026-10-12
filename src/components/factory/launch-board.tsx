@@ -8,6 +8,7 @@ import { ChainMark, type MarkChain } from "./chain-mark";
 import { compactUsd } from "./market-line";
 import { useLive, useLiveConnected } from "@/lib/factory/live";
 import { SafetyBadges } from "./safety-badges";
+import { LiveMark } from "./coin-stream";
 import { QuickBuyBar, QuickBuyButton } from "./quick-buy";
 
 import { tr } from "@/lib/i18n";
@@ -245,6 +246,7 @@ export function LaunchCard({ coin, flash = false }: { coin: TelegramCoin; flash?
         <span className="min-w-0 flex-1">
           <span className="flex items-center gap-1.5">
             <span className="truncate font-extrabold">{coin.symbol}</span>
+            <LiveMark chain={coin.chain} token={coin.token} />
             {MARKS.has(coin.chain) ? <ChainMark id={coin.chain as MarkChain} className="h-4 w-4 shrink-0" /> : null}
             {coin.graduated ? <span className="text-xs text-cyan">{tr("Graduated")}</span> : null}
             {coin.source === "site" ? <span className="text-xs text-muted">{tr("Site")}</span> : null}

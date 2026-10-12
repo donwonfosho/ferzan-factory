@@ -4,7 +4,7 @@
  * a hash of exactly what is being saved, and the time. Shared by browser and server.
  */
 
-export type ProofAction = "profile" | "post" | "coin";
+export type ProofAction = "profile" | "post" | "coin" | "stream";
 
 export type Proof = { ts: number; signature: string };
 

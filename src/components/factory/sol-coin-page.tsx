@@ -6,6 +6,7 @@ import { formatPrice, formatSmart, formatUsdPrice, parseDecimal } from "@/lib/fa
 import { WalletNeeded, solanaWallet, useAccountWallets } from "@/lib/factory/wallet-bridge";
 import { cn } from "@/lib/cn";
 import { TvChart } from "./tv-chart";
+import { CoinStream } from "./coin-stream";
 import { Button, TextInput } from "./ui";
 import { CreatorScoreBox } from "./creator-score";
 import { SafetyBadges } from "./safety-badges";
@@ -251,6 +252,7 @@ export function SolCoinPage({ mint }: { mint: string }) {
           : tr("{0} of {1} SOL raised · {2} trades · {3} SOL volume", coin.raisedSol.toFixed(2), coin.gradSol.toFixed(0), coin.trades, coin.volumeSol.toFixed(2))}
       </p>
       <RiskPanel chain="solana" token={coin.mint} progress={coin.progress} curveOpen={!coin.graduated} />
+      <CoinStream chain="solana" token={coin.mint} creator={coin.creator} signer={knownWallet} />
 
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-start">

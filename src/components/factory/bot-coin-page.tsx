@@ -18,6 +18,7 @@ import { cn } from "@/lib/cn";
 import { Button, TextInput } from "./ui";
 import { CurveGraphic } from "./chart-pro";
 import { TvChart } from "./tv-chart";
+import { CoinStream } from "./coin-stream";
 import { CreatorScoreBox } from "./creator-score";
 import { SafetyBadges } from "./safety-badges";
 import { ReportCoin } from "./feedback";
@@ -344,6 +345,7 @@ export function BotCoinPage({ chain, curve }: { chain: BotCurveChain; curve: str
           : tr("{0} of {1} {2} raised.", formatSmart(BigInt(state.realEth), 18), formatSmart(BigInt(state.gradTarget), 18), state.native)}
       </p>
       <RiskPanel chain={state.chain} token={state.token} progress={state.progress} curveOpen={!state.graduated && !opensAt} />
+      <CoinStream chain={state.chain} token={state.token} curve={curve} creator={state.creator} signer={pnlWallet} />
 
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-start">
