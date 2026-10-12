@@ -1,9 +1,8 @@
 /**
  * Server-only bridge to the Ferzan trade desk.
- * The shared secret and the per-request token are built here and never returned.
+ * The visitor's Privy access token is sent to the desk and never logged or returned.
  */
-import { createHmac } from "node:crypto";
-
+const DESK = "https://157-230-80-150.sslip.io";
 const TIMEOUT_MS = 15_000;
 
 class DeskStatus extends Error {
@@ -16,36 +15,7 @@ class DeskStatus extends Error {
   }
 }
 
-function secret(): string {
-  const value = process.env.FERZAN_BRIDGE_SECRET?.trim() ?? "";
-  if (value.length < 32) throw new Error("The terminal is not open yet.");
-  return value;
-}
-
-function apiBase(): string {
-  const raw = (process.env.FERZAN_TRADE_API ?? "").trim();
-  let url: URL;
-  try {
-    url = new URL(raw);
-  } catch {
-    throw new Error("The terminal is not open yet.");
-  }
-  if ((url.protocol !== "https:" && url.protocol !== "http:") || url.username || url.password) {
-    throw new Error("The terminal is not open yet.");
-  }
-  const path = url.pathname.replace(/\/$/, "");
-  return url.origin + (path === "/" ? "" : path);
-}
-
-/** v1.|ts|.tg.|id signed with HMAC-SHA256, then packed as v1.ts.tg.id.sig. */
-export function bridgeToken(telegramUserId: string, now = Math.floor(Date.now() / 1000)): string {
-  const ts = String(now);
-  const msg = `v1|${ts}|tg|${telegramUserId}`;
-  const sig = createHmac("sha256", secret()).update(msg).digest("hex");
-  return `v1.${ts}.tg.${telegramUserId}.${sig}`;
-}
-
-const BANNED = new Set(["bridge", "secret", "telegram_user_id", "telegramUserId"]);
+const BANNED = new Set(["bridge", "privy", "secret", "token", "access_token", "accessToken", "authorization", "telegram_user_id", "telegramUserId"]);
 
 function clip(value: unknown, depth = 0): unknown {
   if (value === null || typeof value === "boolean") return value;
@@ -99,15 +69,15 @@ function toUserError(err: DeskStatus): Error {
   return new Error(err.detail || "The terminal did not answer. Try again.");
 }
 
-async function post(endpoint: string, telegramUserId: string, fields: Record<string, unknown>): Promise<unknown> {
-  const body: Record<string, unknown> = { bridge: bridgeToken(telegramUserId) };
+async function post(endpoint: string, accessToken: string, fields: Record<string, unknown>): Promise<unknown> {
+  const body: Record<string, unknown> = { privy: accessToken };
   for (const [key, value] of Object.entries(fields)) {
-    if (key === "bridge" || value === undefined) continue;
+    if (key === "privy" || key === "bridge" || value === undefined) continue;
     body[key] = value;
   }
   let res: Response;
   try {
-    res = await fetch(`${apiBase()}/api/${endpoint}`, {
+    res = await fetch(`${DESK}/api/${endpoint}`, {
       method: "POST",
       headers: { "content-type": "application/json", accept: "application/json" },
       body: JSON.stringify(body),
@@ -121,8 +91,8 @@ async function post(endpoint: string, telegramUserId: string, fields: Record<str
   return clip(parsed) ?? {};
 }
 
-async function noWallet(telegramUserId: string): Promise<{ noWallet: true; bot_link: string; bot_username: string }> {
-  const me = await post("me", telegramUserId, {}).catch(() => null);
+async function noWallet(accessToken: string): Promise<{ noWallet: true; bot_link: string; bot_username: string }> {
+  const me = await post("me", accessToken, {}).catch(() => null);
   const row = me && typeof me === "object" ? (me as Record<string, unknown>) : {};
   return {
     noWallet: true,
@@ -131,33 +101,27 @@ async function noWallet(telegramUserId: string): Promise<{ noWallet: true; bot_l
   };
 }
 
-/** POST /api/<endpoint>. Portfolio 404 becomes a no-wallet result and does not throw. */
-export async function runDesk(endpoint: string, telegramUserId: string, fields: Record<string, unknown>): Promise<unknown> {
+/** POST /api/<endpoint> with the Privy access token. Portfolio 404 becomes a no-wallet result and does not throw. */
+export async function runDesk(endpoint: string, accessToken: string, fields: Record<string, unknown>): Promise<unknown> {
   try {
     if (endpoint === "portfolio") {
       try {
-        return await post(endpoint, telegramUserId, fields);
+        return await post(endpoint, accessToken, fields);
       } catch (err) {
-        if (err instanceof DeskStatus && err.status === 404) return noWallet(telegramUserId);
+        if (err instanceof DeskStatus && err.status === 404) return noWallet(accessToken);
         throw err;
       }
     }
-    return await post(endpoint, telegramUserId, fields);
+    return await post(endpoint, accessToken, fields);
   } catch (err) {
     if (err instanceof DeskStatus) throw toUserError(err);
     throw err;
   }
 }
 
-/** GET /api/public/safety/:mint. No bridge token. Null when the desk is not configured or did not answer. */
+/** GET /api/public/safety/:mint. No token. Null when the desk did not answer. */
 export async function publicSafety(mint: string, chain: string): Promise<unknown | null> {
-  let base: string;
-  try {
-    base = apiBase();
-  } catch {
-    return null;
-  }
-  const url = new URL(`${base}/api/public/safety/${encodeURIComponent(mint)}`);
+  const url = new URL(`${DESK}/api/public/safety/${encodeURIComponent(mint)}`);
   if (chain) url.searchParams.set("chain", chain);
   try {
     const res = await fetch(url, { headers: { accept: "application/json" }, signal: AbortSignal.timeout(TIMEOUT_MS) });

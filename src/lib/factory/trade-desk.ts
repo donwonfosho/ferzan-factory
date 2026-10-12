@@ -217,7 +217,7 @@ export const deskLinked = createServerFn({ method: "POST" })
     return { linked: Boolean(id) };
   });
 
-/** One desk call. The bridge token stays on the server. */
+/** One desk call. The access token stays on the server. */
 export const deskCall = createServerFn({ method: "POST" })
   .validator((data: unknown): { token: string; op: DeskOp; body: Record<string, unknown> } => {
     const row = rec(data);
@@ -229,9 +229,9 @@ export const deskCall = createServerFn({ method: "POST" })
   })
   .handler(async ({ data }): Promise<string> => {
     await (await import("./guard.server")).guardRelay(SENDS.has(data.op) ? "send" : "read");
-    const id = await telegramOrLock(data.token);
+    await telegramOrLock(data.token);
     const { runDesk } = await import("./trade-desk.server");
-    return JSON.stringify(await runDesk(data.op, id, data.body)) ?? "null";
+    return JSON.stringify(await runDesk(data.op, data.token, data.body)) ?? "null";
   });
 
 /** Public contract check. No account and no bridge token. Null when it cannot be read. */
