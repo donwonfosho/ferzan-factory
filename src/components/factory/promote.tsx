@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { CHAINS, TREASURY } from "@/lib/factory/catalog";
-import { listBoosts, previewBoost, submitBoost, type BoostQuote, type BoostView } from "@/lib/factory/boosts";
+import { listBoosts, previewBoost, setBoostPayer, submitBoost, type BoostQuote, type BoostView } from "@/lib/factory/boosts";
 import { evmWallet, solanaWallet } from "@/lib/factory/wallet-bridge";
 import type { ChainId } from "@/lib/factory/types";
 import { tr } from "@/lib/i18n";
@@ -87,15 +87,18 @@ export function PromoteForm() {
     setNote("");
     let sent = hash.trim();
     let sentNow = false;
+    let wallet = "";
     try {
       if (!sent) {
         if (chain === "solana") {
-          const wallet = await solanaWallet();
+          const connected = await solanaWallet();
+          wallet = connected.address;
+          await setBoostPayer({ data: { quote: quote.quote, chain, payer: wallet } });
           const { solanaRelay } = await import("@/lib/factory/solana");
           const block = (await solanaRelay({ data: { method: "block" } })) as { blockhash?: string };
           if (!block.blockhash) throw new Error(tr("Solana did not return a block."));
           const { PublicKey, SystemProgram, Transaction } = await import("@solana/web3.js");
-          const from = new PublicKey(wallet.address);
+          const from = new PublicKey(wallet);
           const tx = new Transaction({ recentBlockhash: block.blockhash, feePayer: from });
           tx.add(
             SystemProgram.transfer({
@@ -104,9 +107,11 @@ export function PromoteForm() {
               lamports: Number(quote.nativeRaw),
             }),
           );
-          sent = await wallet.signAndSend(tx.serialize({ requireAllSignatures: false, verifySignatures: false }));
+          sent = await connected.signAndSend(tx.serialize({ requireAllSignatures: false, verifySignatures: false }));
         } else {
           const { address, provider } = await evmWallet(chain);
+          wallet = address;
+          await setBoostPayer({ data: { quote: quote.quote, chain, payer: wallet } });
           const raw = await provider.request({
             method: "eth_sendTransaction",
             params: [{ from: address, to: TREASURY.evm, value: `0x${BigInt(quote.nativeRaw).toString(16)}` }],
@@ -116,8 +121,10 @@ export function PromoteForm() {
         }
         sentNow = true;
         setHash(sent);
+      } else {
+        wallet = chain === "solana" ? (await solanaWallet()).address : (await evmWallet(chain)).address;
       }
-      await submitBoost({ data: { chain, coin: quote.coin, hours, hash: sent, quote: quote.quote } });
+      await submitBoost({ data: { chain, coin: quote.coin, hours, hash: sent, quote: quote.quote, wallet } });
       setNote(tr("Promoted. It shows at the top of Pulse until it ends."));
     } catch (err) {
       const message = err instanceof Error ? err.message : tr("The send failed.");

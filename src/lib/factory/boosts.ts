@@ -120,7 +120,7 @@ async function quoteFor(chain: ChainId, hours: Hours): Promise<{ raw: bigint; te
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-async function paidOnChain(chain: ChainId, hash: string): Promise<bigint> {
+async function paidOnChain(chain: ChainId, hash: string): Promise<{ paid: bigint; from: string }> {
   const { TREASURY, SOLANA_RPC } = await import("./catalog");
   if (chain === "solana") {
     const { Connection } = await import("@solana/web3.js");
@@ -129,7 +129,7 @@ async function paidOnChain(chain: ChainId, hash: string): Promise<bigint> {
     type SolTx = {
       meta: { err: unknown; innerInstructions?: { instructions: SolIx[] }[] } | null;
       blockTime: number | null;
-      transaction: { message: { instructions: SolIx[] } };
+      transaction: { message: { accountKeys?: ({ pubkey?: string } | string)[]; instructions: SolIx[] } };
     };
     let tx: SolTx | null = null;
     for (let i = 0; i < 4; i += 1) {
@@ -148,10 +148,10 @@ async function paidOnChain(chain: ChainId, hash: string): Promise<bigint> {
       const lamports = ix.parsed.info.lamports;
       if (typeof lamports === "number" && lamports > 0) paid += BigInt(lamports);
     }
-    return paid;
+    return { paid, from: solanaPayer(tx) };
   }
   const { chainRpc } = await import("./relay");
-  type EvmTx = { to?: string; value?: string } | null;
+  type EvmTx = { from?: string; to?: string; value?: string } | null;
   type EvmReceipt = { status?: string; blockNumber?: string } | null;
   let tx: EvmTx = null;
   let receipt: EvmReceipt = null;
@@ -169,16 +169,39 @@ async function paidOnChain(chain: ChainId, hash: string): Promise<bigint> {
     const ts = block?.timestamp ? Number(BigInt(block.timestamp)) * 1000 : 0;
     if (ts && Date.now() - ts > FRESH_MS) throw new Error("That payment is too old. Send a new one.");
   }
-  return BigInt(tx.value ?? "0");
+  const from = typeof tx.from === "string" ? tx.from.toLowerCase() : "";
+  if (!from) throw new Error("That payment did not come from your wallet.");
+  return { paid: BigInt(tx.value ?? "0"), from };
 }
 
-type StoredQuote = { chain: string; coin: string; hours: number; native_raw: string; live: boolean; used: boolean };
+function solanaPayer(tx: { transaction: { message: { accountKeys?: ({ pubkey?: string } | string)[] } } }): string {
+  const first = tx.transaction.message.accountKeys?.[0];
+  const from = typeof first === "string" ? first : first?.pubkey ?? "";
+  if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(from)) throw new Error("That payment did not come from your wallet.");
+  return from;
+}
+
+function payerOf(chain: string, value: unknown): string {
+  const payer = typeof value === "string" ? value.trim() : "";
+  if (chain === "solana") {
+    if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(payer)) throw new Error("Open the wallet on this site first.");
+    return payer;
+  }
+  if (!/^0x[a-fA-F0-9]{40}$/.test(payer)) throw new Error("Open the wallet on this site first.");
+  return payer.toLowerCase();
+}
+
+function samePayer(chain: string, left: string, right: string): boolean {
+  return chain === "solana" ? left === right : left.toLowerCase() === right.toLowerCase();
+}
+
+type StoredQuote = { chain: string; coin: string; hours: number; native_raw: string; payer: string | null; live: boolean; used: boolean };
 
 async function loadQuote(id: string): Promise<StoredQuote | null> {
   const { getSql } = await import("@/lib/db");
   const sql = await getSql();
   const rows = await sql<StoredQuote>`
-    select chain, coin, hours, native_raw, (expires_at > now()) as live, used
+    select chain, coin, hours, native_raw, payer, (expires_at > now()) as live, used
     from boost_quotes
     where id = ${id}
   `;
@@ -229,19 +252,48 @@ export const previewBoost = createServerFn({ method: "POST" })
     };
   });
 
-export const submitBoost = createServerFn({ method: "POST" })
-  .validator((data: unknown): { chain: ChainId; coin: string; hours: Hours; hash: string; quote: string } => {
-    if (!data || typeof data !== "object") throw new Error("That coin looks wrong.");
-    const row = data as { chain?: unknown; coin?: unknown; hours?: unknown; hash?: unknown; quote?: unknown };
+export const setBoostPayer = createServerFn({ method: "POST" })
+  .validator((data: unknown): { quote: string; chain: ChainId; payer: string } => {
+    if (!data || typeof data !== "object") throw new Error("That quote is not valid. Refresh the price and try again.");
+    const row = data as { quote?: unknown; chain?: unknown; payer?: unknown };
     const chain = chainOf(row.chain);
-    return { chain, coin: coinOf(chain, row.coin), hours: hoursOf(row.hours), hash: hashOf(chain, row.hash), quote: quoteOf(row.quote) };
+    return { quote: quoteOf(row.quote), chain, payer: payerOf(chain, row.payer) };
+  })
+  .handler(async ({ data }): Promise<{ ok: true }> => {
+    await (await import("./guard.server")).guardRelay("send");
+    const { getSql } = await import("@/lib/db");
+    const sql = await getSql();
+    const saved = await sql<{ payer: string }>`
+      update boost_quotes
+      set payer = ${data.payer}
+      where id = ${data.quote}
+        and chain = ${data.chain}
+        and used = false
+        and expires_at > now()
+        and payer is null
+      returning payer
+    `;
+    if (saved[0]) return { ok: true };
+    const row = await loadQuote(data.quote);
+    if (row && row.chain === data.chain && row.payer && samePayer(data.chain, row.payer, data.payer) && !row.used && row.live) return { ok: true };
+    throw new Error("That quote is not valid. Refresh the price and try again.");
+  });
+
+export const submitBoost = createServerFn({ method: "POST" })
+  .validator((data: unknown): { chain: ChainId; coin: string; hours: Hours; hash: string; quote: string; wallet: string } => {
+    if (!data || typeof data !== "object") throw new Error("That coin looks wrong.");
+    const row = data as { chain?: unknown; coin?: unknown; hours?: unknown; hash?: unknown; quote?: unknown; wallet?: unknown };
+    const chain = chainOf(row.chain);
+    return { chain, coin: coinOf(chain, row.coin), hours: hoursOf(row.hours), hash: hashOf(chain, row.hash), quote: quoteOf(row.quote), wallet: payerOf(chain, row.wallet) };
   })
   .handler(async ({ data }): Promise<{ ok: true; endsAt: string }> => {
     await (await import("./guard.server")).guardRelay("send");
     const coin = await findCoin(data.chain, data.coin);
     const stored = assertQuote(await loadQuote(data.quote), data);
     const quoted = BigInt(stored.native_raw);
-    const paid = await paidOnChain(data.chain, data.hash);
+    const { paid, from } = await paidOnChain(data.chain, data.hash);
+    const expected = stored.payer && stored.payer.length > 0 ? stored.payer : data.wallet;
+    if (!samePayer(data.chain, from, expected)) throw new Error("That payment did not come from your wallet.");
     const min = (quoted * 95n) / 100n;
     if (paid < min) throw new Error("That payment is short of this tier.");
     const { getSql } = await import("@/lib/db");
