@@ -735,6 +735,7 @@ const dict: Record<string, string> = {
   "One tap puts Ferzan on your home screen. It opens full screen like an app, straight to the Floor.": "Одно нажатие помещает Ferzan на главный экран. Он открывается в полноэкранном режиме, как приложение, прямо на этаже.",
   "Only on Ferzan": "Только Ferzan",
   "Open": "Открыть",
+  "Open @Ferzan_Trade_Bot": "Открыть @Ferzan_Trade_Bot",
   "Open Raydium pool": "Открыть пул Raydium",
   "Open a contract": "Открыть контракт",
   "Open a wallet on this site first.": "Сначала открыть кошелек на этом сайте.",
@@ -958,6 +959,7 @@ const dict: Record<string, string> = {
   "Telegram bots": "Telegram ботов",
   "Telegram chat": "Telegram в чат",
   "Telegram hub": "Telegram хаб",
+  "Telegram sign-in works on ferzan-factory.com. If that address does not open for you, use the same terminal inside Telegram:": "Вход через Telegram работает на ferzan-factory.com. Если этот адрес не открывается, пользуйтесь тем же терминалом внутри Telegram:",
   "Telegram text copied.": "Telegram текст скопирован.",
   'Telegram will ask for your phone number, then send a login request inside the Telegram app (not a text message). Open Telegram, go to the chat named "Telegram" with the blue checkmark, and tap Confirm.':
     "Telegram спросит номер телефона, затем отправит запрос на вход внутри приложения Telegram (это не SMS). Откройте Telegram, зайдите в чат с именем «Telegram» и синей галочкой и нажмите «Подтвердить».",

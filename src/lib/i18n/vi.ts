@@ -735,6 +735,7 @@ const dict: Record<string, string> = {
   "One tap puts Ferzan on your home screen. It opens full screen like an app, straight to the Floor.": "Một lần nhấn sẽ đặt Ferzan trên màn hình chính của bạn. Nó mở toàn màn hình giống như một ứng dụng, thẳng đến Sàn.",
   "Only on Ferzan": "Chỉ trên Ferzan",
   "Open": "Mở",
+  "Open @Ferzan_Trade_Bot": "Mở @Ferzan_Trade_Bot",
   "Open Raydium pool": "Mở nhóm Raydium",
   "Open a contract": "Mở hợp đồng",
   "Open a wallet on this site first.": "Trước tiên hãy mở ví trên trang web này.",
@@ -958,6 +959,7 @@ const dict: Record<string, string> = {
   "Telegram bots": "Telegram bot",
   "Telegram chat": "Telegram trò chuyện",
   "Telegram hub": "Telegram hub",
+  "Telegram sign-in works on ferzan-factory.com. If that address does not open for you, use the same terminal inside Telegram:": "Đăng nhập Telegram hoạt động trên ferzan-factory.com. Nếu địa chỉ đó không mở được, hãy dùng cùng terminal bên trong Telegram:",
   "Telegram text copied.": "Telegram đã sao chép văn bản.",
   'Telegram will ask for your phone number, then send a login request inside the Telegram app (not a text message). Open Telegram, go to the chat named "Telegram" with the blue checkmark, and tap Confirm.':
     'Telegram sẽ hỏi số điện thoại của bạn, rồi gửi yêu cầu đăng nhập bên trong ứng dụng Telegram (không phải tin nhắn SMS). Mở Telegram, vào cuộc trò chuyện tên "Telegram" có dấu tích xanh và nhấn Xác nhận.',

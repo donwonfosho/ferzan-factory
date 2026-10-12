@@ -739,6 +739,7 @@ const dict: Record<string, string> = {
   "One tap puts Ferzan on your home screen. It opens full screen like an app, straight to the Floor.": "一键把 Ferzan 放到主屏幕。它会像应用一样全屏打开，直接进入大厅。",
   "Only on Ferzan": "只有 Ferzan 才有",
   "Open": "打开",
+  "Open @Ferzan_Trade_Bot": "打开 @Ferzan_Trade_Bot",
   "Open Raydium pool": "开启 Raydium 资金池",
   "Open a contract": "打开合约",
   "Open a wallet on this site first.": "请先在本站打开一个钱包。",
@@ -965,6 +966,7 @@ const dict: Record<string, string> = {
   "Telegram bots": "Telegram 机器人",
   "Telegram chat": "Telegram 聊天群",
   "Telegram hub": "Telegram 中心",
+  "Telegram sign-in works on ferzan-factory.com. If that address does not open for you, use the same terminal inside Telegram:": "Telegram 登录只在 ferzan-factory.com 上可用。如果这个地址打不开，请在 Telegram 里用同一个终端：",
   "Telegram text copied.": "已复制 Telegram 文案。",
   'Telegram will ask for your phone number, then send a login request inside the Telegram app (not a text message). Open Telegram, go to the chat named "Telegram" with the blue checkmark, and tap Confirm.':
     "Telegram 会先要你的手机号，然后在 Telegram 应用里发送一条登录请求（不是短信）。打开 Telegram，进入带蓝色对勾、名为“Telegram”的聊天，点确认。",

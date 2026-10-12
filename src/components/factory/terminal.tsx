@@ -91,10 +91,14 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
+const OFF_HOST =
+  "Telegram sign-in works on ferzan-factory.com. If that address does not open for you, use the same terminal inside Telegram:";
+
 export function TerminalPage() {
   const account = useAccountWallets();
   const accountRef = useRef(account);
   accountRef.current = account;
+  const [offHost, setOffHost] = useState(false);
   const [gate, setGate] = useState<Gate>("wait");
   const [tab, setTab] = useState<Tab>("trade");
   const [err, setErr] = useState("");
@@ -122,6 +126,10 @@ export function TerminalPage() {
   const [lastOrder, setLastOrder] = useState<Rec | null>(null);
   const [alertTarget, setAlertTarget] = useState("2m");
   const [copyAddress, setCopyAddress] = useState("");
+
+  useEffect(() => {
+    setOffHost(window.location.hostname !== "ferzan-factory.com");
+  }, []);
 
   useEffect(() => {
     if (!account?.ready) return;
@@ -292,12 +300,23 @@ export function TerminalPage() {
     return (
       <div className="mx-auto max-w-lg">
         <h1 className="text-4xl">{tr("Terminal")}</h1>
-        <p className="mt-4 text-lg">{tr(LOCKED)}</p>
-        <p className="mt-2 text-sm text-muted">{tr("Buys and sells go through your Telegram bot. Keys and withdrawals stay in that chat.")}</p>
-        {err ? <p className="mt-3 text-sm text-muted">{err}</p> : null}
-        <Button className="mt-6" onClick={() => account?.linkTelegram()}>
-          {gate === "out" ? tr("Sign in") : tr("Link Telegram")}
-        </Button>
+        {offHost ? (
+          <>
+            <p className="mt-4 text-lg">{tr(OFF_HOST)}</p>
+            <a className="btn-cyan mt-6 inline-flex" href="https://t.me/Ferzan_Trade_Bot" target="_blank" rel="noopener noreferrer">
+              {tr("Open @Ferzan_Trade_Bot")}
+            </a>
+          </>
+        ) : (
+          <>
+            <p className="mt-4 text-lg">{tr(LOCKED)}</p>
+            <p className="mt-2 text-sm text-muted">{tr("Buys and sells go through your Telegram bot. Keys and withdrawals stay in that chat.")}</p>
+            {err ? <p className="mt-3 text-sm text-muted">{err}</p> : null}
+            <Button className="mt-6" onClick={() => account?.linkTelegram()}>
+              {gate === "out" ? tr("Sign in") : tr("Link Telegram")}
+            </Button>
+          </>
+        )}
       </div>
     );
   }

@@ -735,6 +735,7 @@ const dict: Record<string, string> = {
   "One tap puts Ferzan on your home screen. It opens full screen like an app, straight to the Floor.": "Um toque coloca Ferzan na tela inicial. Ele abre em tela cheia como um aplicativo, direto para o Floor.",
   "Only on Ferzan": "Somente em Ferzan",
   "Open": "Abrir",
+  "Open @Ferzan_Trade_Bot": "Abrir @Ferzan_Trade_Bot",
   "Open Raydium pool": "Abrir pool Raydium",
   "Open a contract": "Abrir um contrato",
   "Open a wallet on this site first.": "Abra uma carteira neste site primeiro.",
@@ -958,6 +959,7 @@ const dict: Record<string, string> = {
   "Telegram bots": "Telegram bots",
   "Telegram chat": "Telegram chat",
   "Telegram hub": "Telegram hub",
+  "Telegram sign-in works on ferzan-factory.com. If that address does not open for you, use the same terminal inside Telegram:": "O início de sessão com o Telegram funciona em ferzan-factory.com. Se esse endereço não abrir, use o mesmo terminal dentro do Telegram:",
   "Telegram text copied.": "Telegram texto copiado.",
   'Telegram will ask for your phone number, then send a login request inside the Telegram app (not a text message). Open Telegram, go to the chat named "Telegram" with the blue checkmark, and tap Confirm.':
     'O Telegram vai pedir o seu número de telefone e depois enviar um pedido de início de sessão dentro da app Telegram (não é uma mensagem de texto). Abra o Telegram, entre no chat chamado "Telegram" com o visto azul e toque em Confirmar.',
