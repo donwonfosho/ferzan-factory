@@ -5,6 +5,7 @@ import { cn } from "@/lib/cn";
 import { ChainMark, type MarkChain } from "./chain-mark";
 import { compactUsd } from "./market-line";
 import { Mark } from "./ui";
+import { FollowButton } from "./follow";
 
 import { tr } from "@/lib/i18n";
 const MARKS = new Set(["solana", "base", "bsc", "ethereum", "robinhood", "arc", "tron", "ton"]);
@@ -62,6 +63,9 @@ export function CreatorPage({ wallet }: { wallet: string }) {
     return (
       <div className="ticket mx-auto max-w-3xl">
         <h1 className="text-3xl">{short}</h1>
+        <div className="mt-3">
+          <FollowButton creator={wallet} />
+        </div>
         <p className="mt-2 text-sm text-muted">{tr("This wallet has not launched a coin through Ferzan yet.")}</p>
       </div>
     );
@@ -95,6 +99,7 @@ export function CreatorPage({ wallet }: { wallet: string }) {
         </div>
         </div>
         <div className="flex gap-2">
+          <FollowButton creator={wallet} />
           {c.followUrl ? (
             <a className="btn-cyan" href={c.followUrl} target="_blank" rel="noopener noreferrer">
               {tr("🔔 Follow")}

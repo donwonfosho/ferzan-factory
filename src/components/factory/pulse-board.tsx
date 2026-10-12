@@ -9,13 +9,14 @@ import { compactUsd } from "./market-line";
 import { QuickBuyBar, QuickBuyButton } from "./quick-buy";
 import { Mark } from "./ui";
 import { WatchlistStrip } from "./watch";
+import { sameCreator, useFollows } from "./follow";
 
 import { tr } from "@/lib/i18n";
 import { tryFive } from "@/lib/factory/retry";
 const CHAIN_KEY = "ferzan-pulse-chain";
 const API_CHAINS = new Set(["base", "bsc", "ethereum", "robinhood", "solana", "arc", "tron", "ton"]);
 const MARKS = new Set(["solana", "base", "bsc", "ethereum", "robinhood", "arc", "tron", "ton"]);
-const TABS = ["trending", "new", "soon", "graduated"] as const;
+const TABS = ["trending", "new", "soon", "graduated", "following"] as const;
 type Tab = (typeof TABS)[number];
 const WINDOWS = ["5m", "1h", "24h"] as const;
 type Window = (typeof WINDOWS)[number];
@@ -24,6 +25,7 @@ const TAB_LABEL: Record<Tab, string> = {
   new: "New",
   soon: "Graduating soon",
   graduated: "Graduated",
+  following: "Following",
 };
 const WINDOW_LABEL: Record<Window, string> = { "5m": "5 minutes", "1h": "1 hour", "24h": "24 hours" };
 
@@ -51,8 +53,14 @@ function volumeOf(coin: TelegramCoin, window: Window): number | null {
   return coin.vol24Usd;
 }
 
-function pick(rows: TelegramCoin[], tab: Tab, window: Window): { rows: TelegramCoin[]; missing: boolean } {
+function pick(rows: TelegramCoin[], tab: Tab, window: Window, follows: string[]): { rows: TelegramCoin[]; missing: boolean } {
   if (tab === "new") return { rows: [...rows].sort((a, b) => b.launchedTs - a.launchedTs), missing: false };
+  if (tab === "following") {
+    return {
+      rows: rows.filter((c) => follows.some((creator) => sameCreator(creator, c.creator))).sort((a, b) => b.launchedTs - a.launchedTs),
+      missing: false,
+    };
+  }
   if (tab === "soon") {
     return { rows: rows.filter((c) => c.progress !== null && c.progress > 70 && !c.graduated), missing: false };
   }
@@ -105,6 +113,7 @@ export function PulseBoard() {
   const [note, setNote] = useState("");
   const [now, setNow] = useState(() => Date.now());
   const live = useLiveConnected();
+  const follows = useFollows();
   const seen = useRef(false);
 
   useEffect(() => {
@@ -142,7 +151,7 @@ export function PulseBoard() {
     }
   }
 
-  const shown = coins ? pick(coins, tab, windowId) : null;
+  const shown = coins ? pick(coins, tab, windowId, follows) : null;
 
   return (
     <div className="space-y-4">

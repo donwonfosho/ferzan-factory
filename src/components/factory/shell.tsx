@@ -23,6 +23,7 @@ import { MobileNav } from "./mobile-nav";
 import { QuickBuyToast } from "./quick-buy";
 import { SearchButton, SearchOverlay } from "./search";
 import { WatchSync } from "./watch";
+import { FollowSync } from "./follow";
 import { tr } from "@/lib/i18n";
 import { LangPicker } from "./lang";
 import { captureEvmRef, captureRef } from "@/lib/factory/compete";
@@ -102,6 +103,7 @@ export function Shell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen">
       <WatchSync />
+      <FollowSync />
       <div className="sticky top-0 z-40">
         <StatusBanner />
         <div className="h-px bg-cyan" />
