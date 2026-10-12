@@ -264,6 +264,107 @@ export const deskCashout = createServerFn({ method: "POST" })
     return JSON.stringify(await cashoutSelf(data.token, data.chain, data.amount)) ?? "null";
   });
 
+const SYSTEM_PROGRAM = "11111111111111111111111111111111";
+const COMPUTE_BUDGET = "ComputeBudget111111111111111111111111111111";
+const SOL_ADDR = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+
+type TopupTx = {
+  version?: number | "legacy";
+  signatures: Uint8Array[];
+  message: {
+    addressTableLookups?: readonly unknown[];
+    staticAccountKeys: { toBase58(): string }[];
+    compiledInstructions: { programIdIndex: number; accountKeyIndexes: number[]; data: Uint8Array }[];
+  };
+};
+
+/** A top-up may only be one System transfer into this user's Trading Wallet, plus one optional compute-budget instruction. */
+export function assertSolTopup(tx: TopupTx, from: string, to: string): void {
+  if (tx.version !== 0) throw new Error("Transaction looks wrong. Nothing was sent.");
+  if (tx.message.addressTableLookups?.length) throw new Error("That transfer looks wrong. Nothing was sent.");
+  const sig = tx.signatures[0];
+  if (!sig || sig.length < 64 || sig.every((b) => b === 0)) throw new Error("Transaction looks wrong. Nothing was sent.");
+  const keys = tx.message.staticAccountKeys.map((key) => key.toBase58());
+  if (keys[0] !== from) throw new Error("That transfer looks wrong. Nothing was sent.");
+  let transfers = 0;
+  let budgets = 0;
+  for (const ix of tx.message.compiledInstructions) {
+    const program = keys[ix.programIdIndex] ?? "";
+    if (program === COMPUTE_BUDGET) {
+      budgets += 1;
+      if (budgets > 1) throw new Error("That transfer looks wrong. Nothing was sent.");
+      continue;
+    }
+    if (program !== SYSTEM_PROGRAM) throw new Error("That transfer looks wrong. Nothing was sent.");
+    const data = Buffer.from(ix.data);
+    const lamports = data.length === 12 ? data.readBigUInt64LE(4) : 0n;
+    const src = keys[ix.accountKeyIndexes[0] ?? -1] ?? "";
+    const dst = keys[ix.accountKeyIndexes[1] ?? -1] ?? "";
+    if (data.length !== 12 || data.readUInt32LE(0) !== 2 || lamports <= 0n || ix.accountKeyIndexes.length !== 2 || src !== from || dst !== to) {
+      throw new Error("That transfer looks wrong. Nothing was sent.");
+    }
+    transfers += 1;
+  }
+  if (transfers !== 1) throw new Error("That transfer looks wrong. Nothing was sent.");
+}
+
+function solanaAddressOf(linked: { type?: string; address?: string }[]): string {
+  const rows = linked.flatMap((row) => {
+    const extra = row as { chain_type?: string; chainType?: string; wallet_client_type?: string; walletClientType?: string };
+    const address = typeof row.address === "string" ? row.address : "";
+    if (!SOL_ADDR.test(address)) return [];
+    const chain = extra.chain_type || extra.chainType || "";
+    if (chain && chain !== "solana") return [];
+    return [{ address, chain, client: extra.wallet_client_type || extra.walletClientType || "" }];
+  });
+  const pool = rows.some((row) => row.chain === "solana") ? rows.filter((row) => row.chain === "solana") : rows;
+  const own = pool.find((row) => row.client === "privy") ?? pool[0];
+  if (!own) throw new Error("This account has no Solana wallet yet.");
+  return own.address;
+}
+
+/** Sign-and-send a SOL top-up from My Wallet to this user's Trading Wallet. The general relay stays Ferzan-only. */
+export const deskTopupSol = createServerFn({ method: "POST" })
+  .validator((data: unknown): { token: string; signedB64: string } => {
+    const row = rec(data);
+    const token = row.token;
+    if (typeof token !== "string" || token.length < 20 || token.length > 16_000) throw new Error("Sign in again.");
+    const signedB64 = typeof row.signedB64 === "string" ? row.signedB64 : "";
+    if (!/^[A-Za-z0-9+/=]{100,2000}$/.test(signedB64)) throw new Error("Transaction looks wrong. Nothing was sent.");
+    return { token, signedB64 };
+  })
+  .handler(async ({ data }): Promise<{ signature: string }> => {
+    await (await import("./guard.server")).guardRelay("send");
+    await telegramOrLock(data.token);
+    const { verifyIdentity } = await import("./privy-identity.server");
+    const from = solanaAddressOf((await verifyIdentity(data.token)).linked);
+    const { runDesk } = await import("./trade-desk.server");
+    const me = rec(await runDesk("me", data.token, {}));
+    const sol = rec(me.addresses).sol;
+    const to = typeof sol === "string" ? sol : "";
+    if (!SOL_ADDR.test(to)) throw new Error("This chain has no Trading Wallet yet.");
+    const { VersionedTransaction } = await import("@solana/web3.js");
+    let tx: TopupTx;
+    try {
+      tx = VersionedTransaction.deserialize(Buffer.from(data.signedB64, "base64"));
+    } catch {
+      throw new Error("Transaction looks wrong. Nothing was sent.");
+    }
+    assertSolTopup(tx, from, to);
+    const res = await fetch("https://launch.ferzaneco.com/api/sol-fees/send", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ signed_tx_b64: data.signedB64 }),
+      signal: AbortSignal.timeout(45_000),
+    }).catch(() => null);
+    if (!res) throw new Error("Solana did not answer. Try again.");
+    const out = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+    if (!res.ok) throw new Error(typeof out.detail === "string" ? out.detail.slice(0, 200) : `Sending failed (${res.status}).`);
+    const signature = typeof out.signature === "string" ? out.signature : "";
+    if (!/^[1-9A-HJ-NP-Za-km-z]{64,88}$/.test(signature)) throw new Error("Solana did not return a signature.");
+    return { signature };
+  });
+
 /** Public contract check. No account and no bridge token. Null when it cannot be read. */
 export const deskSafety = createServerFn({ method: "GET" })
   .validator((data: unknown): { mint: string; chain: string } => {

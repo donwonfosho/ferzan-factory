@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { explorerTx } from "@/lib/factory/deploy";
 import { readBalance } from "@/lib/factory/relay";
 import { solanaExplorerTx, solBalance } from "@/lib/factory/solana";
 import { formatUnits, parseDecimal } from "@/lib/factory/units";
-import { deskCall, deskCashout, normalizeTypedAmount } from "@/lib/factory/trade-desk";
-import { evmWallet, solanaWallet, useAccountWallets } from "@/lib/factory/wallet-bridge";
+import { deskCall, deskCashout, deskTopupSol, normalizeTypedAmount } from "@/lib/factory/trade-desk";
+import { evmWallet, useAccountWallets } from "@/lib/factory/wallet-bridge";
 import { tr } from "@/lib/i18n";
 
 type Rec = Record<string, unknown>;
@@ -22,6 +22,12 @@ function rec(value: unknown): Rec {
 
 function text(value: unknown): string {
   return typeof value === "string" ? value : "";
+}
+
+function toBase64(bytes: Uint8Array): string {
+  let text = "";
+  for (const b of bytes) text += String.fromCharCode(b);
+  return btoa(text);
 }
 
 const EVM_ADDRESS = /^0x[0-9a-fA-F]{40}$/;
@@ -95,6 +101,11 @@ export function WalletsPanel({ me: given, onRefresh }: { me?: Rec | null; onRefr
   const [link, setLink] = useState("");
   const [botHref, setBotHref] = useState("");
   const [tick, setTick] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
+  const alive = useRef(true);
+  useEffect(() => () => {
+    alive.current = false;
+  }, []);
 
   const addresses = rec(me?.addresses);
   const solDesk = text(addresses.sol);
@@ -148,6 +159,7 @@ export function WalletsPanel({ me: given, onRefresh }: { me?: Rec | null; onRefr
 
   useEffect(() => {
     let stop = false;
+    setRefreshing(true);
     const jobs: [string, Promise<bigint>][] = [];
     if (account?.solAddress) jobs.push([`my:sol`, solBalance(account.solAddress)]);
     if (solDesk) jobs.push([`desk:sol`, solBalance(solDesk)]);
@@ -166,7 +178,7 @@ export function WalletsPanel({ me: given, onRefresh }: { me?: Rec | null; onRefr
           try {
             next[key] = formatUnits(await job, 9, 4) + " SOL";
           } catch {
-            /* leave unread */
+            /* keep the previous balance */
           }
         }),
         ...evmReads.map(async ([key, chain, address]) => {
@@ -175,11 +187,14 @@ export function WalletsPanel({ me: given, onRefresh }: { me?: Rec | null; onRefr
             const unit = EVM_TOP.find((row) => row.id === chain)?.unit ?? "";
             next[key] = `${formatUnits(BigInt(wei), 18, 4)} ${unit}`;
           } catch {
-            /* leave unread */
+            /* keep the previous balance */
           }
         }),
       ]);
-      if (!stop) setBalances(next);
+      if (!stop) {
+        setBalances((prev) => ({ ...prev, ...next }));
+        setRefreshing(false);
+      }
     })();
     return () => {
       stop = true;
@@ -202,15 +217,26 @@ export function WalletsPanel({ me: given, onRefresh }: { me?: Rec | null; onRefr
   }
 
   function refresh() {
+    if (!alive.current) return;
     setTick((n) => n + 1);
     onRefresh?.();
+  }
+
+  function refreshSoon() {
+    refresh();
+    for (const ms of [12_000, 40_000]) {
+      window.setTimeout(() => refresh(), ms);
+    }
   }
 
   async function maxTop() {
     setMsg("");
     try {
       if (topChain === "sol") {
-        if (!account?.solAddress) return;
+        if (!account?.solAddress) {
+          setMsg(tr("This account has no Solana wallet yet."));
+          return;
+        }
         const bal = await solBalance(account.solAddress);
         const keep = 5000n;
         if (bal <= keep) {
@@ -220,7 +246,10 @@ export function WalletsPanel({ me: given, onRefresh }: { me?: Rec | null; onRefr
         setTopAmount(formatUnits(bal - keep, 9, 6));
         return;
       }
-      if (!account?.evmAddress) return;
+      if (!account?.evmAddress) {
+        setMsg(tr("This account has no EVM wallet yet."));
+        return;
+      }
       const { wei } = await readBalance({ data: { chain: topChain, address: account.evmAddress } });
       const { provider } = await evmWallet(topChain);
       const gas = await provider.request({ method: "eth_gasPrice" });
@@ -252,19 +281,26 @@ export function WalletsPanel({ me: given, onRefresh }: { me?: Rec | null; onRefr
         const lamports = parseDecimal(normalizeTypedAmount(topAmount), 9);
         if (!lamports || lamports <= 0n) throw new Error(tr("Type how much to send."));
         if (lamports > BigInt(Number.MAX_SAFE_INTEGER)) throw new Error(tr("Type how much to send."));
-        const wallet = await solanaWallet();
-        const { PublicKey, SystemProgram, Transaction } = await import("@solana/web3.js");
+        if (!account?.solAddress || !account.solSign) throw new Error(tr("This account has no Solana wallet yet."));
+        const token = await account.identityToken();
+        if (!token) throw new Error(tr("Sign in again."));
+        const { PublicKey, SystemProgram, TransactionMessage, VersionedTransaction } = await import("@solana/web3.js");
         const { solanaRelay } = await import("@/lib/factory/solana");
         const block = await solanaRelay({ data: { method: "block" } });
-        if (!("blockhash" in block) || typeof block.blockhash !== "string" || typeof block.lastValidBlockHeight !== "number") throw new Error(tr("The terminal did not answer. Try again."));
-        const from = new PublicKey(wallet.address);
-        const tx = new Transaction({ feePayer: from, blockhash: block.blockhash, lastValidBlockHeight: block.lastValidBlockHeight }).add(
-          SystemProgram.transfer({ fromPubkey: from, toPubkey: new PublicKey(solDesk), lamports: Number(lamports) }),
-        );
-        const raw = tx.serialize({ requireAllSignatures: false, verifySignatures: false });
-        const signature = await wallet.signAndSend(raw);
-        setLink(solanaExplorerTx(signature));
-        setMsg(tr("Sent. {0}", signature));
+        if (!("blockhash" in block) || typeof block.blockhash !== "string") throw new Error(tr("The terminal did not answer. Try again."));
+        const from = new PublicKey(account.solAddress);
+        const message = new TransactionMessage({
+          payerKey: from,
+          recentBlockhash: block.blockhash,
+          instructions: [SystemProgram.transfer({ fromPubkey: from, toPubkey: new PublicKey(solDesk), lamports: Number(lamports) })],
+        }).compileToV0Message();
+        const signed = await account.solSign(new VersionedTransaction(message).serialize());
+        const sent = await deskTopupSol({ data: { token, signedB64: toBase64(signed) } });
+        setLink(solanaExplorerTx(sent.signature));
+        setMsg(tr("Sent. View on Solscan"));
+        setTopAmount("");
+        refreshSoon();
+        return;
       } else {
         if (!evmDesk) throw new Error(tr("This chain has no Trading Wallet yet."));
         if (!(await deskAddressOk(topChain, evmDesk))) {
@@ -332,6 +368,7 @@ export function WalletsPanel({ me: given, onRefresh }: { me?: Rec | null; onRefr
 
   return (
     <div className="grid gap-3">
+      {refreshing ? <p className="text-sm text-muted">{tr("Refreshing…")}</p> : null}
       {noteOn ? (
         <div className="term-card text-sm">
           <p>
@@ -460,7 +497,7 @@ export function WalletsPanel({ me: given, onRefresh }: { me?: Rec | null; onRefr
       ) : null}
       {link ? (
         <a className="text-sm text-cyan" href={link} target="_blank" rel="noopener noreferrer">
-          {tr("View on explorer")}
+          {link.includes("solscan.io") ? tr("View on Solscan") : tr("View on explorer")}
         </a>
       ) : null}
       {toast ? <p className="text-sm text-cyan">{toast}</p> : null}

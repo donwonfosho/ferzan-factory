@@ -11,6 +11,22 @@ type Rec = Record<string, unknown>;
 type Gate = "wait" | "out" | "check" | "locked" | "open";
 type Tab = "trade" | "book" | "wallets" | "watch" | "feed";
 
+const TAB_HASH: Record<Tab, string> = {
+  trade: "trade",
+  book: "portfolio",
+  wallets: "wallets",
+  watch: "watch",
+  feed: "feed",
+};
+
+function tabFromHash(hash: string): Tab | null {
+  const id = hash.replace(/^#/, "");
+  if (id === "trade" || id === "watch" || id === "feed") return id;
+  if (id === "portfolio") return "book";
+  if (id === "wallets") return "wallets";
+  return null;
+}
+
 const LOCKED = "Link Telegram to unlock the terminal";
 
 function rec(value: unknown): Rec {
@@ -182,6 +198,9 @@ export function TerminalPage() {
   const [offHost, setOffHost] = useState(false);
   const [gate, setGate] = useState<Gate>("wait");
   const [tab, setTab] = useState<Tab>("trade");
+  const tabRef = useRef(tab);
+  tabRef.current = tab;
+  const loadTab = useRef<(id: Tab) => void>(() => {});
   const [err, setErr] = useState("");
   const [me, setMe] = useState<Rec | null>(null);
   const [book, setBook] = useState<Rec | null>(null);
@@ -215,17 +234,34 @@ export function TerminalPage() {
   }, []);
 
   useEffect(() => {
-    if (!account?.ready) return;
-    if (!account.authenticated) {
-      setGate("out");
+    const next = tabFromHash(window.location.hash);
+    if (next) setTab(next);
+    const sync = () => {
+      const picked = tabFromHash(window.location.hash);
+      if (picked) setTab(picked);
+    };
+    window.addEventListener("hashchange", sync);
+    return () => window.removeEventListener("hashchange", sync);
+  }, []);
+
+  useEffect(() => {
+    if (gate !== "open") return;
+    loadTab.current(tabRef.current);
+  }, [gate]);
+
+  useEffect(() => {
+    const current = accountRef.current;
+    if (!current?.ready) return;
+    if (!current.authenticated) {
+      setGate((g) => (g === "open" ? g : "out"));
       return;
     }
     let stop = false;
-    setGate("check");
-    void account.identityToken().then(async (token) => {
+    setGate((g) => (g === "open" ? g : "check"));
+    void current.identityToken().then(async (token) => {
       if (stop) return;
       if (!token) {
-        setGate("out");
+        setGate((g) => (g === "open" ? g : "out"));
         return;
       }
       try {
@@ -234,14 +270,14 @@ export function TerminalPage() {
       } catch (e) {
         if (!stop) {
           setErr(e instanceof Error ? e.message : "Sign in again");
-          setGate("out");
+          setGate((g) => (g === "open" ? g : "out"));
         }
       }
     });
     return () => {
       stop = true;
     };
-  }, [account]);
+  }, [account?.ready, account?.authenticated, account?.userId]);
 
   async function call(op: DeskOp, body: Rec = {}): Promise<unknown> {
     const token = await account?.identityToken();
@@ -382,6 +418,14 @@ export function TerminalPage() {
     }
   }
 
+  loadTab.current = (id) => {
+    if (id === "watch") void loadWatch();
+    if (id === "feed") {
+      void loadFeed();
+      void loadMore();
+    }
+  };
+
   if (gate === "wait" || gate === "check") {
     return (
       <div className="term-page mx-auto max-w-lg">
@@ -436,6 +480,10 @@ export function TerminalPage() {
 
   function pickTab(id: Tab) {
     setTab(id);
+    const next = `#${TAB_HASH[id]}`;
+    if (window.location.hash !== next) {
+      window.history.replaceState(window.history.state, "", `${window.location.pathname}${window.location.search}${next}`);
+    }
     if (id === "watch") void loadWatch();
     if (id === "feed") {
       void loadFeed();
@@ -807,7 +855,7 @@ export function TerminalPage() {
               onClick={() => {
                 if (text(item.mint)) {
                   setMint(text(item.mint));
-                  setTab("trade");
+                  pickTab("trade");
                 }
               }}
             >
