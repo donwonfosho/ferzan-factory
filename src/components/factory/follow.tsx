@@ -55,7 +55,7 @@ function save(next: string[], sync = true) {
 async function pushDiff(prev: string[], next: string[]) {
   const account = accountWallets();
   if (!account?.authenticated) return;
-  const token = await account.accessToken();
+  const token = await account.identityToken();
   if (!token) return;
   for (const creator of next) {
     if (prev.some((item) => sameCreator(item, creator))) continue;
@@ -75,7 +75,7 @@ export function FollowSync() {
     let stop = false;
     void (async () => {
       const live = accountWallets();
-      const token = live ? await live.accessToken() : null;
+      const token = live ? await live.identityToken() : null;
       if (!token || stop) return;
       const remote = await listFollows({ data: { token } }).catch(() => [] as string[]);
       if (stop) return;

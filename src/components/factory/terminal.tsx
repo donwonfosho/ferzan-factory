@@ -139,7 +139,7 @@ export function TerminalPage() {
     }
     let stop = false;
     setGate("check");
-    void account.accessToken().then(async (token) => {
+    void account.identityToken().then(async (token) => {
       if (stop) return;
       if (!token) {
         setGate("out");
@@ -161,7 +161,7 @@ export function TerminalPage() {
   }, [account]);
 
   async function call(op: DeskOp, body: Rec = {}): Promise<unknown> {
-    const token = await account?.accessToken();
+    const token = await account?.identityToken();
     if (!token) throw new Error("Sign in again");
     const raw = await deskCall({ data: { token, op, body } });
     return JSON.parse(raw) as unknown;
@@ -171,7 +171,7 @@ export function TerminalPage() {
     if (gate !== "open") return;
     let stop = false;
     void (async () => {
-      const token = await accountRef.current?.accessToken();
+      const token = await accountRef.current?.identityToken();
       if (!token || stop) return;
       try {
         const [who, port] = await Promise.all([
@@ -202,7 +202,7 @@ export function TerminalPage() {
         setOrderId("");
         return;
       }
-      void accountRef.current?.accessToken().then(async (token) => {
+      void accountRef.current?.identityToken().then(async (token) => {
         if (!token || stop) return;
         const row = rec(JSON.parse(await deskCall({ data: { token, op: "order/status", body: { id: orderId } } })) as unknown);
         if (stop) return;

@@ -61,8 +61,10 @@ export type AccountWallets = {
   signSolMessage?: (message: Uint8Array) => Promise<Uint8Array>;
   /** Privy user id when signed in. Null when signed out. */
   userId: string | null;
-  /** Privy access token for this account, or null when signed out. */
+  /** Privy access token for wallet APIs, or null when signed out. */
   accessToken: () => Promise<string | null>;
+  /** Privy identity token for server checks, or null when signed out. */
+  identityToken: () => Promise<string | null>;
   /** Opens Privy's Telegram link. Signs in first when there is no account. */
   linkTelegram: () => void;
 };

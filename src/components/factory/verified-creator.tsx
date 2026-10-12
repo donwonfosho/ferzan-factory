@@ -42,7 +42,7 @@ export function VerifiedCreator({ chain, coin, creator }: { chain: string; coin:
       return;
     }
     let stop = false;
-    void account?.accessToken().then((token) => {
+    void account?.identityToken().then((token) => {
       if (!token || stop) return;
       void mySocials({ data: { token } })
         .then((next) => {
@@ -58,7 +58,7 @@ export function VerifiedCreator({ chain, coin, creator }: { chain: string; coin:
   }, [owned, account?.userId]);
 
   async function save(platform: "x" | "telegram", remove: boolean) {
-    const token = await account?.accessToken();
+    const token = await account?.identityToken();
     if (!token) {
       setNote(tr("Sign in again."));
       return;

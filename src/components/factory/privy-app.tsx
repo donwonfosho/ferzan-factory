@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { PrivyProvider, useExportWallet, useImportWallet, useLinkAccount, useLogin, useLoginWithTelegram, usePrivy, useSignMessage, useWallets } from "@privy-io/react-auth";
+import { PrivyProvider, getIdentityToken, useExportWallet, useIdentityToken, useImportWallet, useLinkAccount, useLogin, useLoginWithTelegram, usePrivy, useSignMessage, useWallets } from "@privy-io/react-auth";
 import {
   useCreateWallet as useCreateExtendedWallet,
   useExportWallet as useExportExtendedWallet,
@@ -44,6 +44,21 @@ type LinkedWallet = { type?: string; chainType?: string; address?: string; id?: 
 function linkedWallet(user: unknown, chainType: "tron" | "ton"): LinkedWallet | null {
   const list = ((user as { linkedAccounts?: unknown[] } | null)?.linkedAccounts ?? []) as LinkedWallet[];
   return list.find((a) => a?.type === "wallet" && a.chainType === chainType && typeof a.address === "string") ?? null;
+}
+
+function idCookie(): string | null {
+  const parts = document.cookie.split("; ");
+  for (const part of parts) {
+    const cut = part.indexOf("=");
+    if (cut < 0 || part.slice(0, cut) !== "privy-id-token") continue;
+    try {
+      const value = decodeURIComponent(part.slice(cut + 1)).trim();
+      return value || null;
+    } catch {
+      return null;
+    }
+  }
+  return null;
 }
 
 const clean = (hex: string) => hex.replace(/^0x/, "").toLowerCase();
@@ -200,6 +215,7 @@ function TelegramSignInNote() {
 /** Mirrors the Privy account into the wallet bridge. */
 function Bridge() {
   const { ready, authenticated, user, login, logout, getAccessToken } = usePrivy();
+  const { identityToken } = useIdentityToken();
   const { linkTelegram: openTelegramLink } = useLinkAccount();
   const { wallets } = useWallets();
   const { wallets: solWallets } = useSolanaWallets();
@@ -317,6 +333,17 @@ function Bridge() {
           return null;
         }
       },
+      identityToken: async () => {
+        if (!authenticated) return null;
+        if (identityToken) return identityToken;
+        try {
+          const fresh = await getIdentityToken();
+          if (fresh) return fresh;
+        } catch {
+          /* cookie below */
+        }
+        return idCookie();
+      },
       linkTelegram: () => {
         if (!authenticated) {
           login();
@@ -355,7 +382,7 @@ function Bridge() {
     });
     // The rest of the site (threads, profile, portfolio) keys on this address.
     if (authenticated && evm) setWallet(evm.address);
-  }, [ready, authenticated, evm, sol, who, user, login, logout, getAccessToken, openTelegramLink, signMessage, signSolanaMessage, signAndSendTransaction, signTransaction, exportWallet, exportSolanaWallet, setWallet, tronAddress, tonAddress, create, exportExtended, signHash, tonPublicKey, importEvmWallet, importSolanaWallet]);
+  }, [ready, authenticated, evm, sol, who, user, login, logout, getAccessToken, identityToken, openTelegramLink, signMessage, signSolanaMessage, signAndSendTransaction, signTransaction, exportWallet, exportSolanaWallet, setWallet, tronAddress, tonAddress, create, exportExtended, signHash, tonPublicKey, importEvmWallet, importSolanaWallet]);
 
   useEffect(() => () => setAccountWallets(null), []);
   return null;

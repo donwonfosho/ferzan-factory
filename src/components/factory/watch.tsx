@@ -37,7 +37,7 @@ function save(next: Watched[], sync = true) {
 async function pushDiff(prev: Watched[], next: Watched[]) {
   const account = accountWallets();
   if (!account?.authenticated) return;
-  const token = await account.accessToken();
+  const token = await account.identityToken();
   if (!token) return;
   for (const item of next) {
     if (prev.some((w) => same(w, item.chain, item.token))) continue;
@@ -66,7 +66,7 @@ export function WatchSync() {
     let stop = false;
     void (async () => {
       const live = accountWallets();
-      const token = live ? await live.accessToken() : null;
+      const token = live ? await live.identityToken() : null;
       if (!token || stop) return;
       const remote = await listWatch({ data: { token } }).catch(() => [] as WatchedCoin[]);
       if (stop) return;
