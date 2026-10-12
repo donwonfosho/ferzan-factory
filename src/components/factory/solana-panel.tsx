@@ -20,6 +20,7 @@ import { KeyLock } from "./key-gate";
 import { tr } from "@/lib/i18n";
 import { tryFive } from "@/lib/factory/retry";
 import { FEE_SITE, TradePreview, approveLine, beginTx, minText } from "./trade-confidence";
+import { SolAppleBuy } from "./apple-pay-buy";
 export function SolanaPanel({ mint, symbol }: { mint: string; symbol: string }) {
   const wallet = useFactory((s) => s.wallet);
   const [state, setState] = useState<SolanaCurve | null | undefined>(undefined);
@@ -36,6 +37,13 @@ export function SolanaPanel({ mint, symbol }: { mint: string; symbol: string }) 
   const [miss, setMiss] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const seen = useRef(false);
+  const queued = useRef("");
+
+  useEffect(() => {
+    if (!queued.current || queued.current !== amount || !formRef.current) return;
+    queued.current = "";
+    formRef.current.requestSubmit();
+  }, [amount]);
 
   useEffect(() => {
     setSol(solanaAddress());
@@ -240,6 +248,15 @@ export function SolanaPanel({ mint, symbol }: { mint: string; symbol: string }) 
       ) : null}
       <p className="text-sm text-muted">{tr("This coin is on Ferzan's first contract: 1% fee. The creator cut is paid into their Solana wallet on the trade. Treasury’s 0.60% is not buying Ferzan yet.")}</p>
       {sol ? <GasStep address={sol} chain="solana" /> : null}
+      <SolAppleBuy
+        mint={mint}
+        symbol={symbol}
+        onBuy={(solAmount) => {
+          setSide("buy");
+          setAmount(solAmount);
+          queued.current = solAmount;
+        }}
+      />
       <div className="grid grid-cols-2 gap-2">
         <button type="button" className={cn("min-h-11 font-semibold", side === "buy" ? "bg-cyan text-cyan-ink" : "bg-bg text-muted shadow-border")} onClick={() => setSide("buy")}>
           {tr("Buy")}

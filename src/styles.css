@@ -568,6 +568,20 @@ select {
   }
 }
 
+@keyframes fz-coin-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+
+.fz-coin-float {
+  animation: fz-coin-float var(--fz-dur, 8s) ease-in-out infinite;
+  animation-delay: var(--fz-delay, 0s);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fz-coin-float { animation: none; }
+}
+
 .term-card {
   min-width: 0;
   border-radius: 14px;

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type MutableRefObject, type RefObject } from "react";
 import { setPollInterval } from "@/lib/factory/poll";
 import { buildSolSwap, getSolCoin, type SolCoin } from "@/lib/factory/sol-coin";
 import { solanaExplorerMint, solanaExplorerTx } from "@/lib/factory/solana";
@@ -28,6 +28,7 @@ import { tr } from "@/lib/i18n";
 import { tryFive } from "@/lib/factory/retry";
 import { FEE_TG, TradePreview, approveLine, beginTx, minText, watchSolana } from "./trade-confidence";
 import { creditCall } from "@/lib/factory/compete";
+import { SolAppleBuy } from "./apple-pay-buy";
 const SLIPPAGES = [100, 500, 1000];
 const TOKEN_DECIMALS = 6; // fixed by the Ferzan Meteora config
 const SOL_DECIMALS = 9;
@@ -40,6 +41,24 @@ function usd(n: number): string {
 }
 
 const short = (a: string) => (a.length > 12 ? `${a.slice(0, 4)}…${a.slice(-4)}` : a);
+
+/** After SOL arrives, submit the same buy form once the amount is the one the user just confirmed. */
+function ArriveSubmit({
+  amount,
+  queued,
+  formRef,
+}: {
+  amount: string;
+  queued: MutableRefObject<string>;
+  formRef: RefObject<HTMLFormElement | null>;
+}) {
+  useEffect(() => {
+    if (!queued.current || queued.current !== amount || !formRef.current) return;
+    queued.current = "";
+    formRef.current.requestSubmit();
+  }, [amount, queued, formRef]);
+  return null;
+}
 
 function fromB64(b64: string): Uint8Array {
   const bin = atob(b64);
@@ -72,6 +91,8 @@ export function SolCoinPage({ mint }: { mint: string }) {
   const [lastTx, setLastTx] = useState("");
   const formRef = useRef<HTMLFormElement>(null);
   const seen = useRef("");
+  const queued = useRef("");
+  const [reveal, setReveal] = useState(0);
 
   // A signed-in account's Solana wallet is known without asking; an extension is asked on first trade.
   const knownWallet = wallet || (account?.authenticated ? account.solAddress ?? "" : "");
@@ -173,25 +194,34 @@ export function SolCoinPage({ mint }: { mint: string }) {
 
   if (loadError && !coin) {
     return (
-      <div className="ticket mx-auto max-w-3xl" role="status">
-        <p className="text-sm text-muted">{tr(loadError)}</p>
-        <div className="mt-3 h-28 animate-pulse rounded-xl bg-bg" />
+      <div className="mx-auto max-w-3xl space-y-4">
+        <SolAppleBuy mint={mint} symbol="SOL" onBuy={(sol) => { setSide("buy"); setAmount(sol); queued.current = sol; setReveal((n) => n + 1); }} />
+        <div className="ticket" role="status">
+          <p className="text-sm text-muted">{tr(loadError)}</p>
+          <div className="mt-3 h-28 animate-pulse rounded-xl bg-bg" />
+        </div>
       </div>
     );
   }
   if (!coin) {
     return (
-      <div className="ticket mx-auto max-w-3xl" aria-busy="true">
-        <p className="text-sm text-muted">{tr("Loading the curve…")}</p>
-        <div className="mt-3 h-28 animate-pulse rounded-xl bg-bg" />
+      <div className="mx-auto max-w-3xl space-y-4">
+        <SolAppleBuy mint={mint} symbol="SOL" onBuy={(sol) => { setSide("buy"); setAmount(sol); queued.current = sol; setReveal((n) => n + 1); }} />
+        <div className="ticket" aria-busy="true">
+          <p className="text-sm text-muted">{tr("Loading the curve…")}</p>
+          <div className="mt-3 h-28 animate-pulse rounded-xl bg-bg" />
+        </div>
       </div>
     );
   }
   if (!coin.indexed) {
     return (
-      <p className="ticket mx-auto max-w-3xl text-sm text-muted">
-        {tr("This coin is not on the Ferzan floor yet. New launches show up within about a minute.")}
-      </p>
+      <div className="mx-auto max-w-3xl space-y-4">
+        <SolAppleBuy mint={mint} symbol={coin.symbol || "SOL"} onBuy={(sol) => { setSide("buy"); setAmount(sol); queued.current = sol; setReveal((n) => n + 1); }} />
+        <p className="ticket text-sm text-muted">
+          {tr("This coin is not on the Ferzan floor yet. New launches show up within about a minute.")}
+        </p>
+      </div>
     );
   }
 
@@ -287,8 +317,20 @@ export function SolCoinPage({ mint }: { mint: string }) {
           </a>
         </div>
       ) : (
-        <PhoneTrade symbol={coin.symbol} presets={tradePresets("SOL")} amount={amount} setAmount={setAmount} rememberKey={`solana:${mint}`}>
+        <>
+        <SolAppleBuy
+          mint={mint}
+          symbol={coin.symbol}
+          onBuy={(sol) => {
+            setSide("buy");
+            setAmount(sol);
+            queued.current = sol;
+            setReveal((n) => n + 1);
+          }}
+        />
+        <PhoneTrade symbol={coin.symbol} presets={tradePresets("SOL")} amount={amount} setAmount={setAmount} rememberKey={`solana:${mint}`} reveal={reveal}>
         <form ref={formRef} onSubmit={(e) => void trade(e)} className="ticket fz-panel space-y-3">
+          <ArriveSubmit amount={amount} queued={queued} formRef={formRef} />
           <div className="grid grid-cols-2 gap-2">
             <button type="button" className={cn("w-full", side === "buy" ? "btn-cyan" : "btn-line")} onClick={() => { setSide("buy"); setAmount(""); }}>
               {tr("Buy")}
@@ -348,6 +390,7 @@ export function SolCoinPage({ mint }: { mint: string }) {
           </Button>
         </form>
         </PhoneTrade>
+        </>
       )}
 
       {coin.graduated ? null : <BridgeBuy dest="solana" />}

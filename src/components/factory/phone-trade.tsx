@@ -42,6 +42,7 @@ export function PhoneTrade({
   amount,
   setAmount,
   rememberKey,
+  reveal = 0,
   children,
 }: {
   symbol: string;
@@ -49,11 +50,17 @@ export function PhoneTrade({
   amount: string;
   setAmount: (value: string) => void;
   rememberKey: string;
+  /** Bump to open the phone sheet so a buy can use the form that is already there. */
+  reveal?: number;
   children: ReactNode;
 }) {
   const phone = usePhone();
   const [open, setOpen] = useState(false);
   const [last, setLast] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (reveal > 0) setOpen(true);
+  }, [reveal]);
 
   useEffect(() => {
     if (!phone) return;

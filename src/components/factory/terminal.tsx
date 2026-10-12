@@ -4,6 +4,7 @@ import { deskCall, deskLinked, deskSafety, type DeskOp } from "@/lib/factory/tra
 import { setPollInterval } from "@/lib/factory/poll";
 import { CHAINS } from "@/lib/factory/catalog";
 import { tr } from "@/lib/i18n";
+import { AddFundsCard } from "./add-funds-card";
 import { Button, TextInput } from "./ui";
 import { TradingSetup, WalletChip, WalletsPanel } from "./wallets-panel";
 
@@ -689,9 +690,12 @@ export function TerminalPage() {
             {tr("Refresh")}
           </button>
           {positions.length === 0 ? (
-            <div className="term-card">
-              <p>{tr("No holdings yet — buy something from the Trade tab")}</p>
-              <button type="button" className="term-go mt-3" onClick={() => pickTab("trade")}>{tr("Trade")}</button>
+            <div className="grid gap-3">
+              <AddFundsCard />
+              <div className="term-card">
+                <p>{tr("No holdings yet — buy something from the Trade tab")}</p>
+                <button type="button" className="term-go mt-3" onClick={() => pickTab("trade")}>{tr("Trade")}</button>
+              </div>
             </div>
           ) : null}
           {positions.map((p) => {

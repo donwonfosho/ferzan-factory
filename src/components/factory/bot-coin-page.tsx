@@ -38,6 +38,7 @@ import { OpenInTelegram } from "./open-telegram";
 import { tr } from "@/lib/i18n";
 import { tryFive } from "@/lib/factory/retry";
 import { FEE_TG, FEE_TG_REF, TradePreview, approveLine, beginTx, minText } from "./trade-confidence";
+import { AddFundsCard } from "./add-funds-card";
 import { evmReferrer, sharedBy } from "@/lib/factory/compete";
 const ZERO = "0x0000000000000000000000000000000000000000";
 const SLIPPAGES = [100, 500, 1000];
@@ -423,6 +424,8 @@ export function BotCoinPage({ chain, curve }: { chain: BotCurveChain; curve: str
           )}
         </div>
       ) : (
+        <>
+        <AddFundsCard />
         <PhoneTrade symbol={state.symbol} presets={tradePresets(state.native)} amount={amount} setAmount={setAmount} rememberKey={`${chain}:${curve}`}>
         <form ref={formRef} onSubmit={(e) => void trade(e)} className="ticket fz-panel space-y-3">
           <div className="grid grid-cols-2 gap-2">
@@ -499,6 +502,7 @@ export function BotCoinPage({ chain, curve }: { chain: BotCurveChain; curve: str
           <StoredReferrer />
         </form>
         </PhoneTrade>
+        </>
       )}
 
       <BridgeBuy dest={chain} />

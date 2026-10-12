@@ -14,6 +14,7 @@ import {
 import { track } from "@/lib/factory/analytics";
 import { cn } from "@/lib/cn";
 import { tr } from "@/lib/i18n";
+import { AddFundsCard } from "./add-funds-card";
 
 const WARN = "On the MoonPay page the receive address must match this address. If it says MoonPay wallet, change it or cancel.";
 const BASE_NOTE = "Buy ETH on Base (eth_base) to your address, then use the Ferzan Bridge to move it to Sonic/Ink.";
@@ -189,6 +190,7 @@ export function FundsDesk() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
+      <AddFundsCard />
       <section className="ticket fz-panel">
         <p className="fz-eyebrow">{tr("Wallet")}</p>
         <h1 className="mt-2 text-3xl font-extrabold">{tr("Add funds")}</h1>

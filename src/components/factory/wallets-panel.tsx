@@ -6,6 +6,7 @@ import { formatUnits, parseDecimal } from "@/lib/factory/units";
 import { deskCall, deskCashout, deskTopupSol, normalizeTypedAmount } from "@/lib/factory/trade-desk";
 import { evmWallet, useAccountWallets } from "@/lib/factory/wallet-bridge";
 import { tr } from "@/lib/i18n";
+import { AddFundsCard } from "./add-funds-card";
 
 type Rec = Record<string, unknown>;
 
@@ -393,6 +394,7 @@ export function WalletsPanel({ me: given, onRefresh }: { me?: Rec | null; onRefr
           </button>
         </div>
       ) : null}
+      <AddFundsCard />
       <div className="grid gap-3 sm:grid-cols-2">
         <section className="term-card">
           <p className="term-label">{tr("My Wallet")}</p>

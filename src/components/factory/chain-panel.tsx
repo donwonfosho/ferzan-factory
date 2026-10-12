@@ -19,6 +19,7 @@ import { KeyLock } from "./key-gate";
 import { tr } from "@/lib/i18n";
 import { tryFive } from "@/lib/factory/retry";
 import { FEE_SITE, TradePreview, approveLine, beginTx, minText } from "./trade-confidence";
+import { AddFundsCard } from "./add-funds-card";
 import { evmReferrer } from "@/lib/factory/compete";
 export function ChainPanel({ chain, address, symbol }: { chain: EvmChainId; address: string; symbol: string }) {
   const wallet = useFactory((s) => s.wallet);
@@ -407,6 +408,7 @@ export function ChainPanel({ chain, address, symbol }: { chain: EvmChainId; addr
       ) : state?.graduated ? (
         <p className="text-sm text-muted">{tr("This coin graduated before a pool could open. Selling stays on the curve.")}</p>
       ) : null}
+      {side === "buy" ? <div className="mb-3"><AddFundsCard /></div> : null}
       <KeyLock address={wallet}>
       <form ref={formRef} onSubmit={submit} className="ticket space-y-4">
         <div className="grid grid-cols-2 gap-2">

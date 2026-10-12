@@ -44,7 +44,7 @@ function receiveAddress(chain: string, address: string): string | null {
 
 /** Signed MoonPay checkout when a publishable key is set. Otherwise the same hosted page with no key and no signature. */
 export const moonpayUrl = createServerFn({ method: "POST" })
-  .validator((data: unknown): { chain: string; address: string; code: string } => {
+  .validator((data: unknown): { chain: string; address: string; code: string; amount?: string } => {
     const row = clean(data);
     const chain = typeof row.chain === "string" ? row.chain : "";
     const codes = FUND_CODES[chain];
@@ -54,7 +54,13 @@ export const moonpayUrl = createServerFn({ method: "POST" })
     const raw = typeof row.address === "string" ? row.address.trim() : "";
     const address = receiveAddress(chain, raw);
     if (!address) throw new Error("Address looks wrong.");
-    return { chain, address, code: asked };
+    let amount: string | undefined;
+    if (typeof row.baseCurrencyAmount === "string" && row.baseCurrencyAmount.trim()) {
+      const n = Number(row.baseCurrencyAmount);
+      if (!Number.isFinite(n) || n < 20 || n > 20_000) throw new Error("MoonPay's minimum is $20.");
+      amount = n.toFixed(2);
+    }
+    return { chain, address, code: asked, amount };
   })
   .handler(async ({ data }): Promise<{ ok: true; url: string; signed: boolean }> => {
     await (await import("./guard.server")).guardRelay("send");
@@ -68,6 +74,7 @@ export const moonpayUrl = createServerFn({ method: "POST" })
         enabledPaymentMethods: "apple_pay,google_pay,credit_debit_card",
         showWalletAddressForm: "true",
       });
+      if (data.amount) params.set("baseCurrencyAmount", data.amount);
       return { ok: true, url: `https://buy.moonpay.com/?${params.toString()}`, signed: false };
     }
     const { createHmac } = await import("node:crypto");
@@ -78,6 +85,7 @@ export const moonpayUrl = createServerFn({ method: "POST" })
       showWalletAddressForm: "false",
       colorCode: "39F3C3",
     });
+    if (data.amount) params.set("baseCurrencyAmount", data.amount);
     const query = `?${params.toString()}`;
     const secret = env("MOONPAY_SECRET_KEY");
     if (secret) {
