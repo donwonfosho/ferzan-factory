@@ -12,6 +12,7 @@ import { CoinStream } from "./coin-stream";
 import { EmbedCode } from "./embed-code";
 import { VerifiedCreator } from "./verified-creator";
 import { ShareCard } from "./share-card";
+import { CommunitySetup } from "./community-setup";
 import { tr } from "@/lib/i18n";
 
 const EVM = new Set(["ethereum", "base", "bsc", "robinhood", "arc"]);
@@ -144,6 +145,7 @@ export function CreatorDash() {
             <VerifiedCreator chain={coin.chain} coin={coin.contract} creator={coin.creator} />
             <EmbedCode chain={coin.chain} id={coin.contract} creator={coin.creator} />
             <ShareCard chain={coin.chain} contract={coin.contract} symbol={coin.symbol} name={coin.name} image={coin.image} />
+            <CommunitySetup chain={coin.chain} token={coin.contract} />
           </section>
         );
       })}

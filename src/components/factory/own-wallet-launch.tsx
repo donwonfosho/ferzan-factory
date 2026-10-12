@@ -31,6 +31,7 @@ import { TermsGate } from "./terms";
 import { Button, Label, Mark, TextInput } from "./ui";
 import { LaunchPerksNote } from "./perks";
 import { LaunchCelebration, LaunchPreview, launchFeeText, useLaunchFees } from "./launch-preview";
+import { CommunitySetup } from "./community-setup";
 
 import { tr } from "@/lib/i18n";
 function bytesFromHex(hex: string): Uint8Array<ArrayBuffer> {
@@ -374,6 +375,7 @@ export function OwnWalletLaunch() {
           </button>
         </div>
         <LaunchCelebration chain={launched.chain} token={launched.token} symbol={launched.symbol} />
+        <CommunitySetup chain={launched.chain} token={launched.token} />
       </div>
     );
   }
