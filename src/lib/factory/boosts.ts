@@ -6,7 +6,6 @@ const USD: Record<Hours, number> = { 6: 10, 24: 30, 72: 75 };
 const CHAINS = new Set(["ethereum", "bsc", "base", "robinhood", "arc", "solana"]);
 const ID = /^(0x[0-9a-fA-F]{40}|[1-9A-HJ-NP-Za-km-z]{32,44})$/;
 const FRESH_MS = 3 * 60 * 60 * 1000;
-const QUOTE_MS = 30 * 60 * 1000;
 
 export type BoostQuote = {
   chain: string;
@@ -19,7 +18,7 @@ export type BoostQuote = {
   nativeText: string;
   nativeSymbol: string;
   treasury: string;
-  /** Signed price, checked at submit so a later price move cannot refuse a correct payment. */
+  /** Row id in boost_quotes. Checked at submit so a later price move cannot refuse a correct payment. */
   quote: string;
 };
 
@@ -60,8 +59,10 @@ function coinOf(chain: string, value: unknown): string {
 }
 
 function quoteOf(value: unknown): string {
-  const quote = typeof value === "string" ? value.trim() : "";
-  if (!/^v1\.\d{10,16}\.\d{1,40}\.[0-9a-f]{64}$/.test(quote)) throw new Error("That quote is not valid. Refresh the price and try again.");
+  const quote = typeof value === "string" ? value.trim().toLowerCase() : "";
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(quote)) {
+    throw new Error("That quote is not valid. Refresh the price and try again.");
+  }
   return quote;
 }
 
@@ -86,33 +87,6 @@ function rawFromUsd(usd: number, price: number, decimals: number): bigint {
   if (price8 <= 0n) throw new Error("The price is not available. Try again.");
   const num = BigInt(Math.round(usd * 1e8)) * 10n ** BigInt(decimals);
   return (num + price8 - 1n) / price8;
-}
-
-function quoteSecret(): string {
-  const value = (process.env.FERZAN_BOOST_SECRET ?? "").trim();
-  if (!value) throw new Error("Boosts are not open yet.");
-  return value;
-}
-
-async function signQuote(chain: string, coin: string, hours: Hours, nativeRaw: string): Promise<string> {
-  const { createHmac } = await import("node:crypto");
-  const expires = Date.now() + QUOTE_MS;
-  const msg = `v1|${chain}|${coin}|${hours}|${nativeRaw}|${expires}`;
-  const sig = createHmac("sha256", quoteSecret()).update(msg).digest("hex");
-  return `v1.${expires}.${nativeRaw}.${sig}`;
-}
-
-async function readQuote(chain: string, coin: string, hours: Hours, quote: string): Promise<bigint> {
-  const { createHmac, timingSafeEqual } = await import("node:crypto");
-  const [, expiresText, nativeRaw, sig] = quote.split(".");
-  const expires = Number(expiresText);
-  const msg = `v1|${chain}|${coin}|${hours}|${nativeRaw}|${expires}`;
-  const expect = createHmac("sha256", quoteSecret()).update(msg).digest();
-  const got = Buffer.from(sig, "hex");
-  if (got.length !== expect.length || !timingSafeEqual(got, expect)) throw new Error("That quote is not valid. Refresh the price and try again.");
-  if (!Number.isFinite(expires) || expires > Date.now() + QUOTE_MS + 60_000) throw new Error("That quote is not valid. Refresh the price and try again.");
-  if (expires < Date.now()) throw new Error("That quote expired. Refresh the price and try again.");
-  return BigInt(nativeRaw);
 }
 
 async function findCoin(chain: string, coin: string): Promise<CoinRow> {
@@ -198,6 +172,29 @@ async function paidOnChain(chain: ChainId, hash: string): Promise<bigint> {
   return BigInt(tx.value ?? "0");
 }
 
+type StoredQuote = { chain: string; coin: string; hours: number; native_raw: string; live: boolean; used: boolean };
+
+async function loadQuote(id: string): Promise<StoredQuote | null> {
+  const { getSql } = await import("@/lib/db");
+  const sql = await getSql();
+  const rows = await sql<StoredQuote>`
+    select chain, coin, hours, native_raw, (expires_at > now()) as live, used
+    from boost_quotes
+    where id = ${id}
+  `;
+  return rows[0] ?? null;
+}
+
+function assertQuote(row: StoredQuote | null, data: { chain: string; coin: string; hours: Hours }): StoredQuote {
+  if (!row || row.chain !== data.chain || row.coin !== data.coin || Number(row.hours) !== data.hours) {
+    throw new Error("That quote is not valid. Refresh the price and try again.");
+  }
+  if (row.used) throw new Error("That quote was already used. Refresh the price and try again.");
+  if (!row.live) throw new Error("That quote expired. Refresh the price and try again.");
+  if (!/^\d{1,40}$/.test(row.native_raw)) throw new Error("That quote is not valid. Refresh the price and try again.");
+  return row;
+}
+
 export const previewBoost = createServerFn({ method: "POST" })
   .validator((data: unknown): { chain: ChainId; coin: string; hours: Hours } => {
     if (!data || typeof data !== "object") throw new Error("That coin looks wrong.");
@@ -209,6 +206,14 @@ export const previewBoost = createServerFn({ method: "POST" })
     await (await import("./guard.server")).guardRelay("read");
     const coin = await findCoin(data.chain, data.coin);
     const quote = await quoteFor(data.chain, data.hours);
+    const { randomUUID } = await import("node:crypto");
+    const id = randomUUID();
+    const { getSql } = await import("@/lib/db");
+    const sql = await getSql();
+    await sql`
+      insert into boost_quotes (id, chain, coin, hours, native_raw, expires_at)
+      values (${id}, ${data.chain}, ${data.coin}, ${data.hours}, ${quote.raw.toString()}, now() + interval '30 minutes')
+    `;
     return {
       chain: data.chain,
       coin: data.coin,
@@ -220,7 +225,7 @@ export const previewBoost = createServerFn({ method: "POST" })
       nativeText: quote.text,
       nativeSymbol: quote.symbol,
       treasury: quote.treasury,
-      quote: await signQuote(data.chain, data.coin, data.hours, quote.raw.toString()),
+      quote: id,
     };
   });
 
@@ -234,7 +239,8 @@ export const submitBoost = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<{ ok: true; endsAt: string }> => {
     await (await import("./guard.server")).guardRelay("send");
     const coin = await findCoin(data.chain, data.coin);
-    const quoted = await readQuote(data.chain, data.coin, data.hours, data.quote);
+    const stored = assertQuote(await loadQuote(data.quote), data);
+    const quoted = BigInt(stored.native_raw);
     const paid = await paidOnChain(data.chain, data.hash);
     const min = (quoted * 95n) / 100n;
     if (paid < min) throw new Error("That payment is short of this tier.");
@@ -242,18 +248,37 @@ export const submitBoost = createServerFn({ method: "POST" })
     const sql = await getSql();
     const key = `${coin.chain}:${coin.contract}`;
     try {
-      await sql`
-        insert into boosts (coin_key, chain, tx_hash, paid_native, usd_at_purchase, starts_at, ends_at)
-        values (${key}, ${coin.chain}, ${data.hash}, ${paid.toString()}, ${USD[data.hours]}, now(), now() + make_interval(hours => ${data.hours}))
+      const saved = await sql<{ ends_at: string }>`
+        with taken as (
+          update boost_quotes
+          set used = true
+          where id = ${data.quote}
+            and used = false
+            and expires_at > now()
+            and chain = ${data.chain}
+            and coin = ${data.coin}
+            and hours = ${data.hours}
+          returning id
+        ),
+        saved as (
+          insert into boosts (coin_key, chain, tx_hash, paid_native, usd_at_purchase, starts_at, ends_at)
+          select ${key}, ${coin.chain}, ${data.hash}, ${paid.toString()}, ${USD[data.hours]}, now(), now() + make_interval(hours => ${data.hours})
+          from taken
+          returning ends_at::text as ends_at
+        )
+        select ends_at from saved
       `;
+      if (!saved[0]) {
+        assertQuote(await loadQuote(data.quote), data);
+        throw new Error("That quote is not valid. Refresh the price and try again.");
+      }
+      cache.clear();
+      return { ok: true, endsAt: saved[0].ends_at };
     } catch (err) {
       const message = err instanceof Error ? err.message : "";
       if (/duplicate|unique/i.test(message)) throw new Error("That transaction was already used.");
       throw err;
     }
-    cache.clear();
-    const rows = await sql<{ ends_at: string }>`select ends_at::text as ends_at from boosts where tx_hash = ${data.hash}`;
-    return { ok: true, endsAt: rows[0]?.ends_at ?? "" };
   });
 
 const cache = new Map<string, { at: number; value: BoostView[] }>();
