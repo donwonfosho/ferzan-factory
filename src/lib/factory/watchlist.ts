@@ -70,6 +70,8 @@ export const putWatch = createServerFn({ method: "POST" })
       values (${id}, ${data.coin.chain}, ${data.coin.token}, ${data.coin.symbol}, ${data.coin.path})
       on conflict (account, chain, token) do update set symbol = excluded.symbol, path = excluded.path
     `;
+    const { syncCoinWatch } = await import("./trade-desk.server");
+    await syncCoinWatch(data.token, [{ chain: data.coin.chain, token: data.coin.token, symbol: data.coin.symbol, on: true }]).catch(() => undefined);
     return { ok: true };
   });
 
@@ -88,6 +90,37 @@ export const dropWatch = createServerFn({ method: "POST" })
     const id = await accountId(data.token);
     const { getSql } = await import("@/lib/db");
     const sql = await getSql();
-    await sql`delete from watchlist where account = ${id} and chain = ${data.chain} and token = ${data.tokenId}`;
+    const gone = await sql<{ symbol: string }>`
+      delete from watchlist where account = ${id} and chain = ${data.chain} and token = ${data.tokenId}
+      returning symbol
+    `;
+    if (gone[0]) {
+      const { syncCoinWatch } = await import("./trade-desk.server");
+      await syncCoinWatch(data.token, [{ chain: data.chain, token: data.tokenId, symbol: gone[0].symbol, on: false }]).catch(() => undefined);
+    }
+    return { ok: true };
+  });
+
+/** Sends the saved watchlist to the trade desk once. Does nothing visible if the desk is quiet. */
+export const pushWatches = createServerFn({ method: "POST" })
+  .validator((data: unknown): { token: string } => {
+    if (!data || typeof data !== "object") throw new Error("Sign in again.");
+    const token = (data as { token?: unknown }).token;
+    if (typeof token !== "string") throw new Error("Sign in again.");
+    return { token };
+  })
+  .handler(async ({ data }): Promise<{ ok: true }> => {
+    await (await import("./guard.server")).guardRelay("read");
+    const id = await accountId(data.token);
+    const { getSql } = await import("@/lib/db");
+    const sql = await getSql();
+    const rows = await sql<WatchedCoin>`
+      select chain, token, symbol, path from watchlist where account = ${id} order by chain, token limit 100
+    `;
+    const { syncCoinWatch } = await import("./trade-desk.server");
+    await syncCoinWatch(
+      data.token,
+      rows.map((row) => ({ chain: row.chain, token: row.token, symbol: row.symbol, on: true })),
+    ).catch(() => undefined);
     return { ok: true };
   });

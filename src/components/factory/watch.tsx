@@ -1,7 +1,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { cn } from "@/lib/cn";
 import { accountWallets, useAccountWallets } from "@/lib/factory/wallet-bridge";
-import { dropWatch, listWatch, putWatch, type WatchedCoin } from "@/lib/factory/watchlist";
+import { dropWatch, listWatch, pushWatches, putWatch, type WatchedCoin } from "@/lib/factory/watchlist";
 
 import { tr } from "@/lib/i18n";
 /** Coins starred in this browser. A signed-in account also keeps a copy, merged on sign-in. */
@@ -77,6 +77,7 @@ export function WatchSync() {
         if (remote.some((w) => same(w, item.chain, item.token))) continue;
         await putWatch({ data: { token, coin: item } }).catch(() => undefined);
       }
+      await pushWatches({ data: { token } }).catch(() => undefined);
     })();
     return () => {
       stop = true;

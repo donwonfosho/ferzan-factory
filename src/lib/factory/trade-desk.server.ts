@@ -132,7 +132,26 @@ export async function publicSafety(mint: string, chain: string): Promise<unknown
   }
 }
 
-/** Telegram user id from Privy's REST user, or null when Telegram is not linked. */
+/** Tell the desk about a site watchlist change. Silent when Telegram is not linked or the desk does not answer. */
+export async function syncCoinWatch(
+  accessToken: string,
+  rows: { chain: string; token: string; symbol: string; on: boolean }[],
+): Promise<void> {
+  let linked = false;
+  try {
+    linked = Boolean(await telegramUserId(accessToken));
+  } catch {
+    return;
+  }
+  if (!linked) return;
+  for (const row of rows.slice(0, 100)) {
+    try {
+      await post("coinwatch", accessToken, { chain: row.chain, token: row.token, symbol: row.symbol, on: row.on });
+    } catch {
+      return;
+    }
+  }
+}
 export async function telegramUserId(accessToken: string): Promise<string | null> {
   if (accessToken.length < 20 || accessToken.length > 4000) throw new Error("Sign in again.");
   const appId = process.env.VITE_PRIVY_APP_ID || "cmuitovv501qx0cl6wnj2qvvt";
