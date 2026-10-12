@@ -169,6 +169,10 @@ export function Shell({ children }: { children: ReactNode }) {
                     <span className="block font-semibold">{tr("Bots")}</span>
                     <span className="text-sm text-muted">{tr("Launch, trade, and track from Telegram")}</span>
                   </Link>
+                  <Link to="/terminal" className="rounded-xl bg-bg px-3 py-3 shadow-border" onClick={() => setOpen(false)}>
+                    <span className="block font-semibold">{tr("Terminal")}</span>
+                    <span className="text-sm text-muted">{tr("Trade through your Telegram bot")}</span>
+                  </Link>
                   <Link to="/login" hash="portfolio" className="rounded-xl bg-bg px-3 py-3 shadow-border" onClick={() => setOpen(false)}>
                     <span className="block font-semibold">{tr("Portfolio")}</span>
                     <span className="text-sm text-muted">{tr("Balances, holdings, and launches")}</span>
@@ -237,6 +241,7 @@ export function Shell({ children }: { children: ReactNode }) {
               <li><Link to="/creator" className="text-cyan">{tr("Creator")}</Link></li>
               <li><Link to="/launch" search={{ kind: "curve" }} className="text-cyan">{tr("Launch")}</Link></li>
               <li><Link to="/bots" className="text-cyan">{tr("Bots")}</Link></li>
+              <li><Link to="/terminal" className="text-cyan">{tr("Terminal")}</Link></li>
             </ul>
           </div>
           <div>

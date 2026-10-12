@@ -63,6 +63,8 @@ export type AccountWallets = {
   userId: string | null;
   /** Privy access token for this account, or null when signed out. */
   accessToken: () => Promise<string | null>;
+  /** Opens Privy's Telegram link. Signs in first when there is no account. */
+  linkTelegram: () => void;
 };
 
 let account: AccountWallets | null = null;

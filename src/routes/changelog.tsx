@@ -16,6 +16,7 @@ const ENTRIES = [
     date: "October 11, 2026",
     items: [
       "Portuguese, Russian, Turkish and Vietnamese are available. Those four are machine translated.",
+      "A terminal for accounts with Telegram linked. Trades go through the Ferzan bot. Keys and withdrawals stay in the bot.",
     ],
   },
   {

@@ -27,6 +27,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as PressRouteImport } from './routes/press'
 import { Route as PromotedRouteImport } from './routes/promoted'
 import { Route as PulseRouteImport } from './routes/pulse'
+import { Route as TerminalRouteImport } from './routes/terminal'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TransparencyRouteImport } from './routes/transparency'
 import { Route as VerifyRouteImport } from './routes/verify'
@@ -134,6 +135,11 @@ const PromotedRoute = PromotedRouteImport.update({
 const PulseRoute = PulseRouteImport.update({
   id: '/pulse',
   path: '/pulse',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TerminalRoute = TerminalRouteImport.update({
+  id: '/terminal',
+  path: '/terminal',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TermsRoute = TermsRouteImport.update({
@@ -246,6 +252,7 @@ export interface FileRoutesByFullPath {
   '/press': typeof PressRoute
   '/promoted': typeof PromotedRoute
   '/pulse': typeof PulseRoute
+  '/terminal': typeof TerminalRoute
   '/terms': typeof TermsRoute
   '/transparency': typeof TransparencyRoute
   '/verify': typeof VerifyRoute
@@ -284,6 +291,7 @@ export interface FileRoutesByTo {
   '/press': typeof PressRoute
   '/promoted': typeof PromotedRoute
   '/pulse': typeof PulseRoute
+  '/terminal': typeof TerminalRoute
   '/terms': typeof TermsRoute
   '/transparency': typeof TransparencyRoute
   '/verify': typeof VerifyRoute
@@ -323,6 +331,7 @@ export interface FileRoutesById {
   '/press': typeof PressRoute
   '/promoted': typeof PromotedRoute
   '/pulse': typeof PulseRoute
+  '/terminal': typeof TerminalRoute
   '/terms': typeof TermsRoute
   '/transparency': typeof TransparencyRoute
   '/verify': typeof VerifyRoute
@@ -363,6 +372,7 @@ export interface FileRouteTypes {
     | '/press'
     | '/promoted'
     | '/pulse'
+    | '/terminal'
     | '/terms'
     | '/transparency'
     | '/verify'
@@ -401,6 +411,7 @@ export interface FileRouteTypes {
     | '/press'
     | '/promoted'
     | '/pulse'
+    | '/terminal'
     | '/terms'
     | '/transparency'
     | '/verify'
@@ -439,6 +450,7 @@ export interface FileRouteTypes {
     | '/press'
     | '/promoted'
     | '/pulse'
+    | '/terminal'
     | '/terms'
     | '/transparency'
     | '/verify'
@@ -478,6 +490,7 @@ export interface RootRouteChildren {
   PressRoute: typeof PressRoute
   PromotedRoute: typeof PromotedRoute
   PulseRoute: typeof PulseRoute
+  TerminalRoute: typeof TerminalRoute
   TermsRoute: typeof TermsRoute
   TransparencyRoute: typeof TransparencyRoute
   VerifyRoute: typeof VerifyRoute
@@ -623,6 +636,13 @@ declare module '@tanstack/react-router' {
       path: '/pulse'
       fullPath: '/pulse'
       preLoaderRoute: typeof PulseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terminal': {
+      id: '/terminal'
+      path: '/terminal'
+      fullPath: '/terminal'
+      preLoaderRoute: typeof TerminalRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/terms': {
@@ -784,6 +804,7 @@ const rootRouteChildren: RootRouteChildren = {
   PressRoute: PressRoute,
   PromotedRoute: PromotedRoute,
   PulseRoute: PulseRoute,
+  TerminalRoute: TerminalRoute,
   TermsRoute: TermsRoute,
   TransparencyRoute: TransparencyRoute,
   VerifyRoute: VerifyRoute,

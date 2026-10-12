@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { PrivyProvider, useExportWallet, useImportWallet, usePrivy, useSignMessage, useWallets } from "@privy-io/react-auth";
+import { PrivyProvider, useExportWallet, useImportWallet, useLinkAccount, usePrivy, useSignMessage, useWallets } from "@privy-io/react-auth";
 import {
   useCreateWallet as useCreateExtendedWallet,
   useExportWallet as useExportExtendedWallet,
@@ -51,6 +51,7 @@ const clean = (hex: string) => hex.replace(/^0x/, "").toLowerCase();
 /** Mirrors the Privy account into the wallet bridge. */
 function Bridge() {
   const { ready, authenticated, user, login, logout, getAccessToken } = usePrivy();
+  const { linkTelegram: openTelegramLink } = useLinkAccount();
   const { wallets } = useWallets();
   const { wallets: solWallets } = useSolanaWallets();
   const { signAndSendTransaction } = useSignAndSendTransaction();
@@ -167,6 +168,13 @@ function Bridge() {
           return null;
         }
       },
+      linkTelegram: () => {
+        if (!authenticated) {
+          login();
+          return;
+        }
+        openTelegramLink();
+      },
       evmEmbedded: evm?.walletClientType === "privy",
       exportEvm: async () => {
         if (evm) await exportWallet({ address: evm.address });
@@ -198,7 +206,7 @@ function Bridge() {
     });
     // The rest of the site (threads, profile, portfolio) keys on this address.
     if (authenticated && evm) setWallet(evm.address);
-  }, [ready, authenticated, evm, sol, who, user, login, logout, getAccessToken, signMessage, signSolanaMessage, signAndSendTransaction, signTransaction, exportWallet, exportSolanaWallet, setWallet, tronAddress, tonAddress, create, exportExtended, signHash, tonPublicKey, importEvmWallet, importSolanaWallet]);
+  }, [ready, authenticated, evm, sol, who, user, login, logout, getAccessToken, openTelegramLink, signMessage, signSolanaMessage, signAndSendTransaction, signTransaction, exportWallet, exportSolanaWallet, setWallet, tronAddress, tonAddress, create, exportExtended, signHash, tonPublicKey, importEvmWallet, importSolanaWallet]);
 
   useEffect(() => () => setAccountWallets(null), []);
   return null;
