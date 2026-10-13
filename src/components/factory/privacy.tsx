@@ -4,7 +4,7 @@ const COLLECT = [
   "Sign-in: when you sign in we receive your email or phone number, or your linked Telegram or X account, from our sign-in provider Privy, plus your wallet addresses.",
   "Wallets and trades: public blockchain data such as your wallet addresses, the coins you launch and your trades. This is public on the blockchain anyway.",
   "Telegram bots: if you use our Telegram bots we store your Telegram user ID and username, your bot settings, your trade history, and (for the Trade Bot) the encrypted keys of the trading wallets the bot holds for you.",
-  "Usage: privacy-friendly, cookie-free page statistics (Plausible) and error reports (Sentry) that help us fix bugs. We keep a short-term, hashed form of IP addresses to stop abuse and rate-limit requests.",
+  "Usage: privacy-friendly, cookie-free page statistics (Plausible) and error reports (Sentry) that help us fix bugs. Our servers keep IP addresses in short-term logs to stop abuse and rate-limit requests.",
   "What you send us: feedback forms and messages.",
   "In your browser: small settings (language, watchlist, drafts) in local storage on your device.",
 ];
