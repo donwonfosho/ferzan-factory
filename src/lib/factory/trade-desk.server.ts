@@ -15,7 +15,7 @@ class DeskStatus extends Error {
   }
 }
 
-const BANNED = new Set(["bridge", "privy", "privy_id", "secret", "token", "access_token", "accessToken", "authorization", "telegram_user_id", "telegramUserId"]);
+const BANNED = new Set(["bridge", "privy", "privy_id", "privy_access", "secret", "token", "access_token", "accessToken", "authorization", "telegram_user_id", "telegramUserId"]);
 
 function clip(value: unknown, depth = 0): unknown {
   if (value === null || typeof value === "boolean") return value;
@@ -70,10 +70,11 @@ function toUserError(err: DeskStatus): Error {
   return new Error(err.detail || "The terminal did not answer. Try again.");
 }
 
-async function post(endpoint: string, idToken: string, fields: Record<string, unknown>): Promise<unknown> {
+async function post(endpoint: string, idToken: string, fields: Record<string, unknown>, access = ""): Promise<unknown> {
   const body: Record<string, unknown> = { privy_id: idToken };
+  if (access) body.privy_access = access; // the desk reads the Privy session id in it (sign-in alerts, sign out everywhere)
   for (const [key, value] of Object.entries(fields)) {
-    if (key === "privy" || key === "privy_id" || key === "bridge" || value === undefined) continue;
+    if (key === "privy" || key === "privy_id" || key === "privy_access" || key === "bridge" || value === undefined) continue;
     body[key] = value;
   }
   let res: Response;
@@ -92,8 +93,8 @@ async function post(endpoint: string, idToken: string, fields: Record<string, un
   return clip(parsed) ?? {};
 }
 
-async function noWallet(accessToken: string): Promise<{ noWallet: true; bot_link: string; bot_username: string }> {
-  const me = await post("me", accessToken, {}).catch(() => null);
+async function noWallet(accessToken: string, access = ""): Promise<{ noWallet: true; bot_link: string; bot_username: string }> {
+  const me = await post("me", accessToken, {}, access).catch(() => null);
   const row = me && typeof me === "object" ? (me as Record<string, unknown>) : {};
   return {
     noWallet: true,
@@ -103,17 +104,17 @@ async function noWallet(accessToken: string): Promise<{ noWallet: true; bot_link
 }
 
 /** POST /api/<endpoint> with the Privy identity token. Portfolio 404 becomes a no-wallet result and does not throw. */
-export async function runDesk(endpoint: string, accessToken: string, fields: Record<string, unknown>): Promise<unknown> {
+export async function runDesk(endpoint: string, accessToken: string, fields: Record<string, unknown>, access = ""): Promise<unknown> {
   try {
     if (endpoint === "portfolio") {
       try {
-        return await post(endpoint, accessToken, fields);
+        return await post(endpoint, accessToken, fields, access);
       } catch (err) {
-        if (err instanceof DeskStatus && err.status === 404) return noWallet(accessToken);
+        if (err instanceof DeskStatus && err.status === 404) return noWallet(accessToken, access);
         throw err;
       }
     }
-    return await post(endpoint, accessToken, fields);
+    return await post(endpoint, accessToken, fields, access);
   } catch (err) {
     if (err instanceof DeskStatus) throw toUserError(err);
     throw err;
@@ -134,8 +135,8 @@ export async function publicSafety(mint: string, chain: string): Promise<unknown
 }
 
 /** Cash out from the Trading Wallet to the account's own wallet. The desk reads the destination from the identity token. Never pass an address. */
-export async function cashoutSelf(idToken: string, chain: string, amount: string): Promise<unknown> {
-  return post("cashout_self", idToken, { chain, amount });
+export async function cashoutSelf(idToken: string, chain: string, amount: string, access = ""): Promise<unknown> {
+  return post("cashout_self", idToken, { chain, amount }, access);
 }
 
 /** Broadcast a signed SOL top-up. The desk checks the transaction and returns its own error text. */
