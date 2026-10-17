@@ -16,6 +16,19 @@ export const FACTORIES: Record<CurveLaunchChain, string> = {
   arc: "0xe8ca8382ab3ab55ffb310fb55da988fb83c922bd",
 };
 
+/**
+ * Ferzan Curve V2 factories. Empty until each chain's V2 factory is deployed and audited. While a chain's
+ * entry is empty the site offers no V2 launch there and shows no V2 panel; fill it in with the exact
+ * address Ferzan announces (the same one the Launch API uses), lowercase.
+ */
+export const CURVE_V2_FACTORIES: Record<CurveLaunchChain, string> = {
+  bsc: "",
+  base: "",
+  ethereum: "",
+  robinhood: "",
+  arc: "",
+};
+
 /** Current (v3) standard-coin factories. A standard launch goes here, never to a curve factory. */
 export const PLAIN_FACTORIES: Record<CurveLaunchChain, string> = {
   bsc: "0x10b1c446ff600dfc4dd9218a364bdbaf93a0fea2",

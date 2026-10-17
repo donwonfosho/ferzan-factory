@@ -17,7 +17,8 @@ import {
 } from "@/lib/factory/bot-launch";
 import { tonWallet, tronLinkAppLink, tronWallet } from "@/lib/factory/tron-ton-wallets";
 import { explorerTx, type EvmChainId } from "@/lib/factory/deploy";
-import { siteCoinHref } from "@/lib/factory/bot-curve";
+import { BOT_CURVE_CHAINS, siteCoinHref, type BotCurveChain } from "@/lib/factory/bot-curve";
+import { curveV2Live } from "@/lib/factory/curve-v2";
 import { getReceipt } from "@/lib/factory/relay";
 import { solanaExplorerTx } from "@/lib/factory/solana";
 import { formatSmart } from "@/lib/factory/units";
@@ -98,6 +99,8 @@ export function OwnWalletLaunch() {
   const [xHandle, setXHandle] = useState("");
   const [telegram, setTelegram] = useState("");
   const [supply, setSupply] = useState("1000000000");
+  const [ferzanCurve, setFerzanCurve] = useState(true); // the Ferzan Curve V2, where it is live
+  const [curveMode, setCurveMode] = useState<"protected" | "balanced" | "aggressive">("balanced");
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
   const [hash, setHash] = useState("");
@@ -148,6 +151,8 @@ export function OwnWalletLaunch() {
   const plain = isPlainLaunch(chain) && !curveOpen;
   const evm = chain !== "solana" && !plain;
   const meta = LAUNCH_CHAIN_META[chain];
+  const v2Here = evm && (BOT_CURVE_CHAINS as readonly string[]).includes(chain) && curveV2Live(chain as BotCurveChain);
+  const v2 = v2Here && ferzanCurve;
 
   function pickChain(next: BotLaunchChain) {
     setChain(next);
@@ -217,8 +222,11 @@ export function OwnWalletLaunch() {
     if (!/^[A-Z0-9]{2,10}$/.test(cleanSymbol)) return setError(tr("Ticker is 2–10 letters or numbers."));
     if (evm && !(Number(grad) > 0)) return setError(tr("Pick how much {0} the curve collects before it graduates.", meta.native));
     if (plain && !/^[1-9]\d{0,12}$/.test(supply.trim())) return setError(tr("Supply is a whole number between 1 and 1,000,000,000,000."));
-    if (evm && Number(startMinutes) > 0 && Number(devBuy) > 0) {
+    if (evm && !v2 && Number(startMinutes) > 0 && Number(devBuy) > 0) {
       return setError(tr("A first buy needs trading to open right away. Clear the delay or the first buy."));
+    }
+    if (v2 && Number(devBuy) > Number(grad) * 0.0064) {
+      return setError(tr("On the Ferzan Curve your first buy can be at most 0.64% of the graduation target ({0} {1}).", (Number(grad) * 0.0064).toPrecision(3), meta.native));
     }
     let sent = false;
     let requestId = "";
@@ -244,6 +252,8 @@ export function OwnWalletLaunch() {
           telegram: telegram.trim(),
           supplyWhole: plain ? supply.trim() : "1000000000",
           mode: isPlainLaunch(chain) && plain ? "plain" : "",
+          curveVersion: v2 ? "2" : "",
+          curveMode,
         },
       });
       requestId = built.requestId;
@@ -636,7 +646,11 @@ export function OwnWalletLaunch() {
           <div>
             <Label>{tr("First buy (")}{meta.native})</Label>
             <TextInput value={devBuy} onChange={(e) => setDevBuy(e.target.value)} placeholder={tr("0 — skip it")} inputMode="decimal" />
-            <p className="mt-1.5 text-xs text-muted">{tr("Optional. It happens in the same transaction, so nobody can buy before you.")}</p>
+            <p className="mt-1.5 text-xs text-muted">
+              {v2
+                ? tr("Optional. On the Ferzan Curve your first buy joins the 30-second Fair Open at the same price as everyone else, and unlocks 25% at each quarter of progress.")
+                : tr("Optional. It happens in the same transaction, so nobody can buy before you.")}
+            </p>
           </div>
         ) : null}
 
@@ -657,6 +671,35 @@ export function OwnWalletLaunch() {
 
         {current === "launch" ? (
           <div className="space-y-4">
+            {v2Here ? (
+              <div className="ticket space-y-3">
+                <label className="flex items-center gap-2 text-sm font-semibold">
+                  <input type="checkbox" checked={ferzanCurve} onChange={(e) => setFerzanCurve(e.target.checked)} />
+                  {tr("Launch on the Ferzan Curve")}
+                </label>
+                {ferzanCurve ? (
+                  <>
+                    <p className="text-xs text-muted">
+                      {tr("Fair Open (one price for the first 30 seconds), Sniper Tax, Dev Lock and the Dev Sell Alarm, Soft Landing, Rising Floor, Diamond Hands and Fair Exit. Same 1% fee.")}
+                    </p>
+                    <div className="grid grid-cols-3 gap-2">
+                      {(["protected", "balanced", "aggressive"] as const).map((m) => (
+                        <button key={m} type="button" onClick={() => setCurveMode(m)} className={cn("min-h-11 px-2 text-sm", curveMode === m ? "btn-cyan" : "btn-line")}>
+                          {m === "protected" ? tr("Protected") : m === "balanced" ? tr("Balanced") : tr("Aggressive")}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted">
+                      {curveMode === "protected"
+                        ? tr("14 days to graduate before a Fair Exit. The safest choice for buyers.")
+                        : curveMode === "balanced"
+                          ? tr("7 days to graduate before a Fair Exit. The default.")
+                          : tr("3 days to graduate before a Fair Exit. For fast coins.")}
+                    </p>
+                  </>
+                ) : null}
+              </div>
+            ) : null}
             <p className="text-sm text-muted">
               {tr("Signs with your own wallet:")}{" "}{WALLET_TEXT[chain]}{tr(". No Telegram needed.")}{" "}
               {plain
