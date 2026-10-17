@@ -5,7 +5,7 @@
 import { env } from "@/lib/env.server";
 import { chainRpc, type RelayChain } from "./relay";
 import type { AnyLaunchTx, BotLaunchChain, BotLaunchInput, ChainModes, CurveLaunchChain, TonMessage } from "./bot-launch";
-import { FACTORIES, PLAIN_FACTORIES, TRON_PLAIN_FACTORY } from "./contracts";
+import { CURVE_V2_FACTORIES, FACTORIES, PLAIN_FACTORIES, TRON_PLAIN_FACTORY } from "./contracts";
 import { TRON_CURVE_FACTORY } from "./tron-curve";
 
 export { FACTORIES, PLAIN_FACTORIES, TRON_PLAIN_FACTORY };
@@ -65,6 +65,12 @@ const asBig = (v: unknown): string => {
   return s;
 };
 
+/** A Ferzan Curve V2 launch: asked for, an EVM curve chain, and that chain's V2 factory is set. */
+function v2Launch(input: BotLaunchInput): boolean {
+  const f = (CURVE_V2_FACTORIES as Record<string, string>)[input.chain] ?? "";
+  return input.curveVersion === "2" && input.mode !== "plain" && /^0x[0-9a-f]{40}$/.test(f);
+}
+
 export async function startLaunch(input: BotLaunchInput): Promise<AnyLaunchTx> {
   const created = await call(
     "/site/launch-requests",
@@ -84,6 +90,7 @@ export async function startLaunch(input: BotLaunchInput): Promise<AnyLaunchTx> {
       telegram: input.telegram,
       supply_whole: input.supplyWhole || "1000000000",
       ...(input.mode ? { mode: input.mode } : {}),
+      ...(v2Launch(input) ? { curve_version: "2", curve_mode: input.curveMode || "balanced" } : {}),
     },
     true,
   );
@@ -136,7 +143,8 @@ export async function startLaunch(input: BotLaunchInput): Promise<AnyLaunchTx> {
   const to = asString(tx.to).toLowerCase();
   const evmChain = input.chain as CurveLaunchChain;
   if (!to) throw new Error("The launch service did not return a launch transaction. Nothing was sent. Please try again.");
-  const wantFactory = input.mode === "plain" ? PLAIN_FACTORIES[evmChain] : FACTORIES[evmChain];
+  const wantFactory =
+    input.mode === "plain" ? PLAIN_FACTORIES[evmChain] : v2Launch(input) ? CURVE_V2_FACTORIES[evmChain] : FACTORIES[evmChain];
   if (to !== wantFactory) {
     const short = (a: string) => `${a.slice(0, 8)}…${a.slice(-4)}`;
     throw new Error(`The launch transaction goes to ${short(to)}, not the Ferzan ${evmChain} factory (${short(wantFactory)}). Nothing was sent.`);
@@ -195,7 +203,9 @@ export async function finishLaunch(input: {
   } | null;
   for (const log of receipt?.logs ?? []) {
     const t = log.topics ?? [];
-    if ((log.address ?? "").toLowerCase() === FACTORIES[input.chain as CurveLaunchChain] && (t[0] ?? "").toLowerCase() === CURVE_LAUNCHED && t.length >= 3) {
+    const from = (log.address ?? "").toLowerCase();
+    const ours = from === FACTORIES[input.chain as CurveLaunchChain] || (from !== "" && from === CURVE_V2_FACTORIES[input.chain as CurveLaunchChain]);
+    if (ours && (t[0] ?? "").toLowerCase() === CURVE_LAUNCHED && t.length >= 3) {
       return { curve: "0x" + t[1].slice(-40), token: "0x" + t[2].slice(-40) };
     }
   }

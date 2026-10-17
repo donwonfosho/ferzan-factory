@@ -57,6 +57,10 @@ export type BotLaunchInput = {
   supplyWhole: string;
   /** Tron only: "plain" asks for a standard coin; empty uses the curve when it is open. */
   mode: string;
+  /** EVM: "2" launches on the Ferzan Curve V2 (only where CURVE_V2_FACTORIES has the chain's factory). */
+  curveVersion?: string;
+  /** Ferzan Curve V2: "protected" | "balanced" | "aggressive". */
+  curveMode?: string;
 };
 
 export type EvmLaunchTx = {
@@ -123,6 +127,8 @@ function readInput(data: unknown): BotLaunchInput {
     x: str(row, "x", 200),
     telegram: str(row, "telegram", 200),
     mode: str(row, "mode", 8) === "plain" ? "plain" : "",
+    curveVersion: str(row, "curveVersion", 2) === "2" ? "2" : "",
+    curveMode: ["protected", "balanced", "aggressive"].includes(str(row, "curveMode", 12)) ? str(row, "curveMode", 12) : "balanced",
     supplyWhole: (() => {
       const v = str(row, "supplyWhole", 16) || "1000000000";
       if (!/^[1-9]\d{0,12}$/.test(v)) throw new Error("Supply looks wrong.");

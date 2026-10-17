@@ -40,6 +40,8 @@ import { tryFive } from "@/lib/factory/retry";
 import { FEE_TG, FEE_TG_REF, TradePreview, approveLine, beginTx, minText } from "./trade-confidence";
 import { AddFundsCard } from "./add-funds-card";
 import { evmReferrer, sharedBy } from "@/lib/factory/compete";
+import { CurveV2Panel } from "./curve-v2-panel";
+import { curveV2Live, getCurveV2 } from "@/lib/factory/curve-v2";
 const ZERO = "0x0000000000000000000000000000000000000000";
 const SLIPPAGES = [100, 500, 1000];
 
@@ -132,6 +134,22 @@ export function BotCoinPage({ chain, curve }: { chain: BotCurveChain; curve: str
   const [copied, setCopied] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const seen = useRef("");
+  // Ferzan Curve V2 coins get their own trade column (Fair Open, Conviction Lock, Dev Sell Alarm, Fair Exit)
+  const [isV2, setIsV2] = useState<boolean | null>(null);
+  useEffect(() => {
+    let stop = false;
+    if (!curveV2Live(chain)) {
+      setIsV2(false);
+      return;
+    }
+    void getCurveV2({ data: { chain, curve, wallet: "" } }).then(
+      (v) => !stop && setIsV2(Boolean(v)),
+      () => !stop && setIsV2(false),
+    );
+    return () => {
+      stop = true;
+    };
+  }, [chain, curve]);
 
   const load = useCallback(async () => {
     const key = `${chain}:${curve}`;
@@ -412,7 +430,24 @@ export function BotCoinPage({ chain, curve }: { chain: BotCurveChain; curve: str
 
         </div>
         <div className="order-first min-w-0 space-y-4 lg:sticky lg:top-24 lg:order-none">
-      {state.graduated ? (
+      {isV2 ? (
+        <>
+          {!state.graduated ? <AddFundsCard /> : null}
+          <CurveV2Panel
+            chain={chain}
+            curve={curve}
+            symbol={state.symbol}
+            native={state.native}
+            account={account}
+            teamLocked={state.mine ? BigInt(state.mine.locked) : 0n}
+            connect={connect}
+            send={send}
+            referrer={referrerFor}
+            onTraded={() => void load()}
+          />
+        </>
+      ) : null}
+      {(isV2 || (isV2 === null && curveV2Live(chain))) && !state.graduated ? null : state.graduated ? (
         <div className="ticket fz-panel">
           <p className="text-sm">{tr("Trading moved to the DEX pool.")}</p>
           {dex ? (
