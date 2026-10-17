@@ -217,22 +217,34 @@ export const deskLinked = createServerFn({ method: "POST" })
     return { linked: Boolean(id) };
   });
 
+/** The optional Privy access token next to the identity token: the desk reads the session id in it. */
+function accessOf(row: Record<string, unknown>): string {
+  const access = row.access;
+  return typeof access === "string" && access.length >= 20 && access.length <= 16_000 ? access : "";
+}
+
 /** One desk call. The identity token stays on the server. */
-export const deskCall = createServerFn({ method: "POST" })
-  .validator((data: unknown): { token: string; op: DeskOp; body: Record<string, unknown> } => {
+const deskCallFn = createServerFn({ method: "POST" })
+  .validator((data: unknown): { token: string; access: string; op: DeskOp; body: Record<string, unknown> } => {
     const row = rec(data);
     const token = row.token;
     if (typeof token !== "string" || token.length < 20 || token.length > 16_000) throw new Error("Sign in again.");
     const op = row.op;
     if (typeof op !== "string" || !(OPS as readonly string[]).includes(op)) throw new Error("That looks wrong.");
-    return { token, op: op as DeskOp, body: cleanDesk(op as DeskOp, row.body) };
+    return { token, access: accessOf(row), op: op as DeskOp, body: cleanDesk(op as DeskOp, row.body) };
   })
   .handler(async ({ data }): Promise<string> => {
     await (await import("./guard.server")).guardRelay(SENDS.has(data.op) ? "send" : "read");
     await telegramOrLock(data.token);
     const { runDesk } = await import("./trade-desk.server");
-    return JSON.stringify(await runDesk(data.op, data.token, data.body)) ?? "null";
+    return JSON.stringify(await runDesk(data.op, data.token, data.body, data.access)) ?? "null";
   });
+
+/** Same call shape as before; the access token is added here so no caller has to change. */
+export async function deskCall(args: { data: { token: string; op: DeskOp; body: Record<string, unknown> } }): Promise<string> {
+  const { deskAccess } = await import("./desk-access");
+  return deskCallFn({ data: { ...args.data, access: await deskAccess() } });
+}
 
 /** ".01" and "0,01" are the same amount. "max" is left alone. */
 export function normalizeTypedAmount(value: string): string {
@@ -244,8 +256,8 @@ export function normalizeTypedAmount(value: string): string {
 const CASHOUT = new Set(["sol", "base", "ethereum", "bsc"]);
 
 /** Cash out the Trading Wallet to My Wallet. The destination is not sent; the desk reads it from the identity token. */
-export const deskCashout = createServerFn({ method: "POST" })
-  .validator((data: unknown): { token: string; chain: string; amount: string } => {
+const deskCashoutFn = createServerFn({ method: "POST" })
+  .validator((data: unknown): { token: string; access: string; chain: string; amount: string } => {
     const row = rec(data);
     const token = row.token;
     if (typeof token !== "string" || token.length < 20 || token.length > 16_000) throw new Error("Sign in again.");
@@ -255,14 +267,19 @@ export const deskCashout = createServerFn({ method: "POST" })
     const amount = normalizeTypedAmount(raw);
     if (amount !== "max" && !/^\d+(\.\d+)?$/.test(amount)) throw new Error("Type an amount like 0.01, or tap Max.");
     if (amount.length > 40) throw new Error("Type an amount like 0.01, or tap Max.");
-    return { token, chain, amount };
+    return { token, access: accessOf(row), chain, amount };
   })
   .handler(async ({ data }): Promise<string> => {
     await (await import("./guard.server")).guardRelay("send");
     await telegramOrLock(data.token);
     const { cashoutSelf } = await import("./trade-desk.server");
-    return JSON.stringify(await cashoutSelf(data.token, data.chain, data.amount)) ?? "null";
+    return JSON.stringify(await cashoutSelf(data.token, data.chain, data.amount, data.access)) ?? "null";
   });
+
+export async function deskCashout(args: { data: { token: string; chain: string; amount: string | number } }): Promise<string> {
+  const { deskAccess } = await import("./desk-access");
+  return deskCashoutFn({ data: { ...args.data, access: await deskAccess() } });
+}
 
 const SYSTEM_PROGRAM = "11111111111111111111111111111111";
 const COMPUTE_BUDGET = "ComputeBudget111111111111111111111111111111";
@@ -324,14 +341,14 @@ function solanaAddressOf(linked: { type?: string; address?: string }[]): string 
 }
 
 /** Sign-and-send a SOL top-up from My Wallet to this user's Trading Wallet. The general relay stays Ferzan-only. */
-export const deskTopupSol = createServerFn({ method: "POST" })
-  .validator((data: unknown): { token: string; signedB64: string } => {
+const deskTopupSolFn = createServerFn({ method: "POST" })
+  .validator((data: unknown): { token: string; access: string; signedB64: string } => {
     const row = rec(data);
     const token = row.token;
     if (typeof token !== "string" || token.length < 20 || token.length > 16_000) throw new Error("Sign in again.");
     const signedB64 = typeof row.signedB64 === "string" ? row.signedB64 : "";
     if (!/^[A-Za-z0-9+/=]{100,2000}$/.test(signedB64)) throw new Error("Transaction looks wrong. Nothing was sent.");
-    return { token, signedB64 };
+    return { token, access: accessOf(row), signedB64 };
   })
   .handler(async ({ data }): Promise<{ signature: string }> => {
     await (await import("./guard.server")).guardRelay("send");
@@ -339,7 +356,7 @@ export const deskTopupSol = createServerFn({ method: "POST" })
     const { verifyIdentity } = await import("./privy-identity.server");
     const from = solanaAddressOf((await verifyIdentity(data.token)).linked);
     const { runDesk } = await import("./trade-desk.server");
-    const me = rec(await runDesk("me", data.token, {}));
+    const me = rec(await runDesk("me", data.token, {}, data.access));
     const sol = rec(me.addresses).sol;
     const to = typeof sol === "string" ? sol : "";
     if (!SOL_ADDR.test(to)) throw new Error("This chain has no Trading Wallet yet.");
@@ -366,6 +383,11 @@ export const deskTopupSol = createServerFn({ method: "POST" })
   });
 
 /** Blockhash from the Trade Desk's own Solana RPC, so a top-up is not signed against a different node. */
+export async function deskTopupSol(args: { data: { token: string; signedB64: string } }): Promise<{ signature: string }> {
+  const { deskAccess } = await import("./desk-access");
+  return deskTopupSolFn({ data: { ...args.data, access: await deskAccess() } });
+}
+
 export const deskTopupBlockhash = createServerFn({ method: "GET" })
   .handler(async (): Promise<{ blockhash: string; lastValidBlockHeight: number }> => {
     await (await import("./guard.server")).guardRelay("read");

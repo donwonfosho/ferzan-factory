@@ -19,6 +19,7 @@ import { base, bsc, mainnet } from "viem/chains";
 import { defineChain } from "viem";
 import { useFactory } from "@/lib/factory/store";
 import { PRIVY_APP_ID, base58, setAccountWallets, type Eip1193 } from "@/lib/factory/wallet-bridge";
+import { setDeskAccess } from "@/lib/factory/desk-access";
 
 import { tr } from "@/lib/i18n";
 const robinhood = defineChain({
@@ -216,6 +217,10 @@ function TelegramSignInNote() {
 function Bridge() {
   const { ready, authenticated, user, login, logout, getAccessToken } = usePrivy();
   const { identityToken } = useIdentityToken();
+  useEffect(() => {  // desk calls carry the access token too (website sign-in alerts in Telegram)
+    setDeskAccess(authenticated ? () => getAccessToken() : null);
+    return () => setDeskAccess(null);
+  }, [authenticated, getAccessToken]);
   const { linkTelegram: openTelegramLink } = useLinkAccount();
   const { wallets } = useWallets();
   const { wallets: solWallets } = useSolanaWallets();
