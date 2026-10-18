@@ -38,7 +38,7 @@ export function Floor() {
       <section className="relative grid items-center gap-8 lg:grid-cols-[1.15fr_1fr] lg:gap-12">
         <div className="fz-orb -top-10 left-0 h-56 w-56" aria-hidden />
         <div className="relative fz-rise">
-          <div className="fz-banner fz-border w-full max-w-[14rem] sm:max-w-2xl">
+          <div className="fz-banner fz-border w-full max-w-2xl">
             <img
               src="/brand/lockup.jpg"
               alt={tr("Ferzan Factory. See it. Ape it. Send it.")}
