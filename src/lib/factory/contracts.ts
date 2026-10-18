@@ -23,9 +23,9 @@ export const FACTORIES: Record<CurveLaunchChain, string> = {
  */
 export const CURVE_V2_FACTORIES: Record<CurveLaunchChain, string> = {
   bsc: "0x49daae1c079d8f09e91e6ec54abadb9c3ee828d4",
-  base: "",
+  base: "0x49daae1c079d8f09e91e6ec54abadb9c3ee828d4",
   ethereum: "",
-  robinhood: "",
+  robinhood: "0x49daae1c079d8f09e91e6ec54abadb9c3ee828d4",
   arc: "",
 };
 
