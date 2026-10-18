@@ -124,6 +124,10 @@ export function BotCoinPage({ chain, curve }: { chain: BotCurveChain; curve: str
   const [loadError, setLoadError] = useState("");
   const [tf, setTf] = useState(300);
   const [account, setAccount] = useState("");
+  const signedIn = useAccountWallets();
+  const signedEvm = signedIn?.authenticated && signedIn.evmAddress && /^0x[0-9a-fA-F]{40}$/.test(signedIn.evmAddress) ? signedIn.evmAddress.toLowerCase() : "";
+  // A browser extension, or the wallet on the account they are already signed into.
+  const wallet = account || signedEvm;
   // A returning visitor already has a wallet connected. eth_accounts only reads it; it never opens MetaMask.
   useEffect(() => {
     const eth = provider() as {
@@ -179,7 +183,7 @@ export function BotCoinPage({ chain, curve }: { chain: BotCurveChain; curve: str
 
   const load = useCallback(async () => {
     const key = `${chain}:${curve}`;
-    const once = () => getBotCurve({ data: { chain, curve, wallet: account, tf } });
+    const once = () => getBotCurve({ data: { chain, curve, wallet, tf } });
     try {
       const next = seen.current === key ? await once() : await tryFive(once, () => setLoadError("Busy right now, retrying"));
       seen.current = key;
@@ -188,7 +192,7 @@ export function BotCoinPage({ chain, curve }: { chain: BotCurveChain; curve: str
     } catch {
       if (seen.current !== key) setLoadError("Busy right now. Try again in a minute.");
     }
-  }, [chain, curve, account, tf]);
+  }, [chain, curve, wallet, tf]);
 
   useEffect(() => {
     void load();
@@ -201,8 +205,7 @@ export function BotCoinPage({ chain, curve }: { chain: BotCurveChain; curve: str
     if (e.type !== "trade" || !sameCoin(e, chain, curve) || reloadTimer.current !== null) return;
     reloadTimer.current = window.setTimeout(() => ((reloadTimer.current = null), void load()), 1200);
   });
-  const signedIn = useAccountWallets();
-  const pnlWallet = account || (signedIn?.authenticated ? (signedIn.evmAddress ?? "") : "");
+  const pnlWallet = wallet;
 
   const sellable = state?.mine ? BigInt(state.mine.balance) - BigInt(state.mine.locked) : 0n;
   const raw = parseDecimal(amount, 18); // native coins and Ferzan curve tokens both use 18 decimals
@@ -304,7 +307,7 @@ export function BotCoinPage({ chain, curve }: { chain: BotCurveChain; curve: str
 
   async function copyShare() {
     try {
-      const from = account || (await connect());
+      const from = wallet || (await connect());
       const url = new URL(window.location.href);
       url.searchParams.set("ref", from);
       await navigator.clipboard.writeText(url.toString());
@@ -466,7 +469,7 @@ export function BotCoinPage({ chain, curve }: { chain: BotCurveChain; curve: str
             curve={curve}
             symbol={state.symbol}
             native={state.native}
-            account={account}
+            account={wallet}
             teamLocked={state.mine ? BigInt(state.mine.locked) : 0n}
             connect={connect}
             send={send}
@@ -552,14 +555,14 @@ export function BotCoinPage({ chain, curve }: { chain: BotCurveChain; curve: str
             amountIn={amount.trim() ? `${amount.trim()} ${side === "buy" ? state.native : state.symbol}` : undefined}
             amountOut={quoted ? (side === "buy" ? `${formatSmart(quoted.out, 18)} ${state.symbol}` : `${formatSmart(quoted.out, 18)} ${state.native}`) : undefined}
             minReceived={quoted ? minText(quoted.out, slip, 18, side === "buy" ? state.symbol : state.native) : undefined}
-            fee={side === "buy" && referrerFor(account) !== ZERO ? FEE_TG_REF : FEE_TG}
+            fee={side === "buy" && referrerFor(wallet) !== ZERO ? FEE_TG_REF : FEE_TG}
             approving={approveLine(
               amount.trim() ? `${amount.trim()} ${side === "buy" ? state.native : state.symbol}` : undefined,
               quoted ? (side === "buy" ? `${formatSmart(quoted.out, 18)} ${state.symbol}` : `${formatSmart(quoted.out, 18)} ${state.native}`) : undefined,
             )}
           />
           <Button type="submit" className="w-full" disabled={Boolean(busy) || Boolean(opensAt)}>
-            {!account ? tr("Connect wallet") : side === "buy" ? tr("Buy {0}", state.symbol) : tr("Sell {0}", state.symbol)}
+            {!wallet ? tr("Connect wallet") : side === "buy" ? tr("Buy {0}", state.symbol) : tr("Sell {0}", state.symbol)}
           </Button>
           <p className="text-xs text-muted">{tr("1% fee on every trade: half to the creator, half to Ferzan. A referrer gets 10% of the fee.")}</p>
           <StoredReferrer />

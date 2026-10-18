@@ -170,10 +170,7 @@ export function CurveV2Panel({
     e.preventDefault();
     void guarded(async () => {
       if (!v2) return;
-      if (!raw || raw <= 0n) {
-        if (side === "sell" && !account) throw new Error(tr("Connect your wallet to see your {0} and sell.", symbol));
-        throw new Error(side === "buy" ? tr("Type how much {0} to spend.", native) : tr("Type how many {0} to sell.", symbol));
-      }
+      if (!raw || raw <= 0n) throw new Error(side === "buy" ? tr("Type how much {0} to spend.", native) : tr("Type how many {0} to sell.", symbol));
       if (side === "buy") {
         if (v2.phase === 1) {
           setBusy(tr("Approve joining the Fair Open in your wallet."));
@@ -318,7 +315,20 @@ export function CurveV2Panel({
           ) : null}
           {error ? <p className="text-sm text-sell">{tr(error)}</p> : null}
           {busy ? <p className="text-sm text-cyan">{busy}</p> : null}
-          <Button type="submit" className="w-full" disabled={Boolean(busy)}>
+          <Button
+            type={account ? "submit" : "button"}
+            className="w-full"
+            disabled={Boolean(busy)}
+            onClick={
+              account
+                ? undefined
+                : () =>
+                    void guarded(async () => {
+                      setBusy(tr("Connect your wallet."));
+                      await connect();
+                    })
+            }
+          >
             {!account
               ? tr("Connect wallet")
               : v2.phase === 5
