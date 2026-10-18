@@ -170,7 +170,10 @@ export function CurveV2Panel({
     e.preventDefault();
     void guarded(async () => {
       if (!v2) return;
-      if (!raw || raw <= 0n) throw new Error(side === "buy" ? tr("Type how much {0} to spend.", native) : tr("Type how many {0} to sell.", symbol));
+      if (!raw || raw <= 0n) {
+        if (side === "sell" && !account) throw new Error(tr("Connect your wallet to see your {0} and sell.", symbol));
+        throw new Error(side === "buy" ? tr("Type how much {0} to spend.", native) : tr("Type how many {0} to sell.", symbol));
+      }
       if (side === "buy") {
         if (v2.phase === 1) {
           setBusy(tr("Approve joining the Fair Open in your wallet."));
@@ -259,6 +262,13 @@ export function CurveV2Panel({
               </button>
             </div>
           )}
+          {side === "sell" && v2.phase !== 5 ? (
+            account && you ? (
+              <p className="text-sm text-muted">{tr("You have {0} {1} · sellable now {2}", formatSmart(BigInt(you.balanceOf), 18), symbol, formatSmart(sellable, 18))}</p>
+            ) : !account ? (
+              <p className="text-sm text-muted">{tr("Connect your wallet to see your {0} and sell.", symbol)}</p>
+            ) : null
+          ) : null}
           <TextInput
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
@@ -267,9 +277,9 @@ export function CurveV2Panel({
           />
           {(side === "sell" || v2.phase === 5) && you ? (
             <div className="flex flex-wrap gap-2">
-              {[25, 50, 100].map((p) => (
+              {[25, 50, 75, 100].map((p) => (
                 <button key={p} type="button" className="btn-line min-h-9 px-3 text-sm" onClick={() => { setSide("sell"); setAmount(plain((sellable * BigInt(p)) / 100n)); }}>
-                  {p}%
+                  {p === 100 ? tr("Max") : `${p}%`}
                 </button>
               ))}
             </div>

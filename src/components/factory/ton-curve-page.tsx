@@ -284,6 +284,8 @@ export function TonCurvePage({ curve }: { curve: string }) {
           candles={state.candles}
           trades={state.trades}
           wallet={account || (signedIn?.authenticated ? (signedIn.tonAddress ?? "") : "")}
+          chain="ton"
+          token={state.token}
           creator={state.creator}
           targetRaw={state.gradTarget}
           targetDecimals={9}

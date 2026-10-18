@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { IChartApi, IPriceLine, ISeriesApi, ISeriesMarkersPluginApi, MouseEventParams, SeriesMarker, Time, UTCTimestamp } from "lightweight-charts";
 import { tr } from "@/lib/i18n";
+import { getPnl } from "@/lib/factory/market-extra";
 import { CandleChart } from "./chart-pro";
 
 type Candle = [number, number, number, number, number, number];
@@ -30,6 +31,8 @@ export function TvChart({
   toCap,
   trades,
   wallet,
+  chain,
+  token,
   creator,
   targetRaw,
   targetDecimals,
@@ -42,6 +45,9 @@ export function TvChart({
   toCap?: number;
   trades?: ChartTrade[];
   wallet?: string;
+  /** Coin the Launch API uses for this wallet's position. Without both, the chart hides P/L. */
+  chain?: string;
+  token?: string;
   creator?: string;
   /** Graduation target as the chain's raw integer, plus its decimals. */
   targetRaw?: string;
@@ -88,6 +94,8 @@ export function TvChart({
           toCap={toCap}
           trades={wallets === false ? [] : (trades ?? [])}
           wallet={wallet ?? ""}
+          chain={chain ?? ""}
+          token={token ?? ""}
           creator={creator ?? ""}
           target={chartNative(targetRaw ?? "", targetDecimals ?? 0)}
           onFail={() => setFailed(true)}
@@ -156,6 +164,8 @@ function LibraryChart({
   toCap,
   trades,
   wallet,
+  chain,
+  token,
   creator,
   target,
   onFail,
@@ -167,6 +177,8 @@ function LibraryChart({
   toCap?: number;
   trades: ChartTrade[];
   wallet: string;
+  chain: string;
+  token: string;
   creator: string;
   target: number;
   onFail: () => void;
@@ -206,8 +218,26 @@ function LibraryChart({
     }
     return got > 0 ? spent / got : 0;
   }, [trades, wallet]);
-  const lastNative = rows.length ? rows[rows.length - 1].close / (k || 1) : 0;
-  const pnl = wallet && avg > 0 && lastNative > 0 ? ((lastNative - avg) / avg) * 100 : null;
+  // Spot price against the average buy overstates a large buy, because that buy itself moved the price.
+  // The Launch API's pnl_pct is what selling the position would pay, the same number as "Your position".
+  const [pnl, setPnl] = useState<number | null>(null);
+  useEffect(() => {
+    let stop = false;
+    if (!wallet || !chain || !token) {
+      setPnl(null);
+      return;
+    }
+    getPnl({ data: { chain, token, wallet } })
+      .then((row) => {
+        if (!stop) setPnl(row && Number.isFinite(row.pnlPct) ? row.pnlPct : null);
+      })
+      .catch(() => {
+        if (!stop) setPnl(null);
+      });
+    return () => {
+      stop = true;
+    };
+  }, [wallet, chain, token, trades]);
 
   useEffect(() => {
     const el = host.current;

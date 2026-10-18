@@ -10,7 +10,7 @@ import {
   type BotCurveChain,
   type BotCurveState,
 } from "@/lib/factory/bot-curve";
-import { dexSwapUrl, explorerAddress, explorerTx } from "@/lib/factory/deploy";
+import { dexSwapUrl, explorerAddress, explorerTx, provider } from "@/lib/factory/deploy";
 import { evmWallet, useAccountWallets } from "@/lib/factory/wallet-bridge";
 import { getReceipt } from "@/lib/factory/relay";
 import { formatPrice, formatSmart, formatUsdPrice, parseDecimal } from "@/lib/factory/units";
@@ -124,6 +124,32 @@ export function BotCoinPage({ chain, curve }: { chain: BotCurveChain; curve: str
   const [loadError, setLoadError] = useState("");
   const [tf, setTf] = useState(300);
   const [account, setAccount] = useState("");
+  // A returning visitor already has a wallet connected. eth_accounts only reads it; it never opens MetaMask.
+  useEffect(() => {
+    const eth = provider() as {
+      request: (args: { method: string }) => Promise<unknown>;
+      on?: (event: string, fn: (accounts: unknown) => void) => void;
+      removeListener?: (event: string, fn: (accounts: unknown) => void) => void;
+    } | null;
+    if (!eth) return;
+    let stop = false;
+    const apply = (accounts: unknown) => {
+      if (stop) return;
+      const first = Array.isArray(accounts) && typeof accounts[0] === "string" ? accounts[0] : "";
+      setAccount(/^0x[0-9a-fA-F]{40}$/.test(first) ? first.toLowerCase() : "");
+    };
+    void eth.request({ method: "eth_accounts" }).then((accounts) => {
+      if (stop) return;
+      const first = Array.isArray(accounts) && typeof accounts[0] === "string" ? accounts[0] : "";
+      if (/^0x[0-9a-fA-F]{40}$/.test(first)) setAccount(first.toLowerCase());
+    }, () => undefined);
+    const onChange = (accounts: unknown) => apply(accounts);
+    eth.on?.("accountsChanged", onChange);
+    return () => {
+      stop = true;
+      eth.removeListener?.("accountsChanged", onChange);
+    };
+  }, [chain]);
   const [side, setSide] = useState<"buy" | "sell">("buy");
   const [amount, setAmount] = useState("");
   const [slip, setSlip] = useState(500);
@@ -378,6 +404,8 @@ export function BotCoinPage({ chain, curve }: { chain: BotCurveChain; curve: str
           candles={state.candles}
           trades={state.trades}
           wallet={pnlWallet}
+          chain={state.chain}
+          token={state.token}
           creator={state.creator}
           targetRaw={state.gradTarget}
           targetDecimals={18}

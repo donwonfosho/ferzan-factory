@@ -319,6 +319,8 @@ export function TronCurvePage({ curve }: { curve: string }) {
           candles={state.candles}
           trades={state.trades}
           wallet={account || (signedIn?.authenticated ? (signedIn.tronAddress ?? "") : "")}
+          chain="tron"
+          token={state.token}
           creator={state.creator}
           targetRaw={state.gradTarget}
           targetDecimals={6}
