@@ -31,10 +31,30 @@ export const SEL = {
 export const word = (v: bigint) => v.toString(16).padStart(64, "0");
 export const addrWord = (a: string) => a.toLowerCase().replace(/^0x/, "").padStart(64, "0");
 
-/** Links from the bots (curve.html) that this site can show itself. */
+/** A ferzan-factory.com coin or token URL, as a path on this site (same tab). */
+function ownSitePath(url: string): string | null {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return null;
+  }
+  const host = parsed.hostname.toLowerCase();
+  if (host !== "ferzan-factory.com" && host !== "www.ferzan-factory.com" && !host.endsWith(".ferzan-factory.com") && host !== "ferzan-factory.grok.me") return null;
+  const parts = parsed.pathname.split("/").filter(Boolean);
+  if (parts.length < 3 || (parts[0] !== "coin" && parts[0] !== "token")) return null;
+  const chain = parts[1].toLowerCase();
+  const id = /^0x[0-9a-fA-F]{40}$/.test(parts[2]) ? parts[2].toLowerCase() : parts[2];
+  if (!/^(?:0x[0-9a-f]{40}|[A-Za-z0-9_-]{20,80})$/.test(id)) return null;
+  return `/${parts[0]}/${chain}/${id}`;
+}
+
+/** Links from the bots (curve.html) or this site's own coin pages, opened here instead of a new tab. */
 export function siteCoinHref(url: string): string | null {
   const m = /curve\.html\?chain=(base|bsc|ethereum|robinhood|arc)&curve=(0x[0-9a-fA-F]{40})/.exec(url);
   if (m) return `/coin/${m[1]}/${m[2].toLowerCase()}`;
+  const own = ownSitePath(url);
+  if (own) return own;
   // Ferzan Tron bonding curves have their own page here (trade with TronLink).
   const tronCurve = /^https:\/\/(?:www\.)?ferzan-factory\.com\/coin\/tron\/(T[1-9A-HJ-NP-Za-km-z]{33})$/.exec(url);
   if (tronCurve) return `/coin/tron/${tronCurve[1]}`;
