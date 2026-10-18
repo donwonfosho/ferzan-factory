@@ -1620,6 +1620,7 @@ const dict: Record<string, string> = {
   "Optional. On the Ferzan Curve your first buy joins the 60-second Fair Open at the same price as everyone else, and unlocks 25% at each quarter of progress.": "Opcional. Na Curva Ferzan sua primeira compra entra na Abertura Justa de 60 segundos pelo mesmo preço que todo mundo, e desbloqueia 25% a cada quarto do progresso.",
   "Fair Open (one price for the first 60 seconds), Sniper Tax, Dev Lock and the Dev Sell Alarm, Soft Landing, Rising Floor, Diamond Hands and Fair Exit. Same 1% fee.": "Abertura Justa (um preço nos primeiros 60 segundos), Imposto de Sniper, Bloqueio do Dev e o Alarme de Venda do Dev, Pouso Suave, Piso Ascendente, Mãos de Diamante e Saída Justa. A mesma taxa de 1%.",
   "Team tokens stay locked until graduation, then unlock gradually over 7 days.": "Os tokens da equipe ficam bloqueados até a formatura e depois desbloqueiam aos poucos ao longo de 7 dias.",
+  "Ferzan Curve V2 (BNB Chain): 1% on every trade. 0.40% creator (half held until graduation), 0.35% Ferzan (0.10% of it to a referrer when a buyer came from a referral link), 0.10% Diamond Hands, 0.05% Rising Floor, 0.05% Auto-Trending, 0.05% FERZAN Flywheel.": "Curva Ferzan V2 (BNB Chain): 1% em cada negociação. 0,40% criador (metade retida até a formatura), 0,35% Ferzan (0,10% disso a um referenciador quando o comprador veio de um link de indicação), 0,10% Mãos de Diamante, 0,05% Piso Ascendente, 0,05% Auto-Trending, 0,05% Volante FERZAN.",
 };
 
 export default dict;

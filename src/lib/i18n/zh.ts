@@ -1628,6 +1628,7 @@ const dict: Record<string, string> = {
   "Optional. On the Ferzan Curve your first buy joins the 60-second Fair Open at the same price as everyone else, and unlocks 25% at each quarter of progress.": "可选。在 Ferzan 曲线上，你的第一笔买入会加入 60 秒公平开盘，价格和所有人一样，并在进度的每个四分之一解锁 25%。",
   "Fair Open (one price for the first 60 seconds), Sniper Tax, Dev Lock and the Dev Sell Alarm, Soft Landing, Rising Floor, Diamond Hands and Fair Exit. Same 1% fee.": "公平开盘（前 60 秒同一价格）、狙击税、开发者锁仓和开发者卖出警报、软着陆、上升地板、钻石手和公平退出。同样是 1% 手续费。",
   "Team tokens stay locked until graduation, then unlock gradually over 7 days.": "团队代币在毕业前保持锁定，然后在 7 天内逐步解锁。",
+  "Ferzan Curve V2 (BNB Chain): 1% on every trade. 0.40% creator (half held until graduation), 0.35% Ferzan (0.10% of it to a referrer when a buyer came from a referral link), 0.10% Diamond Hands, 0.05% Rising Floor, 0.05% Auto-Trending, 0.05% FERZAN Flywheel.": "Ferzan 曲线 V2（BNB Chain）：每笔交易 1%。0.40% 创建者（一半留到毕业），0.35% Ferzan（买家来自推荐链接时，其中 0.10% 给推荐人），0.10% 钻石手，0.05% 上升地板，0.05% Auto-Trending，0.05% FERZAN 飞轮。",
 };
 
 export default dict;

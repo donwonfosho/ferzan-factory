@@ -166,6 +166,7 @@ function VerifyPage() {
           <li>{tr("Older website curves (first contracts, no longer used for new launches): 60% treasury, 30% creator, 10% referrer or treasury.")}</li>
           <li>{tr("New launches (Launch Bot curves): 50% creator, 50% platform.")}</li>
           <li>{tr("New launches (Launch Bot curves) with a referral: 50% creator, 40% platform, 10% referrer.")}</li>
+          <li>{tr("Ferzan Curve V2 (BNB Chain): 1% on every trade. 0.40% creator (half held until graduation), 0.35% Ferzan (0.10% of it to a referrer when a buyer came from a referral link), 0.10% Diamond Hands, 0.05% Rising Floor, 0.05% Auto-Trending, 0.05% FERZAN Flywheel.")}</li>
         </ul>
         <p>
           {tr("New launches (Launch Bot curves) on this site use that split. It is not the older website curve contract, and this site has no separate Launch Bot factory address to list.")}

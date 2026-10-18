@@ -1620,6 +1620,7 @@ const dict: Record<string, string> = {
   "Optional. On the Ferzan Curve your first buy joins the 60-second Fair Open at the same price as everyone else, and unlocks 25% at each quarter of progress.": "İsteğe bağlı. Ferzan Eğrisinde ilk alımınız 60 saniyelik Adil Açılışa herkesle aynı fiyattan katılır ve ilerlemenin her çeyreğinde %25 açılır.",
   "Fair Open (one price for the first 60 seconds), Sniper Tax, Dev Lock and the Dev Sell Alarm, Soft Landing, Rising Floor, Diamond Hands and Fair Exit. Same 1% fee.": "Adil Açılış (ilk 60 saniye tek fiyat), Keskin Nişancı Vergisi, Geliştirici Kilidi ve Geliştirici Satış Alarmı, Yumuşak İniş, Yükselen Taban, Elmas Eller ve Adil Çıkış. Aynı %1 ücret.",
   "Team tokens stay locked until graduation, then unlock gradually over 7 days.": "Ekip tokenları mezuniyete kadar kilitli kalır, sonra 7 günde yavaş yavaş açılır.",
+  "Ferzan Curve V2 (BNB Chain): 1% on every trade. 0.40% creator (half held until graduation), 0.35% Ferzan (0.10% of it to a referrer when a buyer came from a referral link), 0.10% Diamond Hands, 0.05% Rising Floor, 0.05% Auto-Trending, 0.05% FERZAN Flywheel.": "Ferzan Eğrisi V2 (BNB Chain): her işlemde %1. %0,40 oluşturan (yarısı mezuniyete kadar tutulur), %0,35 Ferzan (alıcı bir yönlendirme bağlantısından geldiyse bunun %0,10'u yönlendirene), %0,10 Elmas Eller, %0,05 Yükselen Taban, %0,05 Auto-Trending, %0,05 FERZAN çarkı.",
 };
 
 export default dict;

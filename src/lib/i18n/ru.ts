@@ -1620,6 +1620,7 @@ const dict: Record<string, string> = {
   "Optional. On the Ferzan Curve your first buy joins the 60-second Fair Open at the same price as everyone else, and unlocks 25% at each quarter of progress.": "Необязательно. На кривой Ferzan ваша первая покупка входит в 60-секундный Честный старт по той же цене, что и у всех, и открывается на 25% на каждой четверти прогресса.",
   "Fair Open (one price for the first 60 seconds), Sniper Tax, Dev Lock and the Dev Sell Alarm, Soft Landing, Rising Floor, Diamond Hands and Fair Exit. Same 1% fee.": "Честный старт (одна цена первые 60 секунд), налог на снайперов, блокировка разработчика и сигнал продажи разработчика, мягкая посадка, растущий пол, алмазные руки и честный выход. Та же комиссия 1%.",
   "Team tokens stay locked until graduation, then unlock gradually over 7 days.": "Токены команды остаются заблокированы до выпуска, затем открываются постепенно за 7 дней.",
+  "Ferzan Curve V2 (BNB Chain): 1% on every trade. 0.40% creator (half held until graduation), 0.35% Ferzan (0.10% of it to a referrer when a buyer came from a referral link), 0.10% Diamond Hands, 0.05% Rising Floor, 0.05% Auto-Trending, 0.05% FERZAN Flywheel.": "Кривая Ferzan V2 (BNB Chain): 1% с каждой сделки. 0,40% создатель (половина удерживается до выпуска), 0,35% Ferzan (0,10% из них рефереру, если покупатель пришёл по реферальной ссылке), 0,10% Алмазные руки, 0,05% Растущий пол, 0,05% Auto-Trending, 0,05% маховик FERZAN.",
 };
 
 export default dict;

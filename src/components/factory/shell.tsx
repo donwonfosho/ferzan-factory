@@ -313,6 +313,7 @@ export function Shell({ children }: { children: ReactNode }) {
           <ul className="mt-2 list-disc space-y-1 pl-5">
             <li>{tr("Older website curves (first contracts, no longer used for new launches): 1% on every trade. 60% treasury, 30% creator, 10% to a referrer when a buyer names a wallet.")}</li>
             <li>{tr("New launches (Launch Bot curves): 1% on every trade. 50% creator, 50% platform, or 50% creator, 40% platform, 10% referrer when a buyer came from a referral link.")}</li>
+            <li>{tr("Ferzan Curve V2 (BNB Chain): 1% on every trade. 0.40% creator (half held until graduation), 0.35% Ferzan (0.10% of it to a referrer when a buyer came from a referral link), 0.10% Diamond Hands, 0.05% Rising Floor, 0.05% Auto-Trending, 0.05% FERZAN Flywheel.")}</li>
           </ul>
         </div>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">

@@ -1620,6 +1620,7 @@ const dict: Record<string, string> = {
   "Optional. On the Ferzan Curve your first buy joins the 60-second Fair Open at the same price as everyone else, and unlocks 25% at each quarter of progress.": "Không bắt buộc. Trên Đường cong Ferzan, lệnh mua đầu của bạn vào Mở cửa công bằng 60 giây với cùng giá như mọi người, và mở 25% ở mỗi phần tư tiến độ.",
   "Fair Open (one price for the first 60 seconds), Sniper Tax, Dev Lock and the Dev Sell Alarm, Soft Landing, Rising Floor, Diamond Hands and Fair Exit. Same 1% fee.": "Mở cửa công bằng (một giá trong 60 giây đầu), Thuế sniper, Khóa dev và Cảnh báo bán của dev, Hạ cánh mềm, Sàn tăng, Tay kim cương và Thoát công bằng. Cùng phí 1%.",
   "Team tokens stay locked until graduation, then unlock gradually over 7 days.": "Token đội bị khóa đến khi tốt nghiệp, rồi mở dần trong 7 ngày.",
+  "Ferzan Curve V2 (BNB Chain): 1% on every trade. 0.40% creator (half held until graduation), 0.35% Ferzan (0.10% of it to a referrer when a buyer came from a referral link), 0.10% Diamond Hands, 0.05% Rising Floor, 0.05% Auto-Trending, 0.05% FERZAN Flywheel.": "Đường cong Ferzan V2 (BNB Chain): 1% mỗi giao dịch. 0,40% người tạo (một nửa giữ đến khi tốt nghiệp), 0,35% Ferzan (0,10% trong đó cho người giới thiệu khi người mua đến từ liên kết giới thiệu), 0,10% Tay kim cương, 0,05% Sàn tăng, 0,05% Auto-Trending, 0,05% bánh đà FERZAN.",
 };
 
 export default dict;
