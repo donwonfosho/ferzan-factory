@@ -22,7 +22,7 @@ export const FACTORIES: Record<CurveLaunchChain, string> = {
  * address Ferzan announces (the same one the Launch API uses), lowercase.
  */
 export const CURVE_V2_FACTORIES: Record<CurveLaunchChain, string> = {
-  bsc: "",
+  bsc: "0x49daae1c079d8f09e91e6ec54abadb9c3ee828d4",
   base: "",
   ethereum: "",
   robinhood: "",
