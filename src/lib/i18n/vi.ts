@@ -1611,6 +1611,15 @@ const dict: Record<string, string> = {
   "Robinhood Chain gas (usually cents)": "Gas Robinhood Chain (thường vài xu)",
   "Arc gas, paid in USDC": "Gas Arc, trả bằng USDC",
   "about 0.3 TON for the coin contract, most of it comes back": "khoảng 0.3 TON cho hợp đồng coin, phần lớn quay lại",
+  "Trading opens soon. The first 60 seconds are a Fair Open: every buy in it gets the same price.": "Giao dịch sắp mở. 60 giây đầu là Mở cửa công bằng: mọi lệnh mua trong đó có cùng một giá.",
+  "24h · up to 2% back": "24 giờ · hoàn tới 2%",
+  "7 days · up to 5% back": "7 ngày · hoàn tới 5%",
+  "If the Rising Floor can't pay most of it yet, the lock is refused and you can buy without it.": "Nếu Sàn tăng chưa trả được phần lớn, khóa bị từ chối và bạn có thể mua không khóa.",
+  "Claim {0} {1} and {2} {3} back from the Fair Open": "Nhận {0} {1} và {2} {3} hoàn lại từ Mở cửa công bằng",
+  "Your tokens unlock 25% at each quarter of progress, once progress has stayed above it for an hour. A sale is public for 10 minutes before it can run, and you can queue up to 25% of your unlocked tokens a day. After graduation the rest unlocks gradually over 7 days.": "Token của bạn mở 25% ở mỗi phần tư tiến độ, sau khi tiến độ giữ trên mức đó một giờ. Một lệnh bán được công khai 10 phút trước khi chạy, và bạn có thể xếp hàng tới 25% token đã mở mỗi ngày. Sau tốt nghiệp phần còn lại mở dần trong 7 ngày.",
+  "Optional. On the Ferzan Curve your first buy joins the 60-second Fair Open at the same price as everyone else, and unlocks 25% at each quarter of progress.": "Không bắt buộc. Trên Đường cong Ferzan, lệnh mua đầu của bạn vào Mở cửa công bằng 60 giây với cùng giá như mọi người, và mở 25% ở mỗi phần tư tiến độ.",
+  "Fair Open (one price for the first 60 seconds), Sniper Tax, Dev Lock and the Dev Sell Alarm, Soft Landing, Rising Floor, Diamond Hands and Fair Exit. Same 1% fee.": "Mở cửa công bằng (một giá trong 60 giây đầu), Thuế sniper, Khóa dev và Cảnh báo bán của dev, Hạ cánh mềm, Sàn tăng, Tay kim cương và Thoát công bằng. Cùng phí 1%.",
+  "Team tokens stay locked until graduation, then unlock gradually over 7 days.": "Token đội bị khóa đến khi tốt nghiệp, rồi mở dần trong 7 ngày.",
 };
 
 export default dict;

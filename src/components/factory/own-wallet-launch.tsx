@@ -648,7 +648,7 @@ export function OwnWalletLaunch() {
             <TextInput value={devBuy} onChange={(e) => setDevBuy(e.target.value)} placeholder={tr("0 — skip it")} inputMode="decimal" />
             <p className="mt-1.5 text-xs text-muted">
               {v2
-                ? tr("Optional. On the Ferzan Curve your first buy joins the 30-second Fair Open at the same price as everyone else, and unlocks 25% at each quarter of progress.")
+                ? tr("Optional. On the Ferzan Curve your first buy joins the 60-second Fair Open at the same price as everyone else, and unlocks 25% at each quarter of progress.")
                 : tr("Optional. It happens in the same transaction, so nobody can buy before you.")}
             </p>
           </div>
@@ -680,8 +680,9 @@ export function OwnWalletLaunch() {
                 {ferzanCurve ? (
                   <>
                     <p className="text-xs text-muted">
-                      {tr("Fair Open (one price for the first 30 seconds), Sniper Tax, Dev Lock and the Dev Sell Alarm, Soft Landing, Rising Floor, Diamond Hands and Fair Exit. Same 1% fee.")}
+                      {tr("Fair Open (one price for the first 60 seconds), Sniper Tax, Dev Lock and the Dev Sell Alarm, Soft Landing, Rising Floor, Diamond Hands and Fair Exit. Same 1% fee.")}
                     </p>
+                    <p className="text-xs text-muted">{tr("Team tokens stay locked until graduation, then unlock gradually over 7 days.")}</p>
                     <div className="grid grid-cols-3 gap-2">
                       {(["protected", "balanced", "aggressive"] as const).map((m) => (
                         <button key={m} type="button" onClick={() => setCurveMode(m)} className={cn("min-h-11 px-2 text-sm", curveMode === m ? "btn-cyan" : "btn-line")}>

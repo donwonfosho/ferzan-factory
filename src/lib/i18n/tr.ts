@@ -1611,6 +1611,15 @@ const dict: Record<string, string> = {
   "Robinhood Chain gas (usually cents)": "Robinhood Chain gazı (genelde sentler)",
   "Arc gas, paid in USDC": "Arc gazı, USDC ile ödenir",
   "about 0.3 TON for the coin contract, most of it comes back": "coin sözleşmesi için yaklaşık 0.3 TON, çoğu geri gelir",
+  "Trading opens soon. The first 60 seconds are a Fair Open: every buy in it gets the same price.": "İşlem yakında açılır. İlk 60 saniye Adil Açılıştır: içindeki her alış aynı fiyattan olur.",
+  "24h · up to 2% back": "24 sa · en fazla %2 geri",
+  "7 days · up to 5% back": "7 gün · en fazla %5 geri",
+  "If the Rising Floor can't pay most of it yet, the lock is refused and you can buy without it.": "Yükselen Taban henüz bunun çoğunu ödeyemiyorsa kilit reddedilir ve onsuz alabilirsiniz.",
+  "Claim {0} {1} and {2} {3} back from the Fair Open": "Adil Açılıştan {0} {1} ve {2} {3} geri alın",
+  "Your tokens unlock 25% at each quarter of progress, once progress has stayed above it for an hour. A sale is public for 10 minutes before it can run, and you can queue up to 25% of your unlocked tokens a day. After graduation the rest unlocks gradually over 7 days.": "Tokenleriniz ilerlemenin her çeyreğinde %25 açılır; ilerleme bunun üstünde bir saat kaldıktan sonra. Bir satış gerçekleşmeden 10 dakika önce herkese açıktır ve günde açılmış tokenlerinizin en fazla %25'ini sıraya koyabilirsiniz. Mezuniyetten sonra kalanı 7 günde yavaş yavaş açılır.",
+  "Optional. On the Ferzan Curve your first buy joins the 60-second Fair Open at the same price as everyone else, and unlocks 25% at each quarter of progress.": "İsteğe bağlı. Ferzan Eğrisinde ilk alımınız 60 saniyelik Adil Açılışa herkesle aynı fiyattan katılır ve ilerlemenin her çeyreğinde %25 açılır.",
+  "Fair Open (one price for the first 60 seconds), Sniper Tax, Dev Lock and the Dev Sell Alarm, Soft Landing, Rising Floor, Diamond Hands and Fair Exit. Same 1% fee.": "Adil Açılış (ilk 60 saniye tek fiyat), Keskin Nişancı Vergisi, Geliştirici Kilidi ve Geliştirici Satış Alarmı, Yumuşak İniş, Yükselen Taban, Elmas Eller ve Adil Çıkış. Aynı %1 ücret.",
+  "Team tokens stay locked until graduation, then unlock gradually over 7 days.": "Ekip tokenları mezuniyete kadar kilitli kalır, sonra 7 günde yavaş yavaş açılır.",
 };
 
 export default dict;

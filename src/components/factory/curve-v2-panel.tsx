@@ -202,7 +202,7 @@ export function CurveV2Panel({
   const phaseBox = (() => {
     switch (v2.phase) {
       case 0:
-        return <p className="text-sm">{tr("Trading opens soon. The first 30 seconds are a Fair Open: every buy in it gets the same price.")}</p>;
+        return <p className="text-sm">{tr("Trading opens soon. The first 60 seconds are a Fair Open: every buy in it gets the same price.")}</p>;
       case 1:
         return (
           <p className="text-sm">
@@ -280,11 +280,11 @@ export function CurveV2Panel({
               <div className="grid grid-cols-3 gap-2">
                 {([0, 1, 7] as const).map((d) => (
                   <button key={d} type="button" className={cn("min-h-9 px-2 text-sm", lock === d ? "btn-cyan" : "btn-line")} onClick={() => setLock(d)}>
-                    {d === 0 ? tr("No lock") : d === 1 ? tr("24h · 2% back") : tr("7 days · 5% back")}
+                    {d === 0 ? tr("No lock") : d === 1 ? tr("24h · up to 2% back") : tr("7 days · up to 5% back")}
                   </button>
                 ))}
               </div>
-              {lock ? <p className="text-xs text-muted">{tr("These tokens can't be sold or moved until the lock ends, even after graduation. The money back comes from the Rising Floor, up to what it holds.")}</p> : null}
+              {lock ? <p className="text-xs text-muted">{tr("These tokens can't be sold or moved until the lock ends, even after graduation. The money back comes from the Rising Floor, up to what it holds.")}{" "}{tr("If the Rising Floor can't pay most of it yet, the lock is refused and you can buy without it.")}</p> : null}
             </div>
           ) : null}
           {quote && v2.phase === 2 ? (
@@ -348,7 +348,9 @@ export function CurveV2Panel({
           ) : null}
           {you.canClaimOpen ? (
             <Button type="button" className="w-full" disabled={Boolean(busy)} onClick={() => void guarded(async () => { setBusy(tr("Claiming your Fair Open tokens…")); await run("claim_open", 0n, tr("Claim")); })}>
-              {tr("Claim {0} {1} from the Fair Open", formatSmart(BigInt(you.openShareOf), 18), symbol)}
+              {BigInt(you.openRefundOf) > 0n
+                ? tr("Claim {0} {1} and {2} {3} back from the Fair Open", formatSmart(BigInt(you.openShareOf), 18), symbol, formatSmart(BigInt(you.openRefundOf), 18), native)
+                : tr("Claim {0} {1} from the Fair Open", formatSmart(BigInt(you.openShareOf), 18), symbol)}
             </Button>
           ) : null}
           {BigInt(you.diamondOwed) > 0n ? (
@@ -364,7 +366,7 @@ export function CurveV2Panel({
         <div className="ticket fz-panel space-y-2 text-sm">
           <p className="font-semibold">{tr("Dev Sell Alarm")}</p>
           <p className="text-muted">
-            {tr("Your tokens unlock 25% at each quarter of progress. A sale is public for 10 minutes before it can run, and you can queue up to 25% of your unlocked tokens a day.")}
+            {tr("Your tokens unlock 25% at each quarter of progress, once progress has stayed above it for an hour. A sale is public for 10 minutes before it can run, and you can queue up to 25% of your unlocked tokens a day. After graduation the rest unlocks gradually over 7 days.")}
           </p>
           <p>
             {tr("Locked")}: {formatSmart(BigInt(you.lockedOf), 18)} {symbol} · {tr("free")}: {formatSmart(sellable, 18)} {symbol}

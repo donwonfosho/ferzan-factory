@@ -75,6 +75,7 @@ export type CurveV2You = {
   holdSince: string;
   openDeposit: string;
   openShareOf: string;
+  openRefundOf: string;
   canClaimOpen: boolean;
   convictionLocked: string;
   convictionUntil: string;
@@ -83,6 +84,7 @@ export type CurveV2You = {
   diamondOwed: string;
   moved: boolean;
   isCreator: boolean;
+  vestingLocked: string;
 };
 
 export type CurveV2State = {
@@ -201,6 +203,7 @@ function readState(raw: Record<string, unknown>): CurveV2State {
           holdSince: wei(y.holdSince),
           openDeposit: wei(y.openDeposit),
           openShareOf: wei(y.openShareOf),
+          openRefundOf: wei(y.openRefundOf),
           canClaimOpen: y.canClaimOpen === true,
           convictionLocked: wei(y.convictionLocked),
           convictionUntil: wei(y.convictionUntil),
@@ -209,6 +212,7 @@ function readState(raw: Record<string, unknown>): CurveV2State {
           diamondOwed: wei(y.diamondOwed),
           moved: y.moved === true,
           isCreator: y.isCreator === true,
+          vestingLocked: wei(y.vestingLocked),
         }
       : null,
   };

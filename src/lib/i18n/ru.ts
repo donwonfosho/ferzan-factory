@@ -1611,6 +1611,15 @@ const dict: Record<string, string> = {
   "Robinhood Chain gas (usually cents)": "Газ Robinhood Chain (обычно центы)",
   "Arc gas, paid in USDC": "Газ Arc, оплачивается в USDC",
   "about 0.3 TON for the coin contract, most of it comes back": "около 0.3 TON на контракт монеты, большая часть вернётся",
+  "Trading opens soon. The first 60 seconds are a Fair Open: every buy in it gets the same price.": "Торговля скоро откроется. Первые 60 секунд — Честный старт: каждая покупка в нём идёт по одной цене.",
+  "24h · up to 2% back": "24 ч · до 2% назад",
+  "7 days · up to 5% back": "7 дней · до 5% назад",
+  "If the Rising Floor can't pay most of it yet, the lock is refused and you can buy without it.": "Если Растущий пол ещё не может выплатить большую часть, блокировка отклоняется, и вы можете купить без неё.",
+  "Claim {0} {1} and {2} {3} back from the Fair Open": "Заберите {0} {1} и {2} {3} обратно с Честного старта",
+  "Your tokens unlock 25% at each quarter of progress, once progress has stayed above it for an hour. A sale is public for 10 minutes before it can run, and you can queue up to 25% of your unlocked tokens a day. After graduation the rest unlocks gradually over 7 days.": "Ваши токены открываются на 25% на каждой четверти прогресса, после того как прогресс держался выше неё час. Продажа публична 10 минут, прежде чем она может пройти, и в очередь можно поставить до 25% открытых токенов в день. После выпуска остальное открывается постепенно за 7 дней.",
+  "Optional. On the Ferzan Curve your first buy joins the 60-second Fair Open at the same price as everyone else, and unlocks 25% at each quarter of progress.": "Необязательно. На кривой Ferzan ваша первая покупка входит в 60-секундный Честный старт по той же цене, что и у всех, и открывается на 25% на каждой четверти прогресса.",
+  "Fair Open (one price for the first 60 seconds), Sniper Tax, Dev Lock and the Dev Sell Alarm, Soft Landing, Rising Floor, Diamond Hands and Fair Exit. Same 1% fee.": "Честный старт (одна цена первые 60 секунд), налог на снайперов, блокировка разработчика и сигнал продажи разработчика, мягкая посадка, растущий пол, алмазные руки и честный выход. Та же комиссия 1%.",
+  "Team tokens stay locked until graduation, then unlock gradually over 7 days.": "Токены команды остаются заблокированы до выпуска, затем открываются постепенно за 7 дней.",
 };
 
 export default dict;

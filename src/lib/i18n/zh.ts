@@ -1619,6 +1619,15 @@ const dict: Record<string, string> = {
   "Robinhood Chain gas (usually cents)": "Robinhood Chain 的 gas（通常几美分）",
   "Arc gas, paid in USDC": "Arc 的 gas，以 USDC 支付",
   "about 0.3 TON for the coin contract, most of it comes back": "约 0.3 TON 用于币合约，大部分会退回",
+  "Trading opens soon. The first 60 seconds are a Fair Open: every buy in it gets the same price.": "交易即将开放。前 60 秒是公平开盘：其中每一笔买入都是同一个价格。",
+  "24h · up to 2% back": "24 小时 · 最高返还 2%",
+  "7 days · up to 5% back": "7 天 · 最高返还 5%",
+  "If the Rising Floor can't pay most of it yet, the lock is refused and you can buy without it.": "如果上升地板还付不出其中的大部分，锁定会被拒绝，你可以不锁定直接买。",
+  "Claim {0} {1} and {2} {3} back from the Fair Open": "从公平开盘领回 {0} {1} 和 {2} {3}",
+  "Your tokens unlock 25% at each quarter of progress, once progress has stayed above it for an hour. A sale is public for 10 minutes before it can run, and you can queue up to 25% of your unlocked tokens a day. After graduation the rest unlocks gradually over 7 days.": "你的代币在进度的每个四分之一解锁 25%，而且进度必须在该线之上保持一小时。一笔卖出在执行前会公开 10 分钟，你每天最多可以把已解锁代币的 25% 排进队列。毕业后其余部分在 7 天内逐步解锁。",
+  "Optional. On the Ferzan Curve your first buy joins the 60-second Fair Open at the same price as everyone else, and unlocks 25% at each quarter of progress.": "可选。在 Ferzan 曲线上，你的第一笔买入会加入 60 秒公平开盘，价格和所有人一样，并在进度的每个四分之一解锁 25%。",
+  "Fair Open (one price for the first 60 seconds), Sniper Tax, Dev Lock and the Dev Sell Alarm, Soft Landing, Rising Floor, Diamond Hands and Fair Exit. Same 1% fee.": "公平开盘（前 60 秒同一价格）、狙击税、开发者锁仓和开发者卖出警报、软着陆、上升地板、钻石手和公平退出。同样是 1% 手续费。",
+  "Team tokens stay locked until graduation, then unlock gradually over 7 days.": "团队代币在毕业前保持锁定，然后在 7 天内逐步解锁。",
 };
 
 export default dict;

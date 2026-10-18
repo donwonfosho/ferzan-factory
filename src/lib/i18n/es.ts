@@ -1611,6 +1611,15 @@ const dict: Record<string, string> = {
   "Robinhood Chain gas (usually cents)": "Gas de Robinhood Chain (normalmente céntimos)",
   "Arc gas, paid in USDC": "Gas de Arc, pagado en USDC",
   "about 0.3 TON for the coin contract, most of it comes back": "unos 0,3 TON para el contrato de la moneda, la mayor parte vuelve",
+  "Trading opens soon. The first 60 seconds are a Fair Open: every buy in it gets the same price.": "La negociación abre pronto. Los primeros 60 segundos son una Apertura Justa: cada compra en ella sale al mismo precio.",
+  "24h · up to 2% back": "24 h · hasta un 2% de vuelta",
+  "7 days · up to 5% back": "7 días · hasta un 5% de vuelta",
+  "If the Rising Floor can't pay most of it yet, the lock is refused and you can buy without it.": "Si el Suelo Ascendente aún no puede pagar la mayor parte, el bloqueo se rechaza y puedes comprar sin él.",
+  "Claim {0} {1} and {2} {3} back from the Fair Open": "Reclama {0} {1} y {2} {3} de vuelta de la Apertura Justa",
+  "Your tokens unlock 25% at each quarter of progress, once progress has stayed above it for an hour. A sale is public for 10 minutes before it can run, and you can queue up to 25% of your unlocked tokens a day. After graduation the rest unlocks gradually over 7 days.": "Tus tokens se desbloquean un 25% en cada cuarto del progreso, una vez que el progreso se ha mantenido por encima durante una hora. Una venta es pública 10 minutos antes de poder ejecutarse, y puedes poner en cola hasta el 25% de tus tokens desbloqueados al día. Después de la graduación el resto se desbloquea poco a poco durante 7 días.",
+  "Optional. On the Ferzan Curve your first buy joins the 60-second Fair Open at the same price as everyone else, and unlocks 25% at each quarter of progress.": "Opcional. En la Curva Ferzan tu primera compra entra en la Apertura Justa de 60 segundos al mismo precio que los demás, y se desbloquea un 25% en cada cuarto del progreso.",
+  "Fair Open (one price for the first 60 seconds), Sniper Tax, Dev Lock and the Dev Sell Alarm, Soft Landing, Rising Floor, Diamond Hands and Fair Exit. Same 1% fee.": "Apertura Justa (un precio durante los primeros 60 segundos), Impuesto al Francotirador, Bloqueo del Dev y la Alarma de Venta del Dev, Aterrizaje Suave, Suelo Ascendente, Manos de Diamante y Salida Justa. La misma comisión del 1%.",
+  "Team tokens stay locked until graduation, then unlock gradually over 7 days.": "Los tokens del equipo siguen bloqueados hasta la graduación y luego se desbloquean poco a poco durante 7 días.",
 };
 
 export default dict;
