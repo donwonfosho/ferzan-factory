@@ -1623,6 +1623,8 @@ const dict: Record<string, string> = {
   "Ferzan Curve V2 (BNB Chain): 1% on every trade. 0.40% creator (half held until graduation), 0.35% Ferzan (0.10% of it to a referrer when a buyer came from a referral link), 0.10% Diamond Hands, 0.05% Rising Floor, 0.05% Auto-Trending, 0.05% FERZAN Flywheel.": "Ferzan Eğrisi V2 (BNB Chain): her işlemde %1. %0,40 oluşturan (yarısı mezuniyete kadar tutulur), %0,35 Ferzan (alıcı bir yönlendirme bağlantısından geldiyse bunun %0,10'u yönlendirene), %0,10 Elmas Eller, %0,05 Yükselen Taban, %0,05 Auto-Trending, %0,05 FERZAN çarkı.",
   "You have {0} {1} · sellable now {2}": "{0} {1} var · şimdi satılabilir {2}",
   "Connect your wallet to see your {0} and sell.": "{0} bakiyeni görüp satmak için cüzdanını bağla.",
+  "A custom Arc target has to be at least 1 USDC.": "Özel bir Arc hedefi en az 1 USDC olmalı.",
+  "Arc runs on Circle's USDC. If Circle ever freezes USDC for a coin's pool, that coin can't graduate. Holders then get their USDC back through Fair Exit.": "Arc, Circle'ın USDC'si üzerinde çalışır. Circle bir coinin havuzundaki USDC'yi dondurursa o coin mezun olamaz. Sahipler USDC'lerini Adil Çıkış ile geri alır.",
 };
 
 export default dict;

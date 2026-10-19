@@ -1623,6 +1623,8 @@ const dict: Record<string, string> = {
   "Ferzan Curve V2 (BNB Chain): 1% on every trade. 0.40% creator (half held until graduation), 0.35% Ferzan (0.10% of it to a referrer when a buyer came from a referral link), 0.10% Diamond Hands, 0.05% Rising Floor, 0.05% Auto-Trending, 0.05% FERZAN Flywheel.": "Curva Ferzan V2 (BNB Chain): 1% em cada negociação. 0,40% criador (metade retida até a formatura), 0,35% Ferzan (0,10% disso a um referenciador quando o comprador veio de um link de indicação), 0,10% Mãos de Diamante, 0,05% Piso Ascendente, 0,05% Auto-Trending, 0,05% Volante FERZAN.",
   "You have {0} {1} · sellable now {2}": "Você tem {0} {1} · vendável agora {2}",
   "Connect your wallet to see your {0} and sell.": "Conecte sua carteira para ver seus {0} e vender.",
+  "A custom Arc target has to be at least 1 USDC.": "Um alvo personalizado na Arc tem que ser de pelo menos 1 USDC.",
+  "Arc runs on Circle's USDC. If Circle ever freezes USDC for a coin's pool, that coin can't graduate. Holders then get their USDC back through Fair Exit.": "A Arc usa o USDC da Circle. Se a Circle congelar o USDC do pool de uma moeda, essa moeda não chega à formatura. Quem tem a moeda recebe o USDC de volta pela Saída Justa.",
 };
 
 export default dict;

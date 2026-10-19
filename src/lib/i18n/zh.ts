@@ -1631,6 +1631,8 @@ const dict: Record<string, string> = {
   "Ferzan Curve V2 (BNB Chain): 1% on every trade. 0.40% creator (half held until graduation), 0.35% Ferzan (0.10% of it to a referrer when a buyer came from a referral link), 0.10% Diamond Hands, 0.05% Rising Floor, 0.05% Auto-Trending, 0.05% FERZAN Flywheel.": "Ferzan 曲线 V2（BNB Chain）：每笔交易 1%。0.40% 创建者（一半留到毕业），0.35% Ferzan（买家来自推荐链接时，其中 0.10% 给推荐人），0.10% 钻石手，0.05% 上升地板，0.05% Auto-Trending，0.05% FERZAN 飞轮。",
   "You have {0} {1} · sellable now {2}": "你有 {0} {1} · 现在可卖 {2}",
   "Connect your wallet to see your {0} and sell.": "连接钱包后才能看到你的 {0} 并卖出。",
+  "A custom Arc target has to be at least 1 USDC.": "自定义 Arc 目标至少要 1 USDC。",
+  "Arc runs on Circle's USDC. If Circle ever freezes USDC for a coin's pool, that coin can't graduate. Holders then get their USDC back through Fair Exit.": "Arc 使用 Circle 的 USDC。如果 Circle 冻结了某枚币池子里的 USDC，这枚币就无法毕业。持有人随后通过公平退出拿回他们的 USDC。",
 };
 
 export default dict;

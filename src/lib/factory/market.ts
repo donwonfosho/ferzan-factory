@@ -5,8 +5,14 @@ import { chainRpc, chainRpcBatch, type RelayChain } from "./relay";
 const TRADE_TOPIC = "0xffbf3942a32ceb2aabfe4f2596228deead369ce3b97102bb8734075fe3510af5";
 const SWAP_V3 = "0xc42079f94a6350d7e6235f29174924f928cc2ac818eb64fed8004e115fbcca67";
 const SWAP_V2 = "0xb3e2773606abfd36b5bd91394b3a54d1398336c65005baf7bf7a05efeffaf75b";
+const SWAP_UNI_V2 = "0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822";
 const GET_POOL_V3 = "0x1698ee82";
 const GET_POOL_V2 = "0x79bc57d5";
+const GET_PAIR = "0xe6a43905";
+/** Arc's DEX USDC (6 decimals). Curve amounts on Arc are the 18-decimal gas coin, so a pool reserve is scaled by 10^12 before the two are compared. */
+const ARC_USDC = "0x3600000000000000000000000000000000000000";
+const ARC_V2_FACTORY = "0x89e5db8b5aa49aa85ac63f691524311aeb649eba";
+const ARC_USDC_SCALE = 10n ** 12n;
 
 type Venue =
   | { kind: "v3"; factory: string; quote: string; fees: number[] }
@@ -156,6 +162,16 @@ async function blockTimes(chain: RelayChain, blocks: bigint[]): Promise<Map<stri
 
 async function poolAddresses(chain: RelayChain, token: string): Promise<{ address: string; quote: string; kind: "v3" | "v2" }[]> {
   const found: { address: string; quote: string; kind: "v3" | "v2" }[] = [];
+  if (chain === "arc") {
+    try {
+      const raw = await chainRpc(chain, "eth_call", [{ to: ARC_V2_FACTORY, data: GET_PAIR + padAddr(token) + padAddr(ARC_USDC) }, "latest"]);
+      const address = addressOut(raw);
+      if (address) found.push({ address, quote: ARC_USDC, kind: "v2" });
+    } catch {
+      /* no pool */
+    }
+    return found;
+  }
   await Promise.all(
     VENUES[chain].map(async (venue) => {
       const fees = venue.kind === "v3" ? venue.fees : [venue.stable ? 1 : 0];
@@ -211,7 +227,7 @@ export const listFills = createServerFn({ method: "POST" })
 
     const pools = await poolAddresses(data.chain, data.contract);
     for (const pool of pools) {
-      const swaps = await getLogs(data.chain, pool.address, pool.kind === "v3" ? SWAP_V3 : SWAP_V2);
+      const swaps = await getLogs(data.chain, pool.address, data.chain === "arc" ? SWAP_UNI_V2 : pool.kind === "v3" ? SWAP_V3 : SWAP_V2);
       const quote0 = quoteIsToken0(pool.quote);
       for (const log of swaps) {
         if (!log.data || !log.blockNumber) continue;
@@ -230,6 +246,7 @@ export const listFills = createServerFn({ method: "POST" })
           native = quote0 ? amount0 : amount1;
           token = quote0 ? amount1 : amount0;
         }
+        if (data.chain === "arc") native *= ARC_USDC_SCALE;
         if (native > 0n && token > 0n) logs.push({ block: BigInt(log.blockNumber), native, token, venue: "market", side: "buy", who: "" });
       }
     }

@@ -26,7 +26,7 @@ export const CURVE_V2_FACTORIES: Record<CurveLaunchChain, string> = {
   base: "0x49daae1c079d8f09e91e6ec54abadb9c3ee828d4",
   ethereum: "0x49daae1c079d8f09e91e6ec54abadb9c3ee828d4",
   robinhood: "0x49daae1c079d8f09e91e6ec54abadb9c3ee828d4",
-  arc: "",
+  arc: "0x49daae1c079d8f09e91e6ec54abadb9c3ee828d4",
 };
 
 /** Current (v3) standard-coin factories. A standard launch goes here, never to a curve factory. */

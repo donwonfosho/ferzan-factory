@@ -221,6 +221,7 @@ export function OwnWalletLaunch() {
     if (cleanName.length < 2 || cleanName.length > 32) return setError(tr("Name needs 2–32 characters."));
     if (!/^[A-Z0-9]{2,10}$/.test(cleanSymbol)) return setError(tr("Ticker is 2–10 letters or numbers."));
     if (evm && !(Number(grad) > 0)) return setError(tr("Pick how much {0} the curve collects before it graduates.", meta.native));
+    if (chain === "arc" && !(Number(grad) >= 1)) return setError(tr("A custom Arc target has to be at least 1 USDC."));
     if (plain && !/^[1-9]\d{0,12}$/.test(supply.trim())) return setError(tr("Supply is a whole number between 1 and 1,000,000,000,000."));
     if (evm && !v2 && Number(startMinutes) > 0 && Number(devBuy) > 0) {
       return setError(tr("A first buy needs trading to open right away. Clear the delay or the first buy."));
@@ -639,6 +640,7 @@ export function OwnWalletLaunch() {
             </div>
             <TextInput className="mt-2" value={grad} onChange={(e) => setGrad(e.target.value)} inputMode="decimal" />
             <p className="mt-1.5 text-xs text-muted">{tr("The curve moves to a DEX pool once it has collected this much. Supply is 1,000,000,000.")}</p>
+            {chain === "arc" ? <p className="mt-1.5 text-xs text-muted">{tr("A custom Arc target has to be at least 1 USDC.")}</p> : null}
           </div>
         ) : null}
 

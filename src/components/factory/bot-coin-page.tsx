@@ -394,6 +394,9 @@ export function BotCoinPage({ chain, curve }: { chain: BotCurveChain; curve: str
           ? tr("This curve is full. Its liquidity moved to a DEX pool.")
           : tr("{0} of {1} {2} raised.", formatSmart(BigInt(state.realEth), 18), formatSmart(BigInt(state.gradTarget), 18), state.native)}
       </p>
+      {chain === "arc" ? (
+        <p className="text-xs text-muted">{tr("Arc runs on Circle's USDC. If Circle ever freezes USDC for a coin's pool, that coin can't graduate. Holders then get their USDC back through Fair Exit.")}</p>
+      ) : null}
       <RiskPanel chain={state.chain} token={state.token} progress={state.progress} curveOpen={!state.graduated && !opensAt} launchedAt={state.startTime} />
       <CoinStream chain={state.chain} token={state.token} curve={curve} creator={state.creator} signer={pnlWallet} />
       <VerifiedCreator chain={state.chain} coin={curve} creator={state.creator} />
